@@ -44,7 +44,7 @@ GETDENS	LDA #3
 	STA $306
 	LDA #$00
 	STA $303
-	JSR $E459
+	JSR SIOVEC
 
 ; wait a bit for the sector data bytes to arrive
 
@@ -60,9 +60,17 @@ W20	CMP 20
 	STA $302
 	LDA #4
 	STA $308
+
+; workaround for bug in older MyIDE interfaces:
+; get status always put the status into $2EA..$2ED
+	LDA #$EA
+	STA DBUF
+	LDA #2
+	STA DBUF+1
+
 	LDA #$40
 	STA $303
-	JSR $E459
+	JSR SIOVEC
 	BPL STATOK
 
 SNGLDS	LDA #0
@@ -73,7 +81,7 @@ SNGLDS	LDA #0
 	STA SECBYTE
 	RTS
 
-STATOK	LDA SECBUF
+STATOK	LDA $2EA
 	AND #$20
 	BNE DBLDENS
 	JSR SNGLDS
@@ -97,6 +105,12 @@ TSTSIZE	LDA #$52
 	STA DSEC+1
 	LDA #$40
 	STA $303
+
+	LDA #<SECBUF
+	STA DBUF
+	LDA #>SECBUF
+	STA DBUF+1
+	
 	JSR SIOVEC
 	BMI ENDDENS
 

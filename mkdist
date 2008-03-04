@@ -1,17 +1,28 @@
 #!/bin/sh
 
-if [ $# -ne 1 ] ; then
-	echo "usage: $0 version"
-	exit 1;
+VER=-`date '+%y%m%d'`
+
+if [ $# -ge 1 ] ; then
+	VER=$1
 fi
 
-NAME=mypdos$1
+NAME=mypdos$VER
 
 mkdir tmp/"${NAME}"
 rm -f dist/${NAME}.zip
-cp -a README.txt LICENSE MYPDOS.COM mypdos.atr mypdoshs.atr myinit.atr tmp/"${NAME}"
+cp -a README.txt LICENSE \
+MYINIT.COM MYINITR.COM MYINITB.COM \
+MYPDOS.COM MYPDOSN.COM \
+MYPDOSR.COM MYPDOSRN.COM MYPDOSB.COM \
+myinit.atr \
+mypdos.atr mypdosn.atr \
+mypdosr.atr mypdosrn.atr mypdosb.atr \
+tmp/"${NAME}"
 mkdir tmp/"${NAME}"/src
+mkdir tmp/"${NAME}"/src/initdisk
 cp -a Makefile *.inc *.src tmp/"${NAME}"/src
+cp -a initdisk/* tmp/"${NAME}"/src/initdisk
+rm -f tmp/"${NAME}"/src/initdisk/*.COM
 cd tmp
 zip -r ../dist/${NAME}.zip ${NAME}
 rm -rf "${NAME}"

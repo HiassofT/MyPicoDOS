@@ -1,6 +1,6 @@
-;  MyPicoDos init V4.03 - initializer program
+;  MyPicoDos init V4.04 - initializer program
 ;
-;  Copyright (C) 1992-2005 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 1992-2007 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -40,6 +40,12 @@ FILSPEC	= $CA
 TMPV	= $CC
 TMPV2	= $CE
 
+; offset to configuration bytes in boot sector:
+OFSSEC	= 9	; start sector of MyPicoDos
+OFSBYT	= 11	; bytes per sector (125/253)
+OFSMASK	= 12	; sector link chaining mask
+OFSLEN	= 13	; sector length (128/256)
+OFSHI	= 15	; default highspeed flag
 
 ; run address
 	* = $02E0
@@ -89,19 +95,26 @@ ASKMAIN	JSR GETKEY
 	TYA
 	BMI ASKMAIN
 	TXA
+
 	CMP #$31
+	BNE NINITHS
+	JSR PUTCHAR
+	LDA #155
+	JSR PUTCHAR
+	.IF .DEF BAREBONE
+	JMP INITN
+	.ELSE
+	JMP INITHS
+	.ENDIF
+NINITHS	CMP #$32
+	.IF .NOT .DEF BAREBONE
 	BNE NINIT
 	JSR PUTCHAR
 	LDA #155
 	JSR PUTCHAR
 	JMP INIT
-NINIT	CMP #$32
-	BNE NINITHS
-	JSR PUTCHAR
-	LDA #155
-	JSR PUTCHAR
-	JMP INITHS
-NINITHS	CMP #$33
+NINIT	CMP #$33
+	.ENDIF
 	BNE NCRNAM
 	JSR PUTCHAR
 	LDA #155
@@ -180,7 +193,7 @@ EXIT	LDA MERK82
 	OPEN 1,8,0,FILENAME
 	BPL OPENOK
 	JMP OPENERR
-OPENOK	NOTE 1,%1+9
+OPENOK	NOTE 1,%1+OFSSEC
 	BMI WRIER1
 	BPUT 1,(%2-$180),(%1+$180)
 	BPL WRIOK
@@ -189,13 +202,13 @@ WRIOK	CLOSE 1
 
 	JSR GETDENS
 	LDA SECBYTE
-	STA %1+11
+	STA %1+OFSBYT
 	LDA SECMASK
-	STA %1+12
+	STA %1+OFSMASK
 	LDA $308
-	STA %1+13
+	STA %1+OFSLEN
 	LDA $309
-	STA %1+14
+	STA %1+OFSLEN+1
 
 	WSEC128 DRIVENO,1,%1
 	BPL S1OK
@@ -209,12 +222,13 @@ S2OK	WSEC128 DRIVENO,3,%1+256
 S3OK
 	.ENDM
 
-INIT	JSR INPDRV
-	MYINIT MYSLOW, MYSLOWL
-	JMP SUCCESS
-
-INITHS	JSR INPDRV
+INITHS	LDA #1
+	BNE INIT1
+INIT	LDA #0
+INIT1	STA MYHS+OFSHI
+INITN	JSR INPDRV
 	MYINIT MYHS, MYHSLEN
+
 	JMP SUCCESS
 
 OPENERR	CLOSE 1
@@ -446,7 +460,7 @@ DIRAGN	JMP DIROK2
 DIROK3	LDA $348
 	CMP #1
 	BEQ DIRLP
-	CMP #40
+	CMP #39
 	BCC DIROK4
 	LDA #39
 DIROK4	TAX
@@ -533,7 +547,7 @@ ITABRT	JMP ABORT
 INTITOK	LDA $348
 	BNE NTL0
 	LDA #1
-NTL0	CMP #41
+NTL0	CMP #39
 	BCS TTRUNC
 	TAX
 	DEX
@@ -565,7 +579,7 @@ PNLP1	LDA PICONAME,Y
 	BPL OUTOK1
 	JMP OEOPEN
 
-OUTOK1	GETLEN2 40, INPBUF
+OUTOK1	GETLEN2 38, INPBUF
 	LDA #LINESEP
 	STA INPBUF,Y
 	INY
@@ -804,20 +818,37 @@ PNAMNAM	.BYTE "PICONAMETXT"
 ;	       1234567890123456789012345678901234567890
 ;              0987654321098765432112345678901234567890
 TITEL	.BYTE 125
-	.BYTE "          MyPicoDos Init V4.03",155
-	.BYTE "         (c) HiassofT 1992-2005",155
+
+	.IF .DEF BAREBONE
+	.BYTE "          MyPicoDos Init V4.04B",155
+	.ELSE
+	.IF .DEF REMOTE
+	.BYTE "          MyPicoDos Init V4.04R",155
+	.ELSE
+	.BYTE "          MyPicoDos Init V4.04",155
+	.ENDIF
+	.ENDIF
+	.BYTE "         (c) HiassofT 1992-2007",155
 	.BYTE 155
 	.BYTE "      COM / EXE / BIN / BAS loader",155
 	.BYTE "  for SD & DD disks, 720-65535 sectors",155
 	.BYTE "  in Dos 2.x / MyDos / BiboDos format", 155
 	.BYTE "long filenames and subdirectory support",155
+	.IF .DEF REMOTE
+	.BYTE "and builtin atariserver remote console", 155
+	.ENDIF
 	.BYTE 155,155
 	.BYTE "this program MUST be loaded from DOS,",155
 	.BYTE "because it creates a short system-file!",155
 	.BYTE 155
-	.BYTE "<1> write MyPicoDos to disk",155
-	.BYTE "<2> write MyPicoDos HighSpeed to disk",155
+	.IF .DEF BAREBONE
+	.BYTE "<1> init disk",155
+	.BYTE "<2> create/edit long filenames",155
+	.ELSE
+	.BYTE "<1> init disk (HighSpeed=auto)",155
+	.BYTE "<2> init disk (HighSpeed=off)",155
 	.BYTE "<3> create/edit long filenames",155
+	.ENDIF
 	.BYTE "<0> exit MyPicoDos Init",155,155
 	.BYTE "-> "
 
@@ -881,34 +912,40 @@ SORTNL	= * - SORTNAM
 WRITNAM	.BYTE 155,"write long names to disk (y/n) > "
 WRITNL	= * - WRITNAM
 
-MERK82	.BYTE 0
+HEXTAB	.BYTE "0123456789ABCDEF"
 
-GOTOLD	.BYTE 0
+MYHS	= *
+.IF .DEF BAREBONE
+	.incbin "mypdosb.bin"
+.ELSE
+.IF .DEF REMOTE
+	.incbin "mypdosr.bin"
+.ELSE
+	.incbin "mypdos.bin"
+.ENDIF
+.ENDIF
+MYHSLEN	= * - MYHS
 
-FILNAM	.DC 11 0
-LONGNAM	.DC 40 0
+MERK82	* = * + 1
+
+GOTOLD	* = * + 1
+
+FILNAM	* = * + 11
+LONGNAM	* = * + 40
 
 ; used by longname.src - end of old PICONAME.TXT
 
-NAMEEND	.WORD 0
+NAMEEND	* = * + 2
 
 ; number of names found so far
-NUMNAME	.BYTE 0
-COUNT	.BYTE 0
-FIRSTFIL	.BYTE 0
+NUMNAME	* = * + 1
+COUNT	* = * + 1
+FIRSTFIL	* = * + 1
 
-PATH	.DC 128 0
+PATH	* = * + 128
 
-DIRNAM	.DC 128 0
-INPBUF	.DC 128 0
-
-HEXTAB	.BYTE "0123456789ABCDEF"
-
-MYSLOW	.incbin "mypdos.bin"
-MYSLOWL	= * - MYSLOW
-
-MYHS	.incbin "mypdoshs.bin"
-MYHSLEN	= * - MYHS
+DIRNAM	* = * + 128
+INPBUF	* = * + 128
 
 SECBUF	= *
 

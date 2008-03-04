@@ -1,0 +1,79 @@
+;  MyPicoDos 4.04 - standalone .COM version
+;
+;  Copyright (C) 2006-2007 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+ORG = $3000
+
+SRCADR  = $E0
+DSTADR  = $E2
+MYSTART	= $1000
+        
+	* = $02E0
+	.WORD ORG
+
+	* = ORG
+
+; check SHIFT key, if pressed just exit
+;	LDA $D20F
+;	AND #8
+;	BNE DOCOPY
+;	RTS
+
+; copy MyPicoDos code
+
+DOCOPY	LDA #<MYPDOS
+	STA SRCADR
+	LDA #>MYPDOS
+	STA SRCADR+1
+	LDA #<MYSTART
+	STA DSTADR
+	LDA #>MYSTART
+	STA DSTADR+1
+	LDX #MYPDPG
+	LDY #0
+MYLP	LDA (SRCADR),Y
+	STA (DSTADR),Y
+	INY
+	BNE MYLP
+	INC SRCADR+1
+	INC DSTADR+1
+	DEX
+	BNE MYLP
+	JMP MYSTART
+
+MYPDOS  = *
+
+	.IF .DEF BAREBONE
+	.incbin mypdos-code-b.bin
+	.ELSE
+	.IF HIDEF=0
+	.IF .DEF REMOTE
+        .incbin mypdos-code-r-hioff.bin
+	.ELSE
+        .incbin mypdos-code-hioff.bin
+	.ENDIF
+	.ELSE
+	.IF .DEF REMOTE
+        .incbin mypdos-code-r.bin
+	.ELSE
+        .incbin mypdos-code.bin
+	.ENDIF
+	.ENDIF
+	.ENDIF
+
+MYPDPG  = (*-MYPDOS+255) / 256
+
