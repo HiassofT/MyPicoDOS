@@ -1,4 +1,4 @@
-MyPicoDos 4.01
+MyPicoDos 4.02
 
 Copyright (C) 1992-2004 by Matthias Reichl <hias@horus.com>
 
@@ -387,4 +387,7 @@ version 4.01:
 - Bugfix: Write protected directories were not displayed.
 - Pressing reset will now result in a cold-start instead of
   activating the selftest/memopad.
+
+version 4.02:
+- Fixed corrupted screen in standard SIO version.
 
