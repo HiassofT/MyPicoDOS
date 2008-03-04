@@ -16,13 +16,15 @@ all: MYINIT.COM MYINITR.COM \
 
 #all: MYPDOS.COM mypdos.atr mypdoshs.atr myinit2.atr
 
-#ASMFLAGS=
-ASMFLAGS = -s
-#ASMFLAGS = -s -dHWDEBUG
+#ASMFLAGS= -Ihisio
+ASMFLAGS = -Ihisio -s
+#ASMFLAGS = -Ihisio -s -dHWDEBUG
 
 MYPDOSINC = common.inc getdens.src longname.src \
 	rreadcode.src comloadcode.src basloadcode.src \
 	rread.bin comload.bin basload.bin
+
+HISIOINC = hisio/hisio.inc hisio/hisiocode.src hisio/hisiodet.src
 
 rread.bin: rread.src rreadcode.src common.inc
 	$(ATASM) $(ASMFLAGS) -r rread.src
@@ -33,17 +35,16 @@ basload.bin: basload.src basloadcode.src common.inc rreadcode.src
 comload.bin: comload.src comloadcode.src common.inc rreadcode.src
 	$(ATASM) $(ASMFLAGS) -r comload.src
 
-highspeed.bin: highspeed.src highspeedcode.src \
-	hisiocode.src hisiodet.src hisio.inc \
+highspeed.bin: highspeed.src highspeedcode.src $(HISIOINC) \
 	common.inc rreadcode.src comloadcode.src
 	$(ATASM) $(ASMFLAGS) -r highspeed.src
 
 mypdos.bin: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src hisiodet.src hisiocode.src hisio.inc highspeed.bin
+	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -r -omypdos.bin -dHIGHSPEED=1 mypdos.src
 
 mypdosr.bin: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src hisiodet.src hisiocode.src hisio.inc highspeed.bin \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -r -omypdosr.bin -dHIGHSPEED=1 -dREMOTE=1 mypdos.src
 
@@ -51,42 +52,42 @@ mypdosb.bin: mypdos.src $(MYPDOSINC)
 	$(ATASM) $(ASMFLAGS) -r -omypdosb.bin -dBAREBONE=1 mypdos.src
 
 mypdos.atr: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src hisiodet.src hisiocode.src hisio.inc highspeed.bin
+	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -r -omypdos.atr -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 mypdos.src
 
 mypdosn.atr: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src hisiodet.src hisiocode.src hisio.inc highspeed.bin
+	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -r -omypdosn.atr -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -dHIDEF=0 mypdos.src
 
 mypdosr.atr: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src hisiodet.src hisiocode.src hisio.inc highspeed.bin \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -r -omypdosr.atr -dREMOTE=1 -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 mypdos.src
 
 mypdosrn.atr: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src hisiodet.src hisiocode.src hisio.inc highspeed.bin \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -r -omypdosrn.atr -dREMOTE=1 -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -dHIDEF=0 mypdos.src
 
 mypdosb.atr: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src hisiodet.src hisiocode.src hisio.inc highspeed.bin
+	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -r -omypdosb.atr -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dBAREBONE=1 mypdos.src
 
 mypdos-code.bin: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src hisiodet.src hisiocode.src hisio.inc highspeed.bin
+	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -r -omypdos-code.bin -dMYPDOSROM=1 -dHIGHSPEED=1 mypdos.src
 
 mypdos-code-hioff.bin: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src hisiodet.src hisiocode.src hisio.inc highspeed.bin
+	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -r -omypdos-code-hioff.bin -dMYPDOSROM=1 -dHIGHSPEED=1 -dHIDEF=0 mypdos.src
 
 mypdos-code-r.bin: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src hisiodet.src hisiocode.src hisio.inc highspeed.bin \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -r -omypdos-code-r.bin -dMYPDOSROM=1 -dHIGHSPEED=1 -dREMOTE=1 mypdos.src
 
 mypdos-code-r-hioff.bin: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src hisiodet.src hisiocode.src hisio.inc highspeed.bin \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -r -omypdos-code-r-hioff.bin -dMYPDOSROM=1 -dHIGHSPEED=1 -dREMOTE=1 -dHIDEF=0 mypdos.src
 
@@ -94,7 +95,7 @@ mypdos-code-b.bin: mypdos.src $(MYPDOSINC)
 	$(ATASM) $(ASMFLAGS) -r -omypdos-code-b.bin -dMYPDOSROM=1 -dBAREBONE=1 mypdos.src
 
 mypdos-atarisio.bin: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src hisiodet.src hisiocode.src hisio.inc highspeed.bin \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -r -omypdos-atarisio.bin -dMYPDOSBIN=1 -dHIGHSPEED=1 -dREMOTE=1 mypdos.src
 

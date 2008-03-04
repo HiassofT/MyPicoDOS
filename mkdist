@@ -7,9 +7,11 @@ if [ $# -ge 1 ] ; then
 fi
 
 NAME=mypdos$VER
+TMPDIR=dist/tmp/"${NAME}"
 
-mkdir tmp/"${NAME}"
-rm -f dist/${NAME}.zip
+mkdir -p "${TMPDIR}/src/hisio"
+mkdir -p "${TMPDIR}/src/initdisk"
+
 cp -a README.txt LICENSE \
 MYINIT.COM MYINITR.COM MYINITB.COM \
 MYPDOS.COM MYPDOSN.COM \
@@ -17,12 +19,13 @@ MYPDOSR.COM MYPDOSRN.COM MYPDOSB.COM \
 myinit.atr \
 mypdos.atr mypdosn.atr \
 mypdosr.atr mypdosrn.atr mypdosb.atr \
-tmp/"${NAME}"
-mkdir tmp/"${NAME}"/src
-mkdir tmp/"${NAME}"/src/initdisk
-cp -a Makefile *.inc *.src tmp/"${NAME}"/src
-cp -a initdisk/* tmp/"${NAME}"/src/initdisk
-rm -f tmp/"${NAME}"/src/initdisk/*.COM
-cd tmp
-zip -r ../dist/${NAME}.zip ${NAME}
-rm -rf "${NAME}"
+"${TMPDIR}"
+cp -a Makefile *.inc *.src "${TMPDIR}/src"
+cp -a hisio/*.src hisio/*.inc "${TMPDIR}/src/hisio"
+cp -a initdisk/DOS.SYS initdisk/DUP.SYS initdisk/BFE.AR0 initdisk/AUTOEXEC.BAT "${TMPDIR}/src/initdisk"
+
+rm -f "dist/${NAME}".zip
+cd dist/tmp
+zip -r "../${NAME}.zip" ${NAME}
+cd ..
+rm -rf tmp
