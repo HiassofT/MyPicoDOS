@@ -1,0 +1,4 @@
+	MYPDOSATR = 1
+
+	.INCLUDE "mypdos.src"
+

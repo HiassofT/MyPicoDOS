@@ -1,0 +1,222 @@
+;  MyPicoDos init V3.0
+;
+;  Copyright (C) 1992-2003 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+MYPDLEN	= 3844
+MFILLEN	= MYPDLEN-$180
+
+MYPDADR	= $6000
+
+	*=$5000
+
+
+	.MACRO WSEC128 ;SECTOR,ADR
+	LDA #1
+	STA $301
+	LDA #$50
+	STA $302
+	LDA #<(%2)
+	STA $304
+	LDA #>(%2)
+	STA $305
+	LDA #<(%1)
+	STA $30A
+	LDA #>(%1)
+	STA $30B
+	JSR $E453
+	.ENDM
+
+; IOCB-Konstante
+
+CIOV	= $E456
+
+ICCOM	= $342
+ICSTA	= $343
+ICBAL	= $344
+ICBAH	= $345
+ICBLL	= $348
+ICBLH	= $349
+ICAX1	= $34A
+ICAX2	= $34B
+
+; CIO-Befehle
+
+COPEN	=   3
+CCLSE	=  12
+CGTXT	=   5
+CPTXT	=   9
+CGBIN	=   7
+CPBIN	=  11
+
+EOL	= $9B
+
+	.MACRO KANNUM ;KANAL
+	LDA #%1		;IOCB-Offset
+	ASL		;aus Kanalnr.
+	ASL		;(mal 16)
+	ASL
+	ASL
+	TAX	;ERGEBNIS IM X-REG
+	.ENDM
+
+	.MACRO OPEN ; KANAL,AUX1,AUX2,FILENAME
+	JMP OP1
+FNAM	.BYTE %$4
+	.BYTE EOL
+OP1	KANNUM %1
+	LDA #%2
+	STA ICAX1,X
+	LDA #%3
+	STA ICAX2,X
+	LDA #COPEN
+	STA ICCOM,X
+	LDA #<FNAM
+	STA ICBAL,X
+	LDA #>FNAM
+	STA ICBAH,X
+	JSR CIOV
+	.ENDM
+
+	.MACRO CLOSE ; KANAL
+	KANNUM %1
+	LDA #CCLSE
+	STA ICCOM,X
+	JSR CIOV
+	.ENDM
+
+	.MACRO NOTE ; KANAL,SECTOR
+	KANNUM %1
+	LDA #$26
+	STA ICCOM,X
+	JSR CIOV
+	LDA $34C,X
+	STA %2
+	LDA $34D,X
+	STA %2+1
+	.ENDM
+
+	.MACRO PRINT ; KANAL,LABEL
+	KANNUM %1
+	LDA #CPTXT
+	STA ICCOM,X
+	LDA #<(%2)
+	STA ICBAL,X
+	LDA #>(%2)
+	STA ICBAH,X
+	LDA #127		; max. Laenge
+	STA ICBLL,X
+	LDA #0
+	STA ICBLH,X
+	JSR CIOV
+	.ENDM
+
+	.MACRO BPUT ; KANAL,LAENGE,BUFFER
+	KANNUM %1
+	LDA #CPBIN
+	STA ICCOM,X
+	LDA #<(%2)
+	STA ICBLL,X
+	LDA #>(%2)
+	STA ICBLH,X
+	LDA #<(%3)
+	STA ICBAL,X
+	LDA #>(%3)
+	STA ICBAH,X
+	JSR CIOV
+	.ENDM
+
+
+
+;************************************
+
+	LDA 82
+	STA MERK82
+	LDA #0
+	STA 82
+MAINLOOP	BPUT 0,TITLEN,TITEL
+	PRINT 0,INSERT1
+
+	JSR GETKEY
+	CMP #27
+	BEQ ABORT
+	JSR INIT
+	PRINT 0,AGAIN
+
+GKLP	JSR GETKEY
+	CMP #'Y
+	BEQ DOAGAIN
+	CMP #'y
+	BEQ DOAGAIN
+	CMP #'N
+	BEQ ABORT
+	CMP #'n
+	BEQ ABORT
+	JMP GKLP
+
+DOAGAIN	PRINT 0,CR
+	JMP MAINLOOP
+
+ABORT	LDA MERK82
+	STA 82
+	RTS
+
+MERK82	.BYTE 0
+
+INIT	OPEN 1,8,0,"D1:PICODOS.SYS"
+	NOTE 1,MYPDADR+9
+	BPUT 1,MFILLEN,(MYPDADR+$180)
+	CLOSE 1
+
+	WSEC128 1,MYPDADR
+	WSEC128 2,MYPDADR+128
+	WSEC128 3,MYPDADR+256
+	RTS
+
+GETKEY	LDA $E425
+	PHA
+	LDA $E424
+	PHA
+	RTS
+
+;	       1234567890123456789012345678901234567890
+TITEL	.BYTE 125
+	.BYTE "          MyPicoDos Init V3.0"
+	.BYTE 155
+	.BYTE "         (c) HiassofT 1992-2003"
+	.BYTE 155,155
+	.BYTE "  highspeed version with basic loader"
+	.BYTE 155
+	.BYTE "  for SD & DD disks, 720-65535 sectors"
+	.BYTE 155,155,155
+	.BYTE "this program MUST be "
+	.BYTE "loaded from MyDos,"
+	.BYTE 155
+	.BYTE "because it creates a "
+	.BYTE "short system-file"
+	.BYTE 155,155,155
+
+TITLEN	= *-TITEL
+
+INSERT1	.BYTE "insert disk in D1: and press any key"
+	.BYTE 155
+AGAIN	.BYTE "another disk "
+	.BYTE "(Y/N)?"
+CR	.BYTE 155
+
+; run address
+	* = $2e0
+	.WORD $5000
