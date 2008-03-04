@@ -1,4 +1,4 @@
-MyPicoDos 3.0
+MyPicoDos 3.1
 
 Copyright (C) 1992-2003 Matthias Reichl <hias@horus.com>
 
@@ -16,6 +16,8 @@ the following features:
   720 up to 65535 sectors.
 - Drives D1: to D8: can be accessed.
 - It supports MyDOS style subdirectories.
+- It supports Bibo-Dos style long directories (128 files per disk)
+- Since version 3.1 it supports XF551 format detection
 - It is able to use a high speed SIO routine provided by the
   disk drive (works with all drives implementing the SIO commands
   $68 and $69, eg. the Speedy 1050 or the HDI).
@@ -29,6 +31,8 @@ Basically, there are two different ways to use MyPicoDos:
   MyPicoDos to a disk in D1:. Note: You must load it from a
   real DOS (not a gamedos!), because the initializer will use the
   DOS functions to create a file named PICODOS.SYS on the disk.
+  The image 'myinit.atr' contains both MyDos and MYPDOS.COM, so
+  you just have to load it into AtariSIO/APE/SIO2PC/...
 
 - Use the supplied mypdos.atr file with your emulator or
   SIO2PC/AtariSIO program. After booting mypdos.atr, it will
@@ -52,19 +56,16 @@ When loading BIN files, MyPicoDos relocates the loader to $80.
 So, if you disable the high speed SIO routine, all BIN files should
 load fine.
 
-MyPicoDos uses the 'get percom block' command to detect the disk size.
-If this command fails (eg. a stock 1050 does not support it), MyPicoDos
-assumes it is a single density disk (90k or 130k) in DOS 2.x format.
+MyPicoDos uses a XF551 compatible way to determine the disk density:
 
-If the 'get percom block' command succeeds, MyPicoDos will calculate the
-total number of sectors on disk and use it together with the sector 
-length to determine the disk format:
+First it reads sector 4 (this is required by the XF551), and then
+it uses the 'get status command' to see whether the disk is single
+or double density.
 
-- single density disks with less than 1024 or with 1040 sectors are
-  assumed to be in DOS 2.x format
-- double density disks with less than 1024 sectors are also assumed
-  to be in DOS 2.x format
-- all other disks are assumed to be in MyDOS format.
+Next, MyPicoDos reads the VTOC and checks if the first byte (this
+is the 'DOS version' byte) is 3 or greater. If yes, the MyDos format
+will be used. If the first byte is 0, 1, or 2, standard DOS 2.x
+format is used.
 
 If the auto-detection fails, you can set the format manually using
 the 'f' key.
@@ -75,18 +76,11 @@ only uses the lower 10 bit for sector chaining and the upper 6 bit
 to store the file number. These upper 6 bit have to be masked out in
 DOS 2.x format.
 
-Unfortunately, this results in a slight incompatibility with 1040
-sector SD disks in MyDOS format: since the upper 6 bit of sector
-chaining information are masked out, only sectors 1-1023 can be
-accessed from MyPicoDos. To avoid problems, don't fill up 1040
-sector disks in MyDOS format 'til the last sector or manually
-set the format to SD/MyDOS.
-
 
 4. Compiling the sources
 
 First of all, you don't need to compile MyPicoDos yourself, you
-may simply use the provided MYPDOS.COM and mypdos.atr files.
+may simply use the provided MYPDOS.COM, myinit.atr and mypdos.atr files.
 
 The source files in the src subdirectory (mypdos.src, myinit.src,
 and mypdosatr.src are in Atasm format. Atasm is a MAC/65 compatible
@@ -115,6 +109,10 @@ The file 'mypdosatr.src' actually is just a workaround since
 Atasm currently does not support setting the output file on the
 command line. All it does is defining MYPDOSATR to 1 and including
 the file mypdos.src.
+
+If you want to create the 'myinit.atr' file, create a directory
+called 'initdisk', copy the DOS.SYS and DUP.SYS files of MyDos
+into it, and type 'make myinit.atr'.
 
 Sorry, the source code does not contain many comments. When I wrote
 the first versions of MyPicoDos on my Atari 800XL using ATMAS II

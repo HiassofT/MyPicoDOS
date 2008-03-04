@@ -16,7 +16,7 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-MYPDLEN	= 3844
+MYPDLEN	= 3858
 MFILLEN	= MYPDLEN-$180
 
 MYPDADR	= $6000
@@ -194,7 +194,7 @@ GETKEY	LDA $E425
 
 ;	       1234567890123456789012345678901234567890
 TITEL	.BYTE 125
-	.BYTE "          MyPicoDos Init V3.0"
+	.BYTE "          MyPicoDos Init V3.1"
 	.BYTE 155
 	.BYTE "         (c) HiassofT 1992-2003"
 	.BYTE 155,155
@@ -203,7 +203,7 @@ TITEL	.BYTE 125
 	.BYTE "  for SD & DD disks, 720-65535 sectors"
 	.BYTE 155,155,155
 	.BYTE "this program MUST be "
-	.BYTE "loaded from MyDos,"
+	.BYTE "loaded from DOS,"
 	.BYTE 155
 	.BYTE "because it creates a "
 	.BYTE "short system-file"

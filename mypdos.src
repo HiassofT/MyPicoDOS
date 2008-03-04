@@ -1,4 +1,4 @@
-;  MyPicoDos 3.0
+;  MyPicoDos 3.1
 ;
 ;  Copyright (C) 1992-2003 Matthias Reichl <hias@horus.com>
 ;
@@ -30,15 +30,16 @@ CLRMEM	= BUF
 
 BASE	= $3000
 
-SCREEN	= BASE
+FFLAG	= BASE
+STSECLO	= BASE+$80
+STSECHI	= BASE+$100
 
-FFLAG	= BASE+$400
-STSECLO	= BASE+$440
-STSECHI	= BASE+$480
+SECBUF	= BASE+$200
+STACK	= BASE+$300
 
-SECBUF	= BASE+$500
-STACK	= BASE+$600
+SCREEN	= BASE+$400
 
+DATAEND = BASE+$1000
 
 STACKPTR	= $E0
 
@@ -49,13 +50,14 @@ XPOS	= $E5
 YPOS	= $E6
 
 TEMP	= $E7
-SADR	= $E8
+SADR	= $E8 ; ,$E9
 
 
 SCRY	= $EA
 REMAIN	= $EB
+MAXFILE = $EC
 
-TEMPV	= $EC ; ,ED
+TEMPV	= $ED ; ,EE
 
 BYTES	= $43
 ADD	= $44 ; ,45
@@ -111,8 +113,8 @@ NO
 	.ENDM
 
 
-DBUF	= 772
-DSEC	= 778
+DBUF	= $304
+DSEC	= $30A
 ADR	= $45	; Temporaerer Vektor
 
 	.IF .DEF MYPDOSATR
@@ -217,35 +219,53 @@ NLR1	DEY
 
 	.ENDIF
 
-; setze Maske fuer Sectornummer und Anzahl der
-; setze Maske fuer Sectornummer und Anzahl der
-; Bytes pro Sektor anhand des Ergebnisses des
-; "get percom" Kommandos. Schlaegt das Kommando
-; fehl, wird single density und DOS 2.5 Format
-; angenommen (Filenummer muss ausmaskiert werden)
-; $308/309 werden auf die jeweilige Sektor-länge
-; initialisiert
+; setze Maske fuer Sectornummer und Anzahl der Bytes pro Sektor
+; sowie die SIO-Laenge $308/309
 
-SETDENS	LDA #<PERCOM
+SETDENS	LDA #3
+	STA SECMASK
+
+; read sector 4 with length=0
+; this is needed by the XF551 to check the disk density
+
+	LDA #<SECBUF
 	STA DBUF
-	LDA #>PERCOM
+	LDA #>SECBUF
 	STA DBUF+1
-	LDA #12
-	STA $308
-	LDA #$4E
+
+	LDA #$52
 	STA $302
 	LDA #0
-	STA SECBYTE
-	STA SECMASK
+	STA $308
 	STA $309
+	STA DSEC+1
+	LDA #4
+	STA DSEC
 	LDA #7
 	STA $306
 	LDA #$40
 	STA $303
 	JSR $E459
-	BPL PEROK
-	LDA #3
-	STA SECMASK
+
+; wait a bit for the sector data bytes to arrive
+
+	LDA 20
+	CLC
+	ADC #20
+W20	CMP 20
+	BNE W20
+
+; check the disk status
+
+	LDA #$53
+	STA $302
+	LDA #4
+	STA $308
+	LDA #$40
+	STA $303
+	JSR $E459
+	BPL STATOK
+
 SNGLDS	LDA #0
 	STA $309
 	LDA #128
@@ -254,45 +274,43 @@ SNGLDS	LDA #0
 	STA SECBYTE
 	RTS
 
-PEROK	LDX PERCOM
-	BNE PLP1
-	INX ; tracks = 0 means harddisk
-PLP1	CLC
-	LDA SECMASK
-	ADC PERCOM+3
-	STA SECMASK
-	LDA SECBYTE
-	ADC PERCOM+2
-	STA SECBYTE
-	DEX
-	BNE PLP1
-	LDA PERCOM+4
-	BEQ PERSS
-	ASL SECMASK	; double sided
-	ROL SECBYTE
-PERSS	LDA SECBYTE
-	CMP #4
-	BCC PERSML	; less than 1024 sectors -> small
-	BNE PERBIG	; more than 1280 -> big
-	LDA SECMASK
-	CMP #$10
-	BNE PERBIG	; 1040 sectors?
-	LDA PERCOM+6
-	BNE PERBIG	; 1040/SD -> small
-PERSML	LDA #3
-	STA SECMASK
-	BNE PERDNS
-PERBIG	LDA #$FF
-	STA SECMASK
+STATOK	LDA SECBUF
+	AND #$20
+	BNE DBLDENS
+	JSR SNGLDS
+	BNE TSTSIZE
 
-PERDNS	LDA PERCOM+6
-	BEQ SNGLDS
+DBLDENS	LDA #1
 	STA $309
-	LDA PERCOM+7
+	LDA #0
 	STA $308
 	LDA #253
 	STA SECBYTE
-	RTS
+
+; now read the VTOC and check if the first byte is larger than 2
+; if yes, the sector link is 16 bits.
+
+TSTSIZE	LDA #$52
+	STA $302
+	LDA #$68
+	STA DSEC
+	LDA #1
+	STA DSEC+1
+	LDA #$40
+	STA $303
+	JSR $E459
+	BMI ENDDENS
+
+	LDA SECBUF
+	CMP #3
+	BCC ENDDENS
+
+	LDA #$FF
+	STA SECMASK
+ENDDENS	RTS
+
+; the page 7 will be used as a sector buffer by the loader,
+; so make sure the code starts at least at $800
 
 	.IF (*<PICOSTART+$100)
 	.DC (PICOSTART+$100-*) 0
@@ -610,15 +628,15 @@ LOAD2	LDA #1
 	JMP LOADBAS
 
 BINOK	GET
-	STA $304	; Start-Adr. LO
+	STA DBUF	; Start-Adr. LO
 	GET
-	STA $305	; Start-Adr. HI
+	STA DBUF+1	; Start-Adr. HI
 	CLC
-	LDA $304	; Start-Adr + 6 =
+	LDA DBUF	; Start-Adr + 6 =
 ;		* Init-Adresse
 	ADC #6
 	STA 0
-	LDA $305
+	LDA DBUF+1
 	ADC #0
 	STA 1
 
@@ -652,9 +670,9 @@ LO2LOP	LDA #$40
 LBIN	JSR $E459
 	BMI END4
 
-	LDA $304
+	LDA DBUF
 	STA ADR
-	LDA $305
+	LDA DBUF+1
 	STA ADR+1
 
 L2BYTE	LDY #253
@@ -670,11 +688,11 @@ L2MASK	AND #$FF
 
 	INY
 	CLC
-	LDA $304
+	LDA DBUF
 	ADC (ADR),Y
-	STA $304
+	STA DBUF
 	BCC LO2LOP
-	INC $305
+	INC DBUF+1
 	BNE LO2LOP
 
 END4	; JSR JJ1
@@ -703,10 +721,10 @@ GETSIO	LDA #$31
 	LDA #$40
 	STA $303
 	LDA #8
-	STA $304
+	STA DBUF
 	STA $306
 	LDA #3
-	STA $305
+	STA DBUF+1
 	LDA #2
 	STA $308
 	LDA #0
@@ -722,11 +740,11 @@ GETSIO	LDA #$31
 
 	INC $302
 	LDA #<SIOADR
-	STA $304
-	STA $30A
+	STA DBUF
+	STA DSEC
 	LDA #>SIOADR
-	STA $305
-	STA $30B
+	STA DBUF+1
+	STA DSEC+1
 	LDA #$40
 	STA $303
 	JSR $E459
@@ -738,8 +756,6 @@ GETSIO	LDA #$31
 	STA NE459+2
 
 NOSIO	RTS
-
-PERCOM	.DC 12 0
 
 MENU	JSR GETSIO
 
@@ -1251,7 +1267,7 @@ FORDM	.BYTE 66
 	.BYTE 86
 	.SBYTE "         "
 
-TITLE	.SBYTE "  MyPicoDos 3.0 (c) "
+TITLE	.SBYTE "  MyPicoDos 3.1 (c) "
 	.SBYTE "HiassofT 1992-2003  "
 
 	.SBYTE "                 "
@@ -1277,24 +1293,37 @@ READSEC LDA #$52
 	JMP NE459
 
 READDIR	LDA DIRSEC
-	STA $30A
+	STA DSEC
 	LDA DIRSEC+1
-	STA $30B
+	STA DSEC+1
 	JSR CLS
 	LDA #0
 	STA FILES
 	STA MAXX
 	STA MAXY
 
-	STW $304,SECBUF
+	STW DBUF,SECBUF
 	STW SADR,SCREEN
 
 	LDA #8
 	STA REMAIN
+	LDA #$80
+	STA MAXFILE
 
 RDDIRLP	JSR READSEC
 	BMI DIRERR
-	LDX #0
+
+	LDA REMAIN
+	CMP #8
+	BNE NOBIG
+	LDA $309
+	BEQ NOBIG
+	LDA SECBUF+128
+	BEQ NOBIG
+	LDA #0
+	STA MAXFILE
+
+NOBIG	LDX #0
 RDFILLP	LDA SECBUF,X
 	CMP #0
 	BEQ ENDRDIR
@@ -1327,14 +1356,15 @@ NOFND	TXA
 	CLC
 	ADC #$10
 	TAX
-	BPL RDFILLP
+	CMP MAXFILE
+	BNE RDFILLP
 
 	DEC REMAIN
 	BEQ ENDRDIR
 
-	INC $30A
+	INC DSEC
 	BNE RDDIRLP
-	INC $30B
+	INC DSEC+1
 	JMP RDDIRLP
 
 ENDRDIR	JSR CORRECT
@@ -1470,7 +1500,7 @@ CLRMEM2	LDA #<ENDE3
 	STA 1
 	LDA #0
 	TAY
-	LDX #($40-(>ENDE3))
+	LDX #((>DATAEND)-(>ENDE3))
 MEMCLR	STA (0),Y
 	DEY
 	BNE MEMCLR
