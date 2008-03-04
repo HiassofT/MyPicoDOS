@@ -43,7 +43,7 @@ Basically, there are two different ways to use MyPicoDos:
 
 - Use the supplied mypdos.atr (standard version) or mypdoshs.atr
   (highspeed version) files with your emulator or AtariSIO/SIO2PC/...
-  program. After booting these ATR-files, MyPicoDos will
+  program. After booting one of these ATR-files, MyPicoDos will
   automatically switch to D2:. So you may simply load the mypdos
   ATR-image into D1: and another ATR image with your files into D2:
   and don't need to create a MyPicoDos boot disk by yourself.
@@ -155,6 +155,13 @@ sort the long filenames alphabetically.
 
 At last, you are asked for a disk/directory title, which
 will appear right above the filename listing in MyPicoDos.
+
+Please note: If you want to edit the long names for a BiboDos QD
+disk you have to start the MyPicoDos initializer from BiboDos.
+The initializer program uses the standard DOS routines to read the
+directory of a disk, and all other DOSses except BiboDos only
+handle 8 entries per directory sector (compared to 16 entries
+in BiboDos QD format).
 
 4.2 Creating the PICONAME.TXT file by hand
 
@@ -271,10 +278,10 @@ $0800-$0858 contains the basic disk IO code to read bytes (used by
 $0859-$0934 is either used by the COM or the BAS loader. The filetype
             is determined by mypdos, and the appropriate loader code
             is then copied there. Actually, the BAS loader only
-            occupies memory up to $08A4.
+            occupies memory up to $08AC.
 $0935-$0B49 contains the optional highspeed SIO code.
 
-$1000-$2300 (approx.) is used by mypdos
+$1000-$2400 (approx.) is used by mypdos
 
 $3000-$6500 is the data area of mypdos (see mypdos.src for details)
 
@@ -323,35 +330,49 @@ If you've got any questions or if you have problems with MyPicoDos,
 feel free to contact me by email!
 
 
-7. Changelog
+7. Credits
+
+Thanks go to:
+
+ABBUC for the highspeed SIO code.
+
+Andreas Magenheimer, Michael Tietz and many others for testing,
+bug reports and sending me hints!
+
+
+8. Changelog
 
 version 3.0:
-- initial GPL release
-- support for 128-bytes-per-sector disks
-- support for disks smaller than 1024 sectors
+- Initial GPL release.
+- Support for 128-bytes-per-sector disks.
+- Support for disks smaller than 1024 sectors.
 
 version 3.1:
-- rewrote density-check code to fix XF551 density recognition bug
-- fixed manual density selection code
-- added drive number selection to MyPicoDos initializer program
-- fixed old-OS bug in initializer program
-- added support for "large" Bibo-Dos directories (128 Files)
-- fixed DOS2.5-format file display bug
+- Rewrote density-check code to fix XF551 density recognition bug.
+- Fixed manual density selection code.
+- Added drive number selection to MyPicoDos initializer program.
+- Fixed old-OS bug in initializer program.
+- Added support for "large" Bibo-Dos directories (128 Files).
+- Fixed DOS2.5-format file display bug.
 
 version 4.0:
-- Added support for long filenames in PICONAME.TXT
+- Added support for long filenames in PICONAME.TXT.
 - Many changes in the internal structure to lower the
-  memory usage of the BAS and COM loader
+  memory usage of the BAS and COM loader.
 - Created separate "highspeed" and "standard SIO" versions.
   The highspeed version now contains a built-in Happy/Speedy/
   AtariSIO/SIO2PC/APE/... - compatible highspeed-SIO routine
 - Added long filename editor to init-program with support to
   read existing long names and with an option to alphabetically
-  sort the long filenames
+  sort the long filenames,
 - "PICODOS.SYS" and "PICONAME.TXT" are excluded from the
-  directory listings
+  directory listings.
 - Internal basic can be automatically switched off when loading
-  COM/EXE/BIN files, and switched on when loading BAS files
+  COM/EXE/BIN files, and switched on when loading BAS files.
 - Added "smart" highspeed mode: the built in highspeed code is
   automatically disabled in case a drive doesn't support
   highspeed SIO.
+- Used memory is now fully cleared before loading a file.
+- Fixed system crash with some Basic programs.
+- Fixed XF551 boot problems with QD disks.
+

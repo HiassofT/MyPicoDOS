@@ -154,15 +154,25 @@ REST	LDA #1
 	LDA #>(PICOSTART+384)
 	STA DBUF+1
 
-	LDA RESTSEC
-	STA DSEC ; Sector=365
-	LDA RESTSEC+1
-	STA DSEC+1
-
 	LDA RESTLEN
 	STA $308
 	LDA RESTLEN+1
 	STA $309
+
+; read sector 4 so that the XF551 recognizes the disk density
+
+	LDA #4
+	STA DSEC
+	LDA #0
+	STA DSEC+1
+	LDA #$40
+	STA $303
+	JSR $E459
+
+	LDA RESTSEC
+	STA DSEC
+	LDA RESTSEC+1
+	STA DSEC+1
 
 LDREST	LDA #$40
 	STA $303
@@ -1447,8 +1457,8 @@ MEMCLR	STA (0),Y
 	DEY
 	BNE MEMCLR
 	INC 1
-	LDA 1
-	CMP #>CLREND
+	LDX 1
+	CPX #>CLREND
 	BNE MEMCLR
 	RTS
 
@@ -1513,12 +1523,14 @@ BASOFF	LDA $D20F
 	LDA $BFFD
 	BNE EBASOFF
 
-	LDA #$A0
+; clear display list / screen and RAM under basic ROM
+
+	LDA #$9C
 	STA TEMPV+1
 	LDA #0
 	STA TEMPV
 	TAY
-	LDX #$20
+	LDX #$24
 CLLP	STA (TEMPV),Y
 	INY
 	BNE CLLP
@@ -1677,7 +1689,7 @@ BINLOAD	JSR CLRMEM
 BINLOOP	LDA #$40
 	STA $303
 BINSIO	JSR $E459
-	BMI BINEND
+	BMI BINLOOP
 
 	LDA DBUF
 	STA ADR
@@ -1746,6 +1758,12 @@ BASSIO1	LDA #<BASLEND
 
 LDBAS2	LDA #0
 	STA 580
+
+; set tab width to 10 - otherwise some basic
+; programs will just crash!
+
+	LDA #10
+	STA $C9
 
 	LDA #<ENDX
 	STA 738
