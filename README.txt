@@ -83,9 +83,9 @@ First of all, you don't need to compile MyPicoDos yourself, you
 may simply use the provided MYPDOS.COM, myinit.atr and mypdos.atr files.
 
 The source files in the src subdirectory (mypdos.src, myinit.src,
-and mypdosatr.src are in Atasm format. Atasm is a MAC/65 compatible
-cross-assembler, so it might be possible to change the source code
-for use on a real Atari.
+getdens.src, and mypdosatr.src are in Atasm format. Atasm is a
+MAC/65 compatible cross-assembler, so it might be possible to change
+the source code for use on a real Atari.
 
 The supplied Makefile works with unix/linux systems, if you are using
 a different platform you might have to change it.
@@ -110,9 +110,8 @@ Atasm currently does not support setting the output file on the
 command line. All it does is defining MYPDOSATR to 1 and including
 the file mypdos.src.
 
-If you want to create the 'myinit.atr' file, create a directory
-called 'initdisk', copy the DOS.SYS and DUP.SYS files of MyDos
-into it, and type 'make myinit.atr'.
+The file 'getdens.src' contains the density-detection source code
+and is used (included) by both mypdos.src and myinit.src.
 
 Sorry, the source code does not contain many comments. When I wrote
 the first versions of MyPicoDos on my Atari 800XL using ATMAS II
@@ -122,6 +121,19 @@ much space left for comments...
 If you've got any questions or if you have problems with MyPicoDos,
 feel free to contact me by email!
 
-so long,
 
-Hias
+5. Changelog
+
+version 3.0:
+- initial GPL release
+- support for 128-bytes-per-sector disks
+- support for disks smaller than 1024 sectors
+
+version 3.1:
+- rewrote density-check code to fix XF551 density recognition bug
+- fixed manual density selection code
+- added drive number selection to MyPicoDos initializer program
+- fixed old-OS bug in initializer program
+- added support for "large" Bibo-Dos directories (128 Files)
+- fixed DOS2.5-format file display bug
+

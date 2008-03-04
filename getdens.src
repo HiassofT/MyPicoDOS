@@ -1,0 +1,91 @@
+; set mask for sector link (SECMASK), number of data bytes per
+; sector (SECBYTE) and SIO sector length ($308/309)
+; this subroutine requires a 256 bytes buffer named "SECBUF"
+; and the address of the SIO routine in the label "SIOVEC"
+
+GETDENS	LDA #3
+	STA SECMASK
+
+; read sector 4 with length=0
+; this is needed by the XF551 to check the disk density
+
+	LDA #<SECBUF
+	STA DBUF
+	LDA #>SECBUF
+	STA DBUF+1
+
+	LDA #$52
+	STA $302
+	LDA #0
+	STA $308
+	STA $309
+	STA DSEC+1
+	LDA #4
+	STA DSEC
+	LDA #7
+	STA $306
+	LDA #$00
+	STA $303
+	JSR $E459
+
+; wait a bit for the sector data bytes to arrive
+
+	LDA 20
+	CLC
+	ADC #20
+W20	CMP 20
+	BNE W20
+
+; check the disk status
+
+	LDA #$53
+	STA $302
+	LDA #4
+	STA $308
+	LDA #$40
+	STA $303
+	JSR $E459
+	BPL STATOK
+
+SNGLDS	LDA #0
+	STA $309
+	LDA #128
+	STA $308
+	LDA #125
+	STA SECBYTE
+	RTS
+
+STATOK	LDA SECBUF
+	AND #$20
+	BNE DBLDENS
+	JSR SNGLDS
+	BNE TSTSIZE
+
+DBLDENS	LDA #1
+	STA $309
+	LDA #0
+	STA $308
+	LDA #253
+	STA SECBYTE
+
+; now read the VTOC and check if the first byte is larger than 2
+; if yes, the sector link is 16 bits.
+
+TSTSIZE	LDA #$52
+	STA $302
+	LDA #$68
+	STA DSEC
+	LDA #1
+	STA DSEC+1
+	LDA #$40
+	STA $303
+	JSR SIOVEC
+	BMI ENDDENS
+
+	LDA SECBUF
+	CMP #3
+	BCC ENDDENS
+
+	LDA #$FF
+	STA SECMASK
+ENDDENS	RTS
