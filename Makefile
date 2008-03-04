@@ -43,6 +43,10 @@ mypdoshs.atr: mypdos.src $(MYPDOSINC) \
 	highspeedcode.src highspeed.bin
 	$(ATASM) $(ASMFLAGS) -r -omypdoshs.atr -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 mypdos.src
 
+mypdos-rom.bin: mypdos.src $(MYPDOSINC) \
+	highspeedcode.src highspeed.bin
+	$(ATASM) $(ASMFLAGS) -r -omypdos-rom.bin -dMYPDOSROM=1 -dHIGHSPEED=1 mypdos.src
+
 MYPDOS.COM: myinit.src getdens.src longname.src qsort.src cio.inc \
 	mypdos.bin mypdoshs.bin
 	$(ATASM) $(ASMFLAGS) -oMYPDOS.COM myinit.src

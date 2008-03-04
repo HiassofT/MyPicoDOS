@@ -1,6 +1,6 @@
-MyPicoDos 4.02
+MyPicoDos 4.03
 
-Copyright (C) 1992-2004 by Matthias Reichl <hias@horus.com>
+Copyright (C) 1992-2005 by Matthias Reichl <hias@horus.com>
 
 This program is proteced under the terms of the GNU General Public
 License, version 2. Please read LICENSE for further details.
@@ -25,6 +25,8 @@ the following features:
 - On XL/XE-type computers MyPicoDos can automatically switch basic on
   when loading a basic program, and switch basic off when
   loading a COM/EXE/BIN file.
+- Joystick support: either use arrow keys or a joystick to select
+  the file.
 
 
 2. Using MyPicoDos
@@ -52,6 +54,9 @@ At the MyPicoDos main screen just use the cursor keys (with or
 without control) to select the file you want and press "Return" to
 load it.
 
+You can also use a joystick (either plugged into port 1 or 2)
+to move the cursor and press fire to select a file or directory.
+
 When you load a file, MyPicoDos will automatically try to
 enable/disable the built-in Basic on XL/XE computers, depending on
 the filetype. You may disable this feature by loading a file with
@@ -72,7 +77,6 @@ details).
 
 In the highspeed version of MyPicoDos you can use the "H" key
 to disable the built-in highspeed SIO code.
-
 
 3. Differences between standard and highspeed versions
 
@@ -390,4 +394,8 @@ version 4.01:
 
 version 4.02:
 - Fixed corrupted screen in standard SIO version.
+
+version 4.03:
+- Added joystick support.
+- Bugfix: Fixed KMK/JZ IDE interface problems in initializer program.
 

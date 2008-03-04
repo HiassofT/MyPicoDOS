@@ -1,6 +1,6 @@
-;  MyPicoDos init V4.02 - initializer program
+;  MyPicoDos init V4.03 - initializer program
 ;
-;  Copyright (C) 1992-2004 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 1992-2005 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ SIOVEC	= $E459
 	LDA #>(%3)
 	STA $305
 	LDA #7
-	STA $307
+	STA $306
 	LDA #128
 	STA $308
 	LDA #0
@@ -217,7 +217,8 @@ INITHS	JSR INPDRV
 	MYINIT MYHS, MYHSLEN
 	JMP SUCCESS
 
-OPENERR	PRINT 0, ERROPEN
+OPENERR	CLOSE 1
+	PRINT 0, ERROPEN
 	JSR GETKEY
 	JMP MAINLOOP
 
@@ -226,7 +227,24 @@ WRIERR	CLOSE 1
 	JSR GETKEY
 	JMP MAINLOOP
 
-WBERR	PRINT 0, ERRWB
+WBERR	CLC
+	LDA $30A
+	ADC #'0
+	STA ERRSEC
+	LDA 771
+	LSR
+	LSR
+	LSR
+	LSR
+	TAX
+	LDA HEXTAB,X
+	STA ERRSTAT
+	LDA 771
+	AND #$0F
+	TAX
+	LDA HEXTAB,X
+	STA ERRSTAT+1
+	PRINT 0, ERRWB
 	JSR GETKEY
 	JMP MAINLOOP
 
@@ -786,8 +804,8 @@ PNAMNAM	.BYTE "PICONAMETXT"
 ;	       1234567890123456789012345678901234567890
 ;              0987654321098765432112345678901234567890
 TITEL	.BYTE 125
-	.BYTE "          MyPicoDos Init V4.02",155
-	.BYTE "         (c) HiassofT 1992-2004",155
+	.BYTE "          MyPicoDos Init V4.03",155
+	.BYTE "         (c) HiassofT 1992-2005",155
 	.BYTE 155
 	.BYTE "      COM / EXE / BIN / BAS loader",155
 	.BYTE "  for SD & DD disks, 720-65535 sectors",155
@@ -834,7 +852,9 @@ ERRWRIT .BYTE "error writing PICODOS.SYS",253,155
 ERRPNC	.BYTE "error creating PICONAME.TXT",253,155
 ERRPNW	.BYTE "error writing PICONAME.TXT",253,155
 
-ERRWB	.BYTE "error writing boot sectors",253,155
+ERRWB	.BYTE "error writing sector "
+ERRSEC	.BYTE "1 (stat=$"
+ERRSTAT	.BYTE "00)",253,155
 
 SUCCTXT	.BYTE 155,"operation successfully completed!", 155
 SUCCLEN	= * - SUCCTXT
@@ -881,6 +901,8 @@ PATH	.DC 128 0
 
 DIRNAM	.DC 128 0
 INPBUF	.DC 128 0
+
+HEXTAB	.BYTE "0123456789ABCDEF"
 
 MYSLOW	.incbin "mypdos.bin"
 MYSLOWL	= * - MYSLOW

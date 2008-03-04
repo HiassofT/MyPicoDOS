@@ -1,6 +1,6 @@
-;  MyPicoDos 4.02 - main menu and loader routine
+;  MyPicoDos 4.03 - main menu and loader routine
 ;
-;  Copyright (C) 1992-2004 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 1992-2005 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -117,6 +117,7 @@ TEMP	= $E8
 	.WORD XRTS
 
 	.ELSE
+	.IF .NOT .DEF MYPDOSROM
 
 ;************************************
 ; boot header 2-stage boot
@@ -133,10 +134,11 @@ RESTBYT	.BYTE 125
 RESTMSK	.BYTE 3
 RESTLEN	.WORD 128
 
-REST	LDA #1
-	STA $301
-	LDA #$31
+REST	LDA #$31
 	STA $300
+
+	LDA #1
+	STA $301
 	
 	LDA #$52
 	STA $302
@@ -196,6 +198,7 @@ NLR1	DEY
 	BNE LDREST
 
 	.ENDIF
+	.ENDIF
 	JMP MENU
 XRTS	RTS
 
@@ -234,11 +237,11 @@ SLMS	.WORD SCREEN
 
 TITLE	= *
 	.IF .DEF HIGHSPEED
-	.SBYTE "MyPicoDos 4.02HS (c)"
-	.SBYTE " HiassofT 1992-2004 "
+	.SBYTE "MyPicoDos 4.03HS (c)"
+	.SBYTE " HiassofT 1992-2005 "
 	.ELSE
-	.SBYTE " MyPicoDos 4.02 (c) "
-	.SBYTE "HiassofT 1992-2004  "
+	.SBYTE " MyPicoDos 4.03 (c) "
+	.SBYTE "HiassofT 1992-2005  "
 	.ENDIF
 
 	.SBYTE "                 "
@@ -421,6 +424,8 @@ MENU 	= *
 	LDA #DEFDRIVE
 	STA DRIVENO
 	STA $301
+	LDA #$31
+	STA $300
 
 NEWDISK	STW DIRSEC,ORIGDIR
 	LDA #0
@@ -1421,11 +1426,96 @@ CLSLP2	STA DSKNAM,Y
 	BPL CLSLP2
 	RTS
 
-GETKEY	LDA $E425
+GETJOY	LDA 632
+	AND 633
+	TAX
+	LDA 644
+	AND 645
+	TAY
+	RTS
+
+GETKEY	LDA 20
+	STA OLD20
+	JSR GETJOY
+	STX OLDJOY
+	STY OLDTRIG
+	CPX #15
+	BNE JOYP1
+	CPY #1
+	BNE JOYP1
+	
+	LDA #0
+	STA JOYSTAT
+	BEQ GETKEY0
+
+JOYP1	LDA JOYSTAT
+	CMP #2
+	BEQ GETKEY0
+	INC JOYSTAT
+
+GETKEY0	LDX JOYSTAT
+	LDA JOYWAIT,X
+	STA WTJOY
+
+GETKEY1	LDA 764
+	CMP #255
+	BNE DOGETK
+	
+	JSR GETJOY
+	CPX OLDJOY
+	BNE JOYCH1
+	CPY OLDTRIG
+	BEQ JOYCHK
+
+JOYCH1	STX OLDJOY
+	STY OLDTRIG
+	LDA #0
+	STA JOYSTAT
+	STA WTJOY
+
+JOYCHK	LDA WTJOY
+	BEQ GETSTK
+	LDA 20
+	CMP OLD20
+	BEQ GETKEY1
+	STA OLD20
+	DEC WTJOY
+	BNE GETKEY1
+
+GETSTK	CPX #15
+	BNE GKST
+	CPY #1
+	BEQ GETKEY1
+
+GKFIR	LDA #12
+DOGETK	STA 764
+	LDA $E425
 	PHA
 	LDA $E424
 	PHA
 	RTS
+
+GKST	TXA
+	CMP #14
+	BEQ DOGETK ; up
+	CMP #13
+	BNE GKST1
+	LDA #15	   ; down
+	BNE DOGETK
+GKST1	CMP #11
+	BNE GKST2
+	LDA #6     ; left
+	BNE DOGETK
+GKST2	CMP #7     ; right
+	BEQ DOGETK
+	BNE GETKEY1
+
+OLD20	.BYTE 0
+OLDJOY	.BYTE 0
+OLDTRIG	.BYTE 0
+WTJOY	.BYTE 0
+JOYSTAT	.BYTE 0
+JOYWAIT	.BYTE 0, 25, 4
 
 PRTFOR	LDA #0
 	STA PRTFSEL
