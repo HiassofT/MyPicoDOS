@@ -42,15 +42,15 @@ RREAD	STY YREG
 	LDY SECBYTE
 	LDA BUF,Y
 	AND SECMASK
-	STA DSEC+1	; Sektor-Nr. HI
+	STA DSEC+1
 	LDA BUF+1,Y
-	STA DSEC	; Sektor-Nr. LO
+	STA DSEC
 	ORA DSEC+1
 	BEQ ?EOF
-?RAGAIN	LDA #$40	; Direction = INput
+?RAGAIN	LDA #$40
 	STA $303
 
-	JSR NE459 ; und lesen
+	JSR NE459
 	BMI ?RAGAIN
 
 	LDY SECBYTE
@@ -64,7 +64,9 @@ RREAD	STY YREG
 ?EOF	PLA
 	PLA
 
-	JSR INADJ ; Starte Programm
+; start program
+
+	JSR INADJ
 	JSR RUADJ
 	JMP (10)
 

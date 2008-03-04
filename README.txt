@@ -17,14 +17,13 @@ the following features:
 - Drives D1: to D8: can be accessed.
 - It supports MyDOS style subdirectories.
 - It supports Bibo-Dos style long directories (128 files per disk).
-- Since version 3.1 it supports XF551 format detection.
+- It supports XF551 format detection.
 - It is available in a standard SIO version and in a
-  highspeed SIO version which comes with built-in highspeed
+  highspeed version which comes with built-in highspeed
   SIO code (compatible with Happy/Speedy/AtariSIO/SIO2PC/APE/...).
-- It supports the display of long filenames and a
-  disk/directory title.
-- On XL/XE-type computers MyPicoDos automatically switches basic on
-  when loading a basic program, and it switches basic off when
+- It supports displaying long filenames and a disk/directory title.
+- On XL/XE-type computers MyPicoDos can automatically switch basic on
+  when loading a basic program, and switch basic off when
   loading a COM/EXE/BIN file.
 
 
@@ -38,41 +37,71 @@ Basically, there are two different ways to use MyPicoDos:
   DOS functions to create a file named PICODOS.SYS on the disk!
   In the initializer you can choose if you want to write the
   standard or the highspeed version to disk.
-  The image 'myinit.atr' contains both MyDos and MYPDOS.COM, so
-  you just have to load it into AtariSIO/APE/SIO2PC/... or
-  into your favourite Atari emulator.
+  The image "myinit.atr" contains both MyDOS and MYPDOS.COM, so
+  just load it into AtariSIO/APE/SIO2PC/... or into your favourite
+  Atari emulator.
 
 - Use the supplied mypdos.atr (standard version) or mypdoshs.atr
   (highspeed version) files with your emulator or AtariSIO/SIO2PC/...
   program. After booting these ATR-files, MyPicoDos will
-  automatically switch to D2:. So you may simply load one of these
-  ATR-images into D1: and another ATR image with your files into D2:
+  automatically switch to D2:. So you may simply load the mypdos
+  ATR-image into D1: and another ATR image with your files into D2:
   and don't need to create a MyPicoDos boot disk by yourself.
+
+At the MyPicoDos main screen just use the cursor keys (with or
+without control) to select the file you want and press "Return" to
+load it.
+
+When you load a file, MyPicoDos will automatically try to
+enable/disable the built-in Basic on XL/XE computers, depending on
+the filetype. You may disable this feature by loading a file with
+"SHIFT-Return" instead of "Return".
+
+MyDOS subdirectories are marked with a ">" in front of it. Just
+press enter to open a selected directory. To leave a directory
+(and return to the parent directory) press "Escape".
+
+Use the keys "1" to "8" to switch to drive D1: to D8:.
+
+Use the "L" key to disable the long-filename display, eg when
+you'd like to see all files on a disk.
+
+In case the disk format recognition did not work correctly, you
+can use the "F" key to manually set the format (read below for
+details).
+
+In the highspeed version of MyPicoDos you can use the "H" key
+to disable the built-in highspeed SIO code.
 
 
 3. Differences between standard and highspeed versions
 
-The standard version does not include the highspeed SIO code and
-is therefore somewhat smaller than the highspeed version. Use this
-version if either none of your drives is highspeed-capable or if
-you intend to use MyPicoDos with an Atari emulator. The standard
-version will load a lot faster in emulators, because the
-"SIO-patch" of the emulator can be used.
+In general I'd recommend using the highspeed version of MyPicoDos.
+The only drawback of the highspeed version is that it is slightly
+larger and that it uses some additional 500 bytes of memory
+in case the SIO-routine is actually used).
 
-If your disk drives are highspeed capable, or if you use an Atari
-peripheral emulator like AtariSIO/SIO2PC/APE/... you may want to
-use the highspeed version - because it is faster :-)
+Before a file is loaded, MyPicoDos checks if the currently selected
+disk drive really supports highspeed SIO and otherwise disables the
+built-in SIO code. This means that the highspeed version needs
+exactly the same amount of memory as the standard version if your
+drive(s) aren't highspeed capable.
 
-One of the drawbacks of the highspeed version is that the highspeed
-SIO code needs some additional 500 bytes of memory. If you run into
-trouble (eg if your Atari crashes when you try to run a program),
-you can disable the highspeed SIO code from within MyPicoDos by
-pressing the 'H' key. In this case, you'll have exactly the same
-amount of free memory as with the standard MyPicoDos version!
+If your drives support highspeed SIO and run into troubles with
+the highspeed version (eg in case when a program needs memory between
+approx. $0940 and $0B50) you may try to manually disable the
+highspeed code with the "H" key.
 
 When loading BIN files, MyPicoDos relocates the loader to $80.
 So, if you disable the high speed SIO routine, all BIN files should
 load fine.
+
+The standard version does not include the highspeed SIO code and
+is therefore somewhat smaller than the highspeed version. You may
+use this version if none of your drives supports highspeed SIO
+or if you've got a disk full of programs which don't work with the
+highspeed version and you don't want to disable the highspeed
+code manually all the time.
 
 
 4. Long filenames and disk/directory titles support
@@ -92,6 +121,9 @@ file are shown. So, if you add another file, be sure to update
 the PICONAME.TXT file, otherwise it won't appear in the listing.
 On the other hand, you can simply hide files by omitting them
 in the PICONAME.TXT file.
+
+In case you'd like to see what's really on the disk, you can
+disable the long filename display with the "L" key.
 
 Please note: a maximum of 100 long filenames is supported per
 directory. This is no limitation for MyDos/DOS2.x format disks,
@@ -167,22 +199,29 @@ any key to return to the main initializer menu.
 MyPicoDos uses a XF551 compatible way to determine the disk density:
 
 First it reads sector 4 (this is required by the XF551), and then
-it uses the 'get status command' to see whether the disk is single
+it uses the "get status command" to see whether the disk is single
 or double density.
 
 Next, MyPicoDos reads the VTOC and checks if the first byte (this
-is the 'DOS version' byte) is 3 or greater. If yes, the MyDos format
+is the "DOS version" byte) is 3 or greater. If yes, the MyDos format
 will be used. If the first byte is 0, 1, or 2, standard DOS 2.x
 format is used.
 
 If the auto-detection fails, you can set the format manually using
-the 'F' key.
+the "F" key.
 
-The difference between DOS 2.x and MyDOS format is that MyDOS uses
+The difference between the DOS 2.x and MyDOS format is that MyDOS uses
 two bytes (16 bit) for storing the sector chaining, whereas DOS 2.x
 only uses the lower 10 bit for sector chaining and the upper 6 bit
 to store the file number. These upper 6 bit have to be masked out in
 DOS 2.x format.
+
+The density (SD or DD) used in the format code actually refers to
+the sector length (SD is 128 bytes per sector, DD is 256 bytes
+per sector) and should not be confused with the SD/ED/DD/QD/... disk
+formats. So a ED (1040 sector) DOS 2.5 disk will be displayed as
+"SD/DOS2.x" and a 16MB (65535 sectors with 256 bytes each) will
+be displayed as DD/MyDOS.
 
 
 6. Compiling the sources
@@ -201,7 +240,7 @@ a different platform you might have to change it.
 To avoid troubles with DOS/Windows based editors, all files have
 been saved in DOS format (CR LF at the end of each line).
 
-The file 'mypdos.src' is the main source file. It contains the
+The file "mypdos.src" is the main source file. It contains the
 menu-selector and the some of the loader code.
 
 The loader code is stored in three (actually six) separate files:
@@ -249,29 +288,29 @@ copy rread, comload, basload, and highspeed into place is limited
 to 768 bytes. So, you'll have to change it if your code gets
 bigger than that.
 
-The file 'myinit.src' is the initializer code which writes MyPicoDos
+The file "myinit.src" is the initializer code which writes MyPicoDos
 to disk and also contains the long filename editor. This file
-also includes 'mypdos.bin' and 'mypdoshs.bin', the standard
+also includes "mypdos.bin" and "mypdoshs.bin", the standard
 and highspeed versions of MyPicoDos.
 
-The file 'mypdosatr.src' actually is just a workaround since older
+The file "mypdosatr.src" actually is just a workaround since older
 versions of Atasm did not support setting the output file on the
 command line. All it does is defining MYPDOSATR to 1 and including
 the file mypdos.src.
 
-The file 'getdens.src' contains the density-detection source code
+The file "getdens.src" contains the density-detection source code
 and is used (included) by both mypdos.src and myinit.src.
 
-The file 'longname.src' contains some basic routines for handling
+The file "longname.src" contains some basic routines for handling
 long filenames, and is used by mypdos.src and myinit.src.
 
-'qsort.src' is an implementation of the quicksort algorithm
+"qsort.src" is an implementation of the quicksort algorithm
 and is used by myinit.src to sort the long filenames.
 
-'cio.inc' (used by mypdos.src and myinit.src) contains some macros
+"cio.inc" (used by mypdos.src and myinit.src) contains some macros
 for CIO calls.
 
-Finally, 'common.inc' contains the definition of the starting address
+Finally, "common.inc" contains the definition of the starting address
 plus some buffers used by mypdos.src, and is used by mypdos and
 the loader and highspeed codes.
 
@@ -305,13 +344,14 @@ version 4.0:
   memory usage of the BAS and COM loader
 - Created separate "highspeed" and "standard SIO" versions.
   The highspeed version now contains a built-in Happy/Speedy/
-  AtariSIO/SIO2PC/APE - compatible highspeed-SIO routine
+  AtariSIO/SIO2PC/APE/... - compatible highspeed-SIO routine
 - Added long filename editor to init-program with support to
   read existing long names and with an option to alphabetically
   sort the long filenames
 - "PICODOS.SYS" and "PICONAME.TXT" are excluded from the
-  directory listins
-- Internal basic will automatically be switched off when loading
-  COM/EXE/BIN files, and will be switched on when loading
-  BAS files
-
+  directory listings
+- Internal basic can be automatically switched off when loading
+  COM/EXE/BIN files, and switched on when loading BAS files
+- Added "smart" highspeed mode: the built in highspeed code is
+  automatically disabled in case a drive doesn't support
+  highspeed SIO.
