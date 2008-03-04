@@ -30,8 +30,11 @@
 ;
 ;  01/22/2004 Matthias Reichl
 ;    - changed all labels to local labels
-
-	SIOADR = COMLEND
+;
+;  10/03/2004 Matthias Reichl
+;    - code merge with AtariSIO
+;    - relocator table is generated if RELOCTABLE is defined
+;    - moved definition of SIOADR out of this file
 
 	POKMSK = $10
 
@@ -343,13 +346,15 @@
 
 SPEEDTB	.DC 8 0
 
-; the relocator table isn't needed by MyPicoDos
-;
-;RELOC	.WORD ?ABS01+1,?ABS02+1,?ABS03+1,?ABS04+1,?ABS05+1,?ABS06+1,?ABS07+1,?ABS08+1
-;	.WORD ?ABS09+1,?ABS10+1,?ABS11+1,?ABS12+1,?ABS13+1,?ABS14+1,?ABS15+1,?ABS16+1
-;	.WORD ?ABS17+1,?ABS18+1,?ABS19+1,?ABS20+1,?ABS21+1,?ABS22+1,?ABS23+1,?ABS24+1
-;	.WORD ?ABS25,?ABS26+1,?ABS27+1
-;
-;RLEN	.WORD *-RELOC
+	.IF .DEF RELOCTABLE
+
+RELOC	.WORD ?ABS01+1,?ABS02+1,?ABS03+1,?ABS04+1,?ABS05+1,?ABS06+1,?ABS07+1,?ABS08+1
+	.WORD ?ABS09+1,?ABS10+1,?ABS11+1,?ABS12+1,?ABS13+1,?ABS14+1,?ABS15+1,?ABS16+1
+	.WORD ?ABS17+1,?ABS18+1,?ABS19+1,?ABS20+1,?ABS21+1,?ABS22+1,?ABS23+1,?ABS24+1
+	.WORD ?ABS25,?ABS26+1,?ABS27+1
+
+RLEN	.WORD *-RELOC
+
+	.ENDIF
 
 	SIOEND = *

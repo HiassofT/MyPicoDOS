@@ -1,4 +1,4 @@
-;  MyPicoDos 4.0 - main menu and loader routine
+;  MyPicoDos 4.01 - main menu and loader routine
 ;
 ;  Copyright (C) 1992-2004 Matthias Reichl <hias@horus.com>
 ;
@@ -19,9 +19,7 @@
 	.include "common.inc"
 	.include "cio.inc"
 
-	.IF .DEF MYPDOSATR
-	DEFDRIVE=2
-	.ELSE
+	.IF .NOT .DEF DEFDRIVE
 	DEFDRIVE=1
 	.ENDIF
 
@@ -33,6 +31,7 @@
 	.include "comloadcode.src"
 	.include "basloadcode.src"
 	.IF .DEF HIGHSPEED
+	SIOADR = COMLEND
 	.include "highspeedcode.src"
 	.ENDIF
 
@@ -103,27 +102,24 @@ TEMP	= $E8
 	.WORD 128
 	.WORD 0,0,0,0,0
 
+	.ENDIF
+
+	* = PICOSTART
+
+	.IF .DEF MYPDOSBIN
+
 ;************************************
-; boot header
+; boot header complete file
 
 	.BYTE 0
 	.BYTE (PICOEND-PICOSTART+127)/128
 	.WORD PICOSTART
 	.WORD XRTS
 
-	LDA #1
-	STA 580
-	STA 9
-
 	.ELSE
 
 ;************************************
-; com file header
-
-	* = PICOSTART
-
-;************************************
-; boot header
+; boot header 2-stage boot
 
 	.BYTE 0	; Boot-Block Header
 	.BYTE 3	; 3 Sektoren	
@@ -138,9 +134,7 @@ RESTMSK	.BYTE 3
 RESTLEN	.WORD 128
 
 REST	LDA #1
-	STA 580
 	STA $301
-	STA 9
 	LDA #$31
 	STA $300
 	
@@ -226,40 +220,14 @@ USLEN	= * - USSIO
 ; number of screen lines
 LINES	= 12
 
-DLIST	.BYTE 112,112
-	.IF .DEF HIGHSPEED
-	.BYTE 48
-	.ELSE
-	.BYTE 112
-	.ENDIF
-	.BYTE $42
-	.WORD TITLE
-	.BYTE 112,48,2,32,2,$42
-	.WORD TLINE
-	.BYTE $42
-SLMS	.WORD SCREEN
-	.DC (LINES-1) 2
-	.BYTE $42
-	.WORD TLINE
-	.BYTE 32,$42
-	.WORD TSELECT
-	.BYTE 0,2,0,2,0,2
-
-	.IF .DEF HIGHSPEED
-	.BYTE 0,2
-	.ENDIF
-
-	.BYTE $41
-	.WORD DLIST
-
 ; MyPicoDos screen
 
 TITLE	= *
 	.IF .DEF HIGHSPEED
-	.SBYTE " MyPicoDos 4.0HS (c)"
+	.SBYTE "MyPicoDos 4.01HS (c)"
 	.SBYTE " HiassofT 1992-2004 "
 	.ELSE
-	.SBYTE "  MyPicoDos 4.0 (c) "
+	.SBYTE " MyPicoDos 4.01 (c) "
 	.SBYTE "HiassofT 1992-2004  "
 	.ENDIF
 
@@ -387,9 +355,44 @@ TOFF	.BYTE 66
 	.SBYTE +$80,"OFF"
 	.BYTE 86,0
 
+DLIST	.BYTE 112,112
+	.IF .DEF HIGHSPEED
+	.BYTE 48
+	.ELSE
+	.BYTE 112
+	.ENDIF
+	.BYTE $42
+	.WORD TITLE
+	.BYTE 112,48,2,32,2,$42
+	.WORD TLINE
+	.BYTE $42
+SLMS	.WORD SCREEN
+	.DC (LINES-1) 2
+	.BYTE $42
+	.WORD TLINE
+	.BYTE 32,$42
+	.WORD TSELECT
+	.BYTE 0,2,0,2,0,2
+
+	.IF .DEF HIGHSPEED
+	.BYTE 0,2
+	.ENDIF
+
+	.BYTE $41
+	.WORD DLIST
+
+
 ; start of main selection code
 
 MENU 	= *
+
+	LDA #1
+	STA 580
+	STA 9
+	LDA #$77
+	STA 10
+	LDA #$E4
+	STA 11
 
 	COP768 $0800, RREADB, RREADL
 
@@ -996,9 +999,11 @@ RDFILLP	LDA SECBUF,X
 	BEQ ENDRDIR
 
 	CMP #$10
+	BEQ FDIR1
+	CMP #$30
 	BNE NFNDDIR
 
-	JSR FNDDIR
+FDIR1	JSR FNDDIR
 	JMP NOFND
 
 DIRERR	JSR CLS
@@ -1548,11 +1553,13 @@ EBASOFF	RTS
 
 	.IF .DEF HIGHSPEED
 CHKHI	LDX DRIVENO
+;	LDA TURTAB-1,X
+;	BNE SPDHI
 	LDA SPEEDTB-1,X
 	BEQ SPDLO
 	CMP #$28
 	BEQ SPDLO
-	RTS
+SPDHI	RTS
 SPDLO	LDA #$E4
 	STA NE459+2
 	LDA #$59
@@ -1912,7 +1919,7 @@ PFTAB	.WORD FORASD, FORASM, FORADD, FORADM
 
 XTAB	.BYTE 1,14,27
 
-	.IF .DEF MYPDOSATR
+	.IF .DEF MYPDOSBIN
 
 	.IF (*&127)<>0
 	.DC (128-(*&127)) 0

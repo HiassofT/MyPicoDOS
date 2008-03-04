@@ -1,4 +1,4 @@
-MyPicoDos 4.0
+MyPicoDos 4.01
 
 Copyright (C) 1992-2004 by Matthias Reichl <hias@horus.com>
 
@@ -81,6 +81,11 @@ The only drawback of the highspeed version is that it is slightly
 larger and that it uses some additional 500 bytes of memory
 in case the SIO-routine is actually used).
 
+If you are using a harddisk interface like the BlackBox, MIO
+or similar, you either have to use the standard version or disable
+high speed. These interfaces can usually only be used via the
+SIO routine in the Atari OS ROM.
+
 Before a file is loaded, MyPicoDos checks if the currently selected
 disk drive really supports highspeed SIO and otherwise disables the
 built-in SIO code. This means that the highspeed version needs
@@ -123,7 +128,9 @@ On the other hand, you can simply hide files by omitting them
 in the PICONAME.TXT file.
 
 In case you'd like to see what's really on the disk, you can
-disable the long filename display with the "L" key.
+disable the long filename display with the "L" key. If you want
+to remove all long filenames completely, just delete the file
+PICONAME.TXT.
 
 Please note: a maximum of 100 long filenames is supported per
 directory. This is no limitation for MyDos/DOS2.x format disks,
@@ -330,38 +337,54 @@ If you've got any questions or if you have problems with MyPicoDos,
 feel free to contact me by email!
 
 
-7. Changelog
+7. Credits
+
+Thanks go to:
+
+ABBUC for the highspeed SIO code.
+
+Andreas Magenheimer, Michael Tietz and many others for testing,
+bug reports and sending me hints!
+
+
+8. Changelog
 
 version 3.0:
-- initial GPL release
-- support for 128-bytes-per-sector disks
-- support for disks smaller than 1024 sectors
+- Initial GPL release.
+- Support for 128-bytes-per-sector disks.
+- Support for disks smaller than 1024 sectors.
 
 version 3.1:
-- rewrote density-check code to fix XF551 density recognition bug
-- fixed manual density selection code
-- added drive number selection to MyPicoDos initializer program
-- fixed old-OS bug in initializer program
-- added support for "large" Bibo-Dos directories (128 Files)
-- fixed DOS2.5-format file display bug
+- Rewrote density-check code to fix XF551 density recognition bug.
+- Fixed manual density selection code.
+- Added drive number selection to MyPicoDos initializer program.
+- Fixed old-OS bug in initializer program.
+- Added support for "large" Bibo-Dos directories (128 Files).
+- Fixed DOS2.5-format file display bug.
 
 version 4.0:
-- Added support for long filenames in PICONAME.TXT
+- Added support for long filenames in PICONAME.TXT.
 - Many changes in the internal structure to lower the
-  memory usage of the BAS and COM loader
+  memory usage of the BAS and COM loader.
 - Created separate "highspeed" and "standard SIO" versions.
   The highspeed version now contains a built-in Happy/Speedy/
   AtariSIO/SIO2PC/APE/... - compatible highspeed-SIO routine
 - Added long filename editor to init-program with support to
   read existing long names and with an option to alphabetically
-  sort the long filenames
+  sort the long filenames,
 - "PICODOS.SYS" and "PICONAME.TXT" are excluded from the
-  directory listings
+  directory listings.
 - Internal basic can be automatically switched off when loading
-  COM/EXE/BIN files, and switched on when loading BAS files
+  COM/EXE/BIN files, and switched on when loading BAS files.
 - Added "smart" highspeed mode: the built in highspeed code is
   automatically disabled in case a drive doesn't support
   highspeed SIO.
 - Used memory is now fully cleared before loading a file.
+- Fixed system crash with some Basic programs.
 - Fixed XF551 boot problems with QD disks.
+
+version 4.01:
+- Bugfix: Write protected directories were not displayed.
+- Pressing reset will now result in a cold-start instead of
+  activating the selftest/memopad.
 

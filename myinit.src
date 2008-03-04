@@ -1,4 +1,4 @@
-;  MyPicoDos init V4.0 - initializer program
+;  MyPicoDos init V4.01 - initializer program
 ;
 ;  Copyright (C) 1992-2004 Matthias Reichl <hias@horus.com>
 ;
@@ -786,7 +786,7 @@ PNAMNAM	.BYTE "PICONAMETXT"
 ;	       1234567890123456789012345678901234567890
 ;              0987654321098765432112345678901234567890
 TITEL	.BYTE 125
-	.BYTE "          MyPicoDos Init V4.0",155
+	.BYTE "          MyPicoDos Init V4.01",155
 	.BYTE "         (c) HiassofT 1992-2004",155
 	.BYTE 155
 	.BYTE "      COM / EXE / BIN / BAS loader",155

@@ -25,5 +25,6 @@
 
 	.OPT OBJ
 
+	SIOADR = COMLEND
 	.include "highspeedcode.src"
 
