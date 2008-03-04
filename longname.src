@@ -1,0 +1,80 @@
+;  longname - common routines for handling long filenames
+;
+;  Copyright (C) 2004 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+NAMBYTE	LDA NAMV
+	CMP NAMEEND
+	BNE NBOK1
+	LDA NAMV+1
+	CMP NAMEEND+1
+	BNE NBOK1
+	LDY #$FF
+	RTS
+NBOK1	LDY #0
+	LDA (NAMV),Y
+	INC NAMV
+	BNE NBOK2
+	INC NAMV+1
+NBOK2	LDY #0
+	RTS
+
+GETFNAM	LDX #0
+GETFNLP	JSR NAMBYTE
+	BMI GETFNER
+	CMP #LINESEP
+	BEQ GETFNAM
+	STA FILNAM,X
+	INX
+	CPX #11
+	BNE GETFNLP
+	JSR NAMBYTE ; ignore separator
+	BMI GETFNER
+	CMP #LINESEP
+	BEQ GETFNAM
+	LDY #0
+GETFNER	RTS
+
+; get long filename
+; N flag is set if an error occurs
+; X contains length of name (max. 40 characters)
+; the remaining bytes of the buffer are set to blank
+; (character 32)
+
+GETLNG	LDX #39
+	LDA #32
+CLRLNG	STA LONGNAM,X
+	DEX
+	BPL CLRLNG
+	LDX #0
+GETLLP1	JSR NAMBYTE
+	BMI GETLNER
+	CMP #LINESEP
+	BEQ GETLNOK
+	STA LONGNAM,X
+	INX
+	CPX #40
+	BNE GETLLP1
+
+; skip til line separator
+GETLLP2	JSR NAMBYTE
+	BMI GETLNER
+	CMP #LINESEP
+	BNE GETLLP2
+
+GETLNOK	LDY #0
+GETLNER	RTS
+

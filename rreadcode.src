@@ -1,0 +1,71 @@
+;  rreadcode - common reader routines for basload and comload
+;
+;  Copyright (C) 1992-2004 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+	* = RREADST
+
+	.LOCAL
+
+ENDX	RTS
+NE459	JMP $E459
+
+XREG	.BYTE 0   ; XREG
+YREG	.BYTE 0   ; YREG
+SECMASK	.BYTE 0   ; SECMASK
+SECBYTE	.BYTE 0   ; SECBYTE
+
+INADJ	JMP (738) ; INADJ
+RUADJ	JMP (736) ; RUADJ
+
+GETBYT	CPX BYTES
+	BNE ?NRR
+	JSR RREAD
+?NRR	LDA BUF,X
+	INX
+	RTS
+
+RREAD	STY YREG
+	LDY SECBYTE
+	LDA BUF,Y
+	AND SECMASK
+	STA DSEC+1	; Sektor-Nr. HI
+	LDA BUF+1,Y
+	STA DSEC	; Sektor-Nr. LO
+	ORA DSEC+1
+	BEQ ?EOF
+?RAGAIN	LDA #$40	; Direction = INput
+	STA $303
+
+	JSR NE459 ; und lesen
+	BMI ?RAGAIN
+
+	LDY SECBYTE
+	LDA BUF+2,Y
+	STA BYTES
+	BEQ RREAD
+	LDX #0
+	LDY YREG
+	RTS
+
+?EOF	PLA
+	PLA
+
+	JSR INADJ ; Starte Programm
+	JSR RUADJ
+	JMP (10)
+
+RREND	= *

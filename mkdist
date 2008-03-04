@@ -7,11 +7,11 @@ fi
 
 NAME=mypdos$1
 
-mkdir -p tmp/"${NAME}"/src
-mkdir -p dist
+mkdir tmp/"${NAME}"
 rm -f dist/${NAME}.zip
-cp -a README.txt LICENSE MYPDOS.COM mypdos.atr tmp/"${NAME}"
-cp -a Makefile *.src tmp/"${NAME}"/src
+cp -a README.txt LICENSE MYPDOS.COM mypdos.atr mypdoshs.atr myinit.atr tmp/"${NAME}"
+mkdir tmp/"${NAME}"/src
+cp -a Makefile *.inc *.src tmp/"${NAME}"/src
 cd tmp
 zip -r ../dist/${NAME}.zip ${NAME}
 rm -rf "${NAME}"

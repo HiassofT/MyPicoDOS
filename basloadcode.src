@@ -1,6 +1,6 @@
-;  mypdosatr - ATR version of MyPicoDos
+;  basloadcode - load basic program
 ;
-;  Copyright (C) 2003-2004 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 1992-2004 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -16,7 +16,48 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	MYPDOSATR = 1
+        .LOCAL
 
-	.INCLUDE "mypdos.src"
+	BASLD = RREND
 
+	* = BASLD
+
+	TXA
+	PHA
+	JSR CLRMEM
+	PLA
+	TAX
+
+	LDA #<?RUNBAS
+	STA $C
+       	STA $2E0
+       	LDA #>?RUNBAS
+       	STA $D
+       	STA $2E1
+
+	LDA $82
+	STA ?STADR+1
+	LDA $83
+	STA ?STADR+2
+
+?LDLP	JSR GETBYT
+?STADR	STA 12345
+	INC ?STADR+1
+	BNE ?LDLP
+	INC ?STADR+2
+	BNE ?LDLP
+
+?RUNBAS	LDA $80
+	STA $2E7
+	LDA $81
+	STA $2E8
+	JSR $B755
+	LDY #$5E
+	LDA $A95E
+	CMP #$20
+	BEQ ?X001
+	INY
+?X001	STY ?BASGO+1
+?BASGO	JMP $A920
+
+BASLEND	= *

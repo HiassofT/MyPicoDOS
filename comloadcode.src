@@ -1,0 +1,144 @@
+;  comloadcode - load .com executable
+;
+;  Copyright (C) 1992-2004 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+	.LOCAL
+
+	COMLD = RREND
+
+	* = COMLD
+
+	TXA
+	PHA
+	JSR CLRMEM
+	PLA
+	TAX
+	JSR GETBYT
+	STA ADR
+	STA 736
+	JSR GETBYT
+	STA ADR+1
+	STA 737
+
+?XXX	JSR GETBYT	; End-Adr LO
+	SEC
+	SBC ADR
+	STA BLEN
+	PHP
+	JSR GETBYT	; End-Adr HI
+	PLP
+	SBC ADR+1
+	STA BLEN+1
+
+	INC BLEN
+	INC BLEN+1
+	LDY #0
+
+?MLOOP	CPX BYTES
+	BNE ?NRRD
+
+?DORD	JSR RREAD
+
+	LDA BLEN+1
+	CMP #2
+	BCC ?NRRD
+	LDA BYTES
+	CMP SECBYTE
+	BNE ?NRRD
+
+; bei 125 oder 253 Bytes: schnelle Kopierroutine nehmen
+
+	TYA
+	CLC
+	ADC ADR
+	STA ADR
+	BCC ?NI01
+	INC ADR+1
+?NI01	LDY SECBYTE
+	DEY
+?COP4	LDA BUF,Y
+	STA (ADR),Y
+	DEY
+	LDA BUF,Y
+	STA (ADR),Y
+	DEY
+	LDA BUF,Y
+	STA (ADR),Y
+	DEY
+	LDA BUF,Y
+	STA (ADR),Y
+	DEY
+	BNE ?COP4
+	LDA BUF,Y
+	STA (ADR),Y
+	CLC
+	LDA ADR
+	ADC SECBYTE
+	STA ADR
+	BCC ?NI02
+	INC ADR+1
+?NI02	SEC
+	LDA BLEN
+	BNE ?NEN1
+	INC BLEN+1
+?NEN1	SBC SECBYTE
+	STA BLEN
+	BNE ?NEN2
+	DEC BLEN+1
+?NEN2	BCS ?ND01
+	DEC BLEN+1
+?ND01	JMP ?DORD
+
+?NRRD	LDA BUF,X
+	INX
+	STA (ADR),Y
+
+	DEC BLEN
+	BNE ?ADPLUS
+	DEC BLEN+1
+	BEQ ?ENDBLK
+
+?ADPLUS	INY
+	BNE ?MLOOP
+	INC ADR+1
+	BNE ?MLOOP
+
+?ENDBLK	LDA 739
+	CMP #>ENDX
+	BNE ?XINIT
+
+?GT	JSR GETBYT	; Start LO
+	STA ADR
+	JSR GETBYT	; Start HI
+	STA ADR+1
+	AND ADR
+	CMP #$FF
+	BEQ ?GT
+	JMP ?XXX
+
+?XINIT	STX XREG
+	JSR INADJ ; und init!
+?WTSYNC	LDA $D40B
+	BNE ?WTSYNC
+	LDX XREG
+	LDA #<ENDX
+	STA 738
+	LDA #>ENDX
+	STA 739
+	JMP ?GT
+
+COMLEND	= *
