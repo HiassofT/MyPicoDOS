@@ -1,6 +1,6 @@
-MyPicoDos 4.04
+MyPicoDos 4.05
 
-Copyright (C) 1992-2007 by Matthias Reichl <hias@horus.com>
+Copyright (C) 1992-2008 by Matthias Reichl <hias@horus.com>
 
 This program is proteced under the terms of the GNU General Public
 License, version 2. Please read LICENSE for further details.
@@ -449,3 +449,5 @@ version 4.04:
   file is present, it will be loaded automatically
 - Added "barebone" version without highspeed SIO and remote console
 
+version 4.05:
+- Updated highspeed SIO code to latest version (1.12)

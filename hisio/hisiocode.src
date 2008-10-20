@@ -19,11 +19,11 @@
 
 DOHISIO	
 
-;.if .def DIAGSIO
-;	LDA #$01
-;.else
+.if .def DIAGSIO
+	LDA #$01
+.else
 	LDA #$02
-;.endif
+.endif
 
 ; internal entry point for highspeed SIO detection:
 ; load A with 1, only 1 retry and no speed fallback
@@ -33,30 +33,34 @@ DOHIDET	STA DRETRY
 	SEI
 	LDA #$01
 	STA CRITIC
-	LDA DUNIT
-	ORA #$30
+	CLC
+	LDA DDEVIC
+	ADC DUNIT
+	ADC #$FF
 	STA CDEVIC
 
 	TSX 
 	STX STACKP
-	LDA SIOSPEED
+?ABS50	LDA SIOSPEED
 	STA MYSPEED
 
 ?DRETLP	LDA #$0D
 	STA CRETRY
 
-	LDA DCOMND
-	STA CCOMND
+.if .def DIAGSIO
+	LDA #0
+	STA ?DIAGER
+.endif
+
 	LDA DAUX1
 	STA CAUX1
 	LDA DAUX2
 	STA CAUX2
 
-.if .def DIAGSIO
-	LDA #0
-	STA ?DIAGER
-.endif
-	LDA MYSPEED
+	LDA DCOMND
+	STA CCOMND
+
+	LDX MYSPEED
 	BPL ?NOTUR
 
 	LDA CAUX2
@@ -64,13 +68,19 @@ DOHIDET	STA DRETRY
 	STA CAUX2
 	BNE ?CRETLP
 
-?NOTUR	CMP #HAPFLG
-	BEQ ?HAPPY
-	CMP #XFFLG
+?NOTUR	CPX #HAPFLG	; happy warp speed?
+	BEQ ?WARP
+	CPX #XFFLG	; XF551?
+	BEQ ?XFCMD
+	CPX #$0A	; check for happy 1050 speed
 	BNE ?CRETLP
 
-?XFCMD	LDA CCOMND
-	ORA #$80
+; the happy 1050 doesn't like the $48 happy command in highspeed...
+	CMP #$48
+	BEQ ?DOSLOW
+	BNE ?CRETLP
+
+?XFCMD	ORA #$80
 	STA CCOMND
 	CMP #$A1
 	BEQ ?DOSLOW
@@ -80,19 +90,19 @@ DOHIDET	STA DRETRY
 	STA MYSPEED
 	BNE ?CRETLP
 
-?HAPPY	LDA CCOMND
-	CMP #$50
-	BEQ ?HAPPY1
+?WARP	CMP #$50
+	BEQ ?WARP1
 	CMP #$52
-	BEQ ?HAPPY1
+	BEQ ?WARP1
 	CMP #$57
 	BNE ?DOSLOW
-?HAPPY1	ORA #$20
+?WARP1	ORA #$20
 	STA CCOMND
 
 ?CRETLP	
 
 .if .def DIAGSIO
+; phase 00 : send command frame and wait for ACK
 	LDA #0
 	STA ?DIAGST
 	STA ?DIAGBT
@@ -126,7 +136,7 @@ DOHIDET	STA DRETRY
 ?NOSND	STX AUDC4
 
 ; transmit command frame
-	JSR ?SENDBLK
+?ABS51	JSR ?SENDBLK
 
 	BIT MYSPEED
 	BPL ?NOTUR1	; 1050 Turbo?
@@ -134,14 +144,17 @@ DOHIDET	STA DRETRY
 	STA AUDF3
 
 ?NOTUR1	
-	JSR ?CHKST ; read command frame ACK/NAK
+
+?ABS52	JSR ?CHKST	; read command frame ACK/NAK
+?ABS53	JSR ?CLRTIM1	; got ACK, clear timer
 
 .if .def DIAGSIO
+; phase 01 : send data frame (only if write operation)
 	INC ?DIAGST
 .endif
 
 	BIT MYSPEED
-	BVC ?NOXF	; XF551?
+	BVC ?NOXF	; XF551 / Happy Warp?
 
 	LDA #XFSPD	; yes, set highspeed before DATA
 	STA AUDF3
@@ -159,29 +172,51 @@ DOHIDET	STA DRETRY
 	LDA DSTATS
 	BPL ?NOSEND
 
-	JSR ?SENDBLK	; transmit data frame
-	JSR ?CHKST	; receive data frame ACK/NAK
+?ABS54	JSR ?SENDBLK	; transmit data frame
 
-?NOSEND	JSR ?WAITCPL	; set command timeout and wait for command complete
+.if .def DIAGSIO
+; phase 02 (write) : receive data frame ACK
+	INC ?DIAGST
+.endif
+
+?ABS55	JSR ?CHKST	; receive data frame ACK/NAK
+
+?NOSEND	
+
+.if .def DIAGSIO
+; phase 02 (read) / 03 (write) : receive command complete
+	INC ?DIAGST
+.endif
+
+?ABS56	JSR ?WAITCPL	; set command timeout and wait for command complete
 	BIT DSTATS
 	BVC ?SIOEND
 
-	JSR ?GETBLK	; receive data block
+.if .def DIAGSIO
+; phase 03 (read) / 04 (write) : read data frame (only if read operation)
+	INC ?DIAGST
+.endif
 
+?ABS57	JSR ?GETBLK	; receive data block
+
+?ABS58
 ?SIOEND	JSR ?CLEANUP	; reset timers and pokey
 	LDY STATUS	; was the command successful?
 	BEQ ?ENDCMD	; yes, we are done
 
 	DEC CRETRY	; retry sending command frame?
 	BEQ ?CHKDR	; no, already tried 13 times
-	JMP ?CRETLP	; yes, we have some more retries
+?ABS59	JMP ?CRETLP	; yes, we have some more retries
 ?CHKDR	
 
 	DEC DRETRY	; any more command retries?
 	BEQ ?ENDCMD	; no, we are finished
+	CPY #ERRDEV
+	BEQ ?GODR	; don't fallback speed on command errors
 	LDA #STDSPD	; try it with standard speed this time
 	STA MYSPEED
-	JMP ?DRETLP	; yes, try it again
+?ABS60
+?GODR	JMP ?DRETLP	; yes, try it again
 ?ENDCMD	
 
 	LDA #0
@@ -212,13 +247,15 @@ DOHIDET	STA DRETRY
 	BNE ?SND2	; always
 	
 ?SND1	LDA (BUFRLO),Y
-	JSR ?SENDBYT	; normal send, wait for pokey clear
+?ABS61	JSR ?SENDBYT	; normal send, wait for pokey clear
 	INY 
 	BNE ?SND2
 	INC BUFRHI
 	DEC BFENHI
+
 ; wait a litte after sending a full page, needed by some
-; slow drives (?) when sending more than 256 bytes (??)
+; drives when sending more than 256 bytes
+
 	LDX #$E0
 ?WT2	INX 
 	BNE ?WT2
@@ -227,18 +264,11 @@ DOHIDET	STA DRETRY
 	LDA BFENHI
 	BNE ?SND1
 	LDA CHKSUM
-	JSR ?SENDBYT
+?ABS62	JSR ?SENDBYT
 ?WTSND	LDA IRQST
 	AND #IMSCPL	; wait until transmit complete
 	BNE ?WTSND
 	RTS
-
-?CHKST	
-	LDY #$03
-	JSR ?STIMOUT
-	LDA #MSKRECV
-	STA IRQEN
-	BNE ?RDACK
 
 ?GETBLK	LDY #$00
 	STY CHKSUM
@@ -246,9 +276,10 @@ DOHIDET	STA DRETRY
 ; note: pokey is already set to receive mode (in rdquit),
 ; so we don't need to do the setup again
 
+?ABS63
 ?GETLP	JSR ?GETBYTE
 	STA (BUFRLO),Y
-	JSR ?ADDSUM
+?ABS64	JSR ?ADDSUM
 	INY 
 	BNE ?GET1
 	INC BUFRHI
@@ -257,7 +288,7 @@ DOHIDET	STA DRETRY
 	BNE ?GETLP
 	LDA BFENHI
 	BNE ?GETLP
-	JSR ?GETBYTE
+?ABS65	JSR ?GETBYTE
 
 .if .def DIAGSIO
 	STA ?DIAGBT
@@ -265,6 +296,53 @@ DOHIDET	STA DRETRY
 	CMP CHKSUM
 	BNE ?ERRCHK
 	RTS 
+
+; cleanup, in case of error or end of transmission
+
+?CLEANUP LDA #$A0	; reset pokey
+	STA AUDC4
+	LDA #$3C	; clear command line
+	STA PBCTL
+
+; clear timer1
+?CLRTIM1	LDY #$00
+
+; set timer1 with Y*256 cycles
+?STIMOUT	LDX #$00
+
+; set timer1 Y*256 + X cycles
+?STIMOU2	LDA #1
+	JSR SETVBV
+.if .def RELOCTABLE
+?ABS66	LDA ?ERRTOA
+	STA CDTMA1
+?ABS67	LDA ?ERRTOA+1
+	STA CDTMA1+1
+.else
+	LDA #<?ERRTO
+	STA CDTMA1
+	LDA #>?ERRTO
+	STA CDTMA1+1
+.endif
+?RDOK	LDA #0
+	RTS
+
+.if .def RELOCTABLE
+?ABS68
+?ERRTOA	.WORD ?ERRTO
+.endif
+
+; read ACK/NAK, handle ERROR as NAK
+; used when waiting for command frame ACK and data frame ACK
+
+?CHKST	
+	LDY #$02
+?ABS69	JSR ?STIMOUT
+	LDA #MSKRECV
+	STA IRQEN
+?ABS70	JSR ?RDACK
+	BNE ?ERRNAK	; catch ERROR and handle it like NAK
+?CHKOK	RTS
 
 ; set command timeout and wait for command complete
 
@@ -278,46 +356,43 @@ DOHIDET	STA DRETRY
 	ROR 
 	AND #$C0
 	TAY 
-	JSR ?STIMOU2
+?ABS71	JSR ?STIMOU2
 
-; receive ACK/NAK (or COMPLETE/ERROR)
+; receive ACK/NAK, COMPLETE/ERROR
 
 ?RDACK	LDA #SKRECV	; set pokey to receive async mode
 	STA SKCTL
 	STA SKREST
 	LDA #$3C	; clear command line
 	STA PBCTL
-	JSR ?GETBYTE
+?ABS72	JSR ?GETBYTE
 
 .if .def DIAGSIO
 	STA ?DIAGBT
 .endif
 
 	CMP #'A		; ACK
-	BNE ?NOACK
-?RDOK	RTS
+	BEQ ?RDOK
 ?NOACK	CMP #'C		; COMPLETE
 	BEQ ?RDOK
-	CMP #'E		; ERROR
-	BNE ?NERRDEV
-	LDY #ERRDEV	; command error
-	.BYTE $2C	; BIT xxx (skip next 2 bytes)
+	CMP #'E		; command ERROR
+	BEQ ?RDERR
 
-?NERRDEV LDY #ERRNAK	; any other error -> set code $8B
-	.BYTE $2C	; BIT xxx (skip next 2 bytes)
+?ERRNAK LDY #ERRNAK	; NAK or any other error -> set code $8B
 
+	.BYTE $2C	; BIT xxx (skip next 2 bytes)
 ?ERRFRM	LDY #ERRFRM	; framing error
-	.BYTE $2C	; BIT xxx (skip next 2 bytes)
 
+	.BYTE $2C	; BIT xxx (skip next 2 bytes)
 ?ERROVR	LDY #ERROVR	; data input overrun
-	.BYTE $2C	; BIT xxx (skip next 2 bytes)
 
-?ERRCHK	LDY #ERRCHK	; checksum error
 	.BYTE $2C	; BIT xxx (skip next 2 bytes)
+?ERRCHK	LDY #ERRCHK	; checksum error
+
+	.BYTE $2C	; BIT xxx (skip next 2 bytes)
+?ERRTO	LDY #ERRTO	; timeout error
 
 ; general error routine, code in Y
-
-?ERRTO	LDY #ERRTO
 
 ?ERR	STY STATUS
 
@@ -334,11 +409,13 @@ DOHIDET	STA DRETRY
 
 	LDX STACKP
 	TXS
-	JMP ?SIOEND	; we got an error, cleanup and try to restart
+?ABS73	JMP ?SIOEND	; we got an error, cleanup and try to restart
 
-; timeout interrupt handler
+?RDERR	LDY #ERRDEV	; command error
+	STY STATUS
+	RTS
 
-MYERR138=?ERRTO
+; break handler
 
 ?ERRBRK	LDA #RMBRK	; reset break interrupt flag
 	STA IRQEN
@@ -346,14 +423,16 @@ MYERR138=?ERRTO
 	STA IRQEN
 	LDX STACKP
 	TXS
-	JSR ?CLEANUP
+?ABS74	JSR ?CLEANUP
 	LDY #ERRBRK	; set error code $80
 	STY STATUS
-	JMP ?ENDCMD	; end command without retrying
+?ABS75	JMP ?ENDCMD	; end command without retrying
+
+; read a byte
 
 ?GETBYTE LDA #IMRECV
 ?GETBY1	BIT IRQST
-	BPL ?ERRBRK	; break key pressed
+	BPL ?ERRBRK	; break key pressed?
 	BNE ?GETBY1
 	LDA #RMRECV	; reset data-receive IRQ bit
 	STA IRQEN
@@ -367,10 +446,12 @@ MYERR138=?ERRTO
 	LDA SERIN
 	RTS 
 
-?SENDBYT	TAX 
-?WPUT	LDA IRQST
-	BPL ?ERRBRK
-	AND #IMSEND
+; send a byte. Note. we don't check for the break key
+; here since it confuses several drives (eg. speedy 1050)
+
+?SENDBYT	TAX
+	LDA #IMSEND
+?WPUT	BIT IRQST
 	BNE ?WPUT
 	LDA #RMSEND
 	STA IRQEN
@@ -385,24 +466,8 @@ MYERR138=?ERRTO
 	STA CHKSUM
 	RTS 
 
-?CLRTIM1	LDY #$00
-?STIMOUT	LDX #$00
-?STIMOU2	LDA #1
-	JSR SETVBV
-	LDA #<?ERRTO
-	STA CDTMA1
-	LDA #>?ERRTO
-	STA CDTMA1+1
-	RTS
-
-; cleanup, in case of error or end of transmission
-
-?CLEANUP JSR ?CLRTIM1
-	LDA #$A0
-	STA AUDC4
-	JSR ?CLRTIM1
-	RTS
-
+; the code starting here is only for diagnostic purposes and is
+; normally not included
 
 .if .def DIAGSIO
 ?DIAGS	.DC $20 0

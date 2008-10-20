@@ -1,6 +1,6 @@
-;  MyPicoDos 4.04 - main menu and loader routine
+;  MyPicoDos 4.05 - main menu and loader routine
 ;
-;  Copyright (C) 1992-2007 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 1992-2008 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -277,15 +277,15 @@ SLMS	.WORD SCREEN
 
 TITLE	= *
 	.IF .DEF BAREBONE
-	.SBYTE " MyPicoDos 4.04B (c)"
-	.SBYTE " HiassofT 1992-2007 "
+	.SBYTE " MyPicoDos 4.05B (c)"
+	.SBYTE " HiassofT 1992-2008 "
 	.ELSE
 	.IF .DEF REMOTE
-	.SBYTE " MyPicoDos 4.04R (c)"
-	.SBYTE " HiassofT 1992-2007 "
+	.SBYTE " MyPicoDos 4.05R (c)"
+	.SBYTE " HiassofT 1992-2008 "
 	.ELSE
-	.SBYTE " MyPicoDos 4.04 (c) "
-	.SBYTE "HiassofT 1992-2007  "
+	.SBYTE " MyPicoDos 4.05 (c) "
+	.SBYTE "HiassofT 1992-2008  "
 	.ENDIF
 	.ENDIF
 

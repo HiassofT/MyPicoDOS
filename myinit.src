@@ -1,6 +1,6 @@
-;  MyPicoDos init V4.04 - initializer program
+;  MyPicoDos init V4.05 - initializer program
 ;
-;  Copyright (C) 1992-2007 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 1992-2008 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -820,15 +820,15 @@ PNAMNAM	.BYTE "PICONAMETXT"
 TITEL	.BYTE 125
 
 	.IF .DEF BAREBONE
-	.BYTE "          MyPicoDos Init V4.04B",155
+	.BYTE "          MyPicoDos Init V4.05B",155
 	.ELSE
 	.IF .DEF REMOTE
-	.BYTE "          MyPicoDos Init V4.04R",155
+	.BYTE "          MyPicoDos Init V4.05R",155
 	.ELSE
-	.BYTE "          MyPicoDos Init V4.04",155
+	.BYTE "          MyPicoDos Init V4.05",155
 	.ENDIF
 	.ENDIF
-	.BYTE "         (c) HiassofT 1992-2007",155
+	.BYTE "         (c) HiassofT 1992-2008",155
 	.BYTE 155
 	.BYTE "      COM / EXE / BIN / BAS loader",155
 	.BYTE "  for SD & DD disks, 720-65535 sectors",155
