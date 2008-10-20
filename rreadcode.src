@@ -16,17 +16,18 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+.if .not .def PICOBOOT
 	* = RREADST
 
 	.LOCAL
 
-ENDX	RTS
 NE459	JMP $E459
+.endif
 
 XREG	.BYTE 0   ; XREG
 YREG	.BYTE 0   ; YREG
-SECMASK	.BYTE 0   ; SECMASK
-SECBYTE	.BYTE 0   ; SECBYTE
+SECMASK	.BYTE 3   ; SECMASK
+;SECBYTE	.BYTE 0   ; SECBYTE
 
 INADJ	JMP (738) ; INADJ
 RUADJ	JMP (736) ; RUADJ
@@ -36,7 +37,7 @@ GETBYT	CPX BYTES
 	JSR RREAD
 ?NRR	LDA BUF,X
 	INX
-	RTS
+ENDX	RTS
 
 RREAD	STY YREG
 	LDY SECBYTE
@@ -50,7 +51,11 @@ RREAD	STY YREG
 ?RAGAIN	LDA #$40
 	STA $303
 
+.if .def PICOBOOT
+	JSR $E459
+.else
 	JSR NE459
+.endif
 	BMI ?RAGAIN
 
 	LDY SECBYTE

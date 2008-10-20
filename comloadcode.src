@@ -18,6 +18,10 @@
 
 	.LOCAL
 
+.if .def PICOBOOT
+	JSR RREAD
+	LDX #2	; skip first two bytes ($FF, $FF)
+.else
 	COMLD = RREND
 
 	* = COMLD
@@ -27,6 +31,7 @@
 	JSR CLRMEM
 	PLA
 	TAX
+.endif
 	JSR GETBYT
 	STA ADR
 	STA 736
@@ -60,7 +65,7 @@
 	CMP SECBYTE
 	BNE ?NRRD
 
-; bei 125 oder 253 Bytes: schnelle Kopierroutine nehmen
+; use fast copy routine in case of a full (125/253 bytes) sector
 
 	TYA
 	CLC
@@ -119,16 +124,7 @@
 
 ?ENDBLK	LDA 739
 	CMP #>ENDX
-	BNE ?XINIT
-
-?GT	JSR GETBYT	; Start LO
-	STA ADR
-	JSR GETBYT	; Start HI
-	STA ADR+1
-	AND ADR
-	CMP #$FF
 	BEQ ?GT
-	JMP ?XXX
 
 ?XINIT	STX XREG
 	JSR INADJ ; und init!
@@ -139,6 +135,15 @@
 	STA 738
 	LDA #>ENDX
 	STA 739
-	JMP ?GT
+
+?GT	JSR GETBYT	; Start LO
+	STA ADR
+	JSR GETBYT	; Start HI
+	STA ADR+1
+	AND ADR
+	CMP #$FF
+	BEQ ?GT
+	JMP ?XXX
+
 
 COMLEND	= *

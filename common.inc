@@ -95,3 +95,4 @@ CLP3	LDA %2+$200,Y
 BYTES	= $43 ;      number of bytes in the current sector
 ADR	= $44 ; ,45  current loading address
 BLEN	= $46 ; ,47  length of com-block
+SECBYTE	= $48
