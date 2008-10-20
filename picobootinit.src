@@ -1,0 +1,219 @@
+;  PicoBoot V4.05 - initializer program
+;
+;  Copyright (C) 2008 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+START	= $2800
+
+; run address
+	* = $02E0
+	.WORD START
+
+	* = START
+
+DBUF	= $304
+DSEC	= $30A
+SIOVEC	= $E459
+
+	.include "cio.inc"
+
+	.MACRO WSEC128 ;DRIVENO,SECTOR,ADR
+	LDA #$31
+	STA $300
+	LDA %1
+	STA $301
+	LDA #$50
+	STA $302
+	LDA #$80
+	STA $303
+	LDA #<(%3)
+	STA $304
+	LDA #>(%3)
+	STA $305
+	LDA #7
+	STA $306
+	LDA #128
+	STA $308
+	LDA #0
+	STA $309
+	LDA #<(%2)
+	STA $30A
+	LDA #>(%2)
+	STA $30B
+	JSR $E459
+	.ENDM
+
+	LDA 82
+	STA MERK82
+	LDA #0
+	STA 82
+MAINLOOP	BPUT 0,TITLEN,TITEL
+
+INPDRV	JMP IDKEY
+INVDSK	JSR BEEP
+IDKEY	JSR GETKEY
+	TAX
+	TYA
+	BPL IDKEY1
+	CPY #128
+	BNE IDKEY
+
+IDABRT2	LDA #155
+	JSR PUTCHAR
+
+ABORT	BPUT 0, ABORTLN, ABORTED
+	JSR GETKEY
+	JMP MAINLOOP
+
+IDKEY1	TXA
+	CMP #27
+	BEQ EXIT
+	CMP #$30
+	BNE NOEXIT
+
+EXIT	LDA MERK82
+	STA 82
+	JMP (10)
+
+NOEXIT	CMP #$31
+	BCC INVDSK
+	CMP #$39
+	BCS INVDSK
+
+	STA INSERT1
+	STA PDRIVNO
+	SEC
+	SBC #$30
+	STA DRIVENO
+	BPUT 0, INS1LEN, INSERT1
+
+IDKEY2	JSR GETKEY
+	TAX
+	TYA
+	BPL IDKEY3
+	CPY #128
+	BEQ IDABRT2
+	BNE IDKEY2
+IDKEY3	CPX #27
+	BEQ IDABRT2
+
+	LDA #$31
+	STA $0300
+	LDA DRIVENO
+	STA $0301
+
+	JSR GETDENS
+	LDA $308
+	STA MYBOOT
+
+	WSEC128 DRIVENO,1,MYBOOT
+	BPL S1OK
+	JMP WBERR
+S1OK	WSEC128 DRIVENO,2,MYBOOT+128
+	BPL S2OK
+	JMP WBERR
+S2OK	WSEC128 DRIVENO,3,MYBOOT+256
+	BPL S3OK
+	JMP WBERR
+S3OK
+
+SUCCESS	BPUT 0, SUCCLEN, SUCCTXT
+	JSR GETKEY
+	JMP MAINLOOP
+
+WBERR	CLC
+	LDA $30A
+	ADC #'0
+	STA ERRSEC
+	LDA 771
+	LSR
+	LSR
+	LSR
+	LSR
+	TAX
+	LDA HEXTAB,X
+	STA ERRSTAT
+	LDA 771
+	AND #$0F
+	TAX
+	LDA HEXTAB,X
+	STA ERRSTAT+1
+	PRINT 0, ERRWB
+	JSR GETKEY
+	JMP MAINLOOP
+
+GETKEY	LDA $E425
+	PHA
+	LDA $E424
+	PHA
+	RTS
+
+BEEP    LDA #253
+
+PUTCHAR	TAY
+	LDA $E407
+	PHA
+	LDA $E406
+	PHA
+	TYA
+	RTS
+
+	.INCLUDE "getdens.src"
+
+DRIVENO	.BYTE 1
+
+;	       1234567890123456789012345678901234567890
+;              0987654321098765432112345678901234567890
+TITEL	.BYTE 125
+
+	.BYTE "          PicoBoot Init V4.05",155
+	.BYTE "         (c) HiassofT 1992-2008",155
+	.BYTE 155
+	.BYTE "         single COM file loader",155
+	.BYTE "  for SD & DD disks, 720-65535 sectors",155
+	.BYTE "  in Dos 2.x / MyDos / BiboDos format", 155
+	.BYTE 155
+	.BYTE "Enter drive number (0 to exit) -> "
+
+TITLEN	= * - TITEL
+
+INSERT1	.BYTE "1",155
+	.BYTE "insert disk in D"
+PDRIVNO	.BYTE "1: and press any key"
+	.BYTE 155
+INS1LEN	= * - INSERT1
+
+ERRWB	.BYTE "error writing sector "
+ERRSEC	.BYTE "1 (stat=$"
+ERRSTAT	.BYTE "00)",253,155
+
+SUCCTXT	.BYTE 155,"operation successfully completed!", 155
+SUCCLEN	= * - SUCCTXT
+
+ABORTED .BYTE 155, "operation aborted", 253, 155
+ABORTLN = * - ABORTED
+
+HEXTAB	.BYTE "0123456789ABCDEF"
+
+MERK82	* = * + 1
+
+SECMASK	* = * + 1
+SECBYTE	* = * + 1
+
+MYBOOT	= *
+	.incbin "picobootcode.bin"
+
+SECBUF	= *

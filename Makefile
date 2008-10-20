@@ -8,7 +8,7 @@ ATASM=atasm
 all: MYINIT.COM MYINITR.COM \
 	MYPDOS.COM MYPDOSN.COM \
 	MYPDOSR.COM MYPDOSRN.COM \
-	MYPDOSB.COM \
+	MYPDOSB.COM PICOBOOT.COM \
 	mypdos.atr mypdosn.atr \
 	mypdosr.atr mypdosrn.atr \
 	mypdosb.atr \
@@ -129,38 +129,51 @@ MYPDOSB.COM: mypdos-code-b.bin mypdos-com.src
 MYPDIDE.ROM: mypdos-code-hioff.bin mypdrom.src
 	$(ATASM) $(ASMFLAGS) -r -oMYPDIDE.ROM mypdrom.src
 
-picostd404.c: mypdos.bin
-	dd if=mypdos.bin bs=1 skip=384 | xxd -i > picostd404.c
+picostd405.c: mypdos.bin
+	dd if=mypdos.bin bs=1 skip=384 | xxd -i > picostd405.c
 
-picorem404.c: mypdosr.bin
-	dd if=mypdosr.bin bs=1 skip=384 | xxd -i > picorem404.c
+picorem405.c: mypdosr.bin
+	dd if=mypdosr.bin bs=1 skip=384 | xxd -i > picorem405.c
 
-picobare404.c: mypdosb.bin
-	dd if=mypdosb.bin bs=1 skip=384 | xxd -i > picobare404.c
+picobare405.c: mypdosb.bin
+	dd if=mypdosb.bin bs=1 skip=384 | xxd -i > picobare405.c
 
-bootstd404.c: mypdos.bin
-	dd if=mypdos.bin bs=1 count=384 | xxd -i > bootstd404.c
+bootstd405.c: mypdos.bin
+	dd if=mypdos.bin bs=1 count=384 | xxd -i > bootstd405.c
 
-bootrem404.c: mypdosr.bin
-	dd if=mypdosr.bin bs=1 count=384 | xxd -i > bootrem404.c
+bootrem405.c: mypdosr.bin
+	dd if=mypdosr.bin bs=1 count=384 | xxd -i > bootrem405.c
 
-bootbare404.c: mypdosb.bin
-	dd if=mypdosb.bin bs=1 count=384 | xxd -i > bootbare404.c
+bootbare405.c: mypdosb.bin
+	dd if=mypdosb.bin bs=1 count=384 | xxd -i > bootbare405.c
 
-atarisio: mypdos-atarisio.bin bootstd404.c bootrem404.c bootbare404.c \
-	picostd404.c picorem404.c picobare404.c
+# picoboot mini COM loader
+
+picobootcode.bin: picobootcode.src common.inc rreadcode.src comloadcode.src
+	$(ATASM) $(ASMFLAGS) -v -r -opicobootcode.bin picobootcode.src
+
+PICOBOOT.COM: picobootinit.src picobootcode.bin getdens.src
+	$(ATASM) $(ASMFLAGS) -oPICOBOOT.COM picobootinit.src
+
+
+picoboot405.c: picobootcode.bin
+	dd if=picobootcode.bin bs=1 count=384 | xxd -i > picoboot405.c
+
+atarisio: mypdos-atarisio.bin bootstd405.c bootrem405.c bootbare405.c \
+	picostd405.c picorem405.c picobare405.c picoboot405.c
 
 myinit.atr: MYINIT.COM MYINITR.COM MYINITB.COM \
 	MYPDOS.COM MYPDOSN.COM \
 	MYPDOSR.COM MYPDOSRN.COM \
-	MYPDOSB.COM \
+	MYPDOSB.COM PICOBOOT.COM \
 	initdisk
 	cp -f MYINIT.COM MYINITR.COM MYINITB.COM \
 	MYPDOS.COM MYPDOSN.COM \
 	MYPDOSR.COM MYPDOSRN.COM \
-	MYPDOSB.COM \
+	MYPDOSB.COM PICOBOOT.COM \
 	initdisk
 	dir2atr -b MyDos453 720 myinit.atr initdisk
+
 
 myinit3:
 	mkdir myinit3
