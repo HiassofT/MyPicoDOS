@@ -1,6 +1,6 @@
 ;  MyPicoDos init V4.05 - initializer program
 ;
-;  Copyright (C) 1992-2008 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 1992-2009 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -97,23 +97,29 @@ ASKMAIN	JSR GETKEY
 	TXA
 
 	CMP #$31
-	BNE NINITHS
+	BNE NINIHSB
 	JSR PUTCHAR
 	LDA #155
 	JSR PUTCHAR
 	.IF .DEF BAREBONE
 	JMP INITN
 	.ELSE
-	JMP INITHS
+	JMP INITHSB
 	.ENDIF
-NINITHS	CMP #$32
+NINIHSB	CMP #$32
 	.IF .NOT .DEF BAREBONE
+	BNE NINIHS
+	JSR PUTCHAR
+	LDA #155
+	JSR PUTCHAR
+	JMP INITHS
+NINIHS	CMP #$33
 	BNE NINIT
 	JSR PUTCHAR
 	LDA #155
 	JSR PUTCHAR
 	JMP INIT
-NINIT	CMP #$33
+NINIT	CMP #$34
 	.ENDIF
 	BNE NCRNAM
 	JSR PUTCHAR
@@ -222,6 +228,8 @@ S2OK	WSEC128 DRIVENO,3,%1+256
 S3OK
 	.ENDM
 
+INITHSB	LDA #$81
+	BNE INIT1
 INITHS	LDA #1
 	BNE INIT1
 INIT	LDA #0
@@ -828,7 +836,7 @@ TITEL	.BYTE 125
 	.BYTE "          MyPicoDos Init V4.05",155
 	.ENDIF
 	.ENDIF
-	.BYTE "         (c) HiassofT 1992-2008",155
+	.BYTE "         (c) HiassofT 1992-2009",155
 	.BYTE 155
 	.BYTE "      COM / EXE / BIN / BAS loader",155
 	.BYTE "  for SD & DD disks, 720-65535 sectors",155
@@ -845,9 +853,10 @@ TITEL	.BYTE 125
 	.BYTE "<1> init disk",155
 	.BYTE "<2> create/edit long filenames",155
 	.ELSE
-	.BYTE "<1> init disk (HighSpeed=auto)",155
-	.BYTE "<2> init disk (HighSpeed=off)",155
-	.BYTE "<3> create/edit long filenames",155
+	.BYTE "<1> init disk (HighSpeed=auto+boot)",155
+	.BYTE "<2> init disk (HighSpeed=auto)",155
+	.BYTE "<3> init disk (HighSpeed=off)",155
+	.BYTE "<4> create/edit long filenames",155
 	.ENDIF
 	.BYTE "<0> exit MyPicoDos Init",155,155
 	.BYTE "-> "

@@ -40,7 +40,7 @@ RREADST	= $0800
 
 ; some common macros
 
-	.MACRO STW ; ADR,WERT
+	.MACRO STW ; ADR,VALUE
 	.IF %0 <> 2
 	.ERROR "STW: need two parameters"
 	.ELSE
@@ -55,37 +55,42 @@ RREADST	= $0800
 	.MACRO COP768 ; DEST, SRC, LEN
 	.IF %0 <> 3
 	.ERROR "COP768: need three parameters"
-	.ELSE
-	.IF (%3) <= 256
+	.ENDIF
+	.IF (%3) > 768
+	.ERROR "COP768: maximum length is 768"
+	.ENDIF
+
 	LDY #0
-	LDX #<(%3)
+	.IF (%3) <= 256
 CLP1	LDA %2,Y
 	STA %1,Y
 	INY
-	DEX
+	CPY #<(%3)
 	BNE CLP1
-	.ELSE ; LEN > 256
-	LDY #0
-CLP2	LDA %2,Y
-	STA %1,Y
-	.IF (%3) > 512
-	LDA %2+$100,Y
-	STA %1+$100,Y
-	.ENDIF
-	INY
-	BNE CLP2
-
-	LDX #<(%3)
-	.IF (%3) > 512
-CLP3	LDA %2+$200,Y
-	STA %1+$200,Y
 	.ELSE
+	.IF (%3) <= 512
+CLP1	LDA %2,Y
+	STA %1,Y
+	INY
+	BNE CLP1
+CLP2	LDA %2+$100,Y
+	STA %1+$100,Y
+	INY
+	CPY #<(%3)
+	BNE CLP2
+	.ELSE
+CLP1	LDA %2,Y
+	STA %1,Y
 	LDA %2+$100,Y
 	STA %1+$100,Y
-	.ENDIF
 	INY
-	DEX
-	BNE CLP3
+	BNE CLP1
+CLP2	LDA %2+$200,Y
+	STA %1+$200,Y
+	INY
+	CPY #<(%3)
+	BNE CLP2
+	.ENDIF
 	.ENDIF
 	.ENDIF
 	.ENDM

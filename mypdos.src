@@ -1,6 +1,6 @@
 ;  MyPicoDos 4.05 - main menu and loader routine
 ;
-;  Copyright (C) 1992-2008 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 1992-2009 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@
 	.ENDIF
 
 	.if .not .def HIDEF
-	HIDEF=1
+	HIDEF=$81
 	.endif
 
 	PICOSTART = $1000
@@ -135,7 +135,7 @@ HIFLG	.BYTE HIDEF
 	.endif
 CAUTORUN	.BYTE 0
 
-	.ELSE	; MYPDOSBIN
+	.ELSE	; no MYPDOSBIN
 	.IF .DEF MYPDOSROM
 
 	JMP MENU
@@ -144,13 +144,13 @@ HIFLG	.BYTE HIDEF
 	.endif
 CAUTORUN	.BYTE 0
 
-	.ELSE ; MYPDOSROM
+	.ELSE ; no MYPDOSROM
 
 ;************************************
 ; boot header 2-stage boot
 
 	.BYTE 0	; Boot-Block Header
-	.BYTE 3	; 3 Sektoren	
+	.BYTE 3	; 3 sectors	
 	.WORD PICOSTART
 	.WORD XRTS ; Dummy=RTS
 
@@ -166,7 +166,18 @@ HIFLG	.BYTE HIDEF
 	.endif
 CAUTORUN	.BYTE 0
 
-REST	LDA #$31
+REST	
+.if .def HIGHSPEED
+	; if SELECT is pressed, disable highspeed SIO during boot
+	LDA $D01F
+	AND #2
+	BNE KEEPHF
+	; clear bit 7 of HIFLG
+	ASL HIFLG
+	LSR HIFLG
+KEEPHF
+.endif
+	LDA #$31
 	STA $300
 
 	LDA #1
@@ -204,8 +215,25 @@ REST	LDA #$31
 
 LDREST	LDA #$40
 	STA $303
-	JSR $E459
+LDSIO	JSR $E459
 	BMI LDREST
+
+.if .def HIGHSPEED
+	BIT HIFLG	; enable highspeed SIO during load?
+	BPL LDNOHI	; bit7=0: no -> out of here
+	LDA HIAVAIL	; highspeed code completely loaded?
+	CMP #$60	; #$60 is RTS
+	BNE LDNOHI	; no, still loading
+	ASL HIFLG	; mask out enable-during-load bit so we only install
+	LSR HIFLG	; the SIO code once
+	JSR INSTHI	; copy highspeed code to right location
+	LDA #<HISIO	; change SIO vector to highspeed code
+	STA LDSIO+1
+	LDA #>HISIO
+	STA LDSIO+2
+LDNOHI
+.endif
+
 	LDA DBUF
 	STA ADR
 	LDA DBUF+1
@@ -233,6 +261,33 @@ NLR1	DEY
 	JMP MENU
 	.ENDIF	; MYPDOSBIN
 XRTS	RTS
+
+; highspeed SIO code moved to beginning so that fast 2-stage loading is possible
+
+	.IF .DEF HIGHSPEED
+	.include "hisiodet.src"
+.if .def FASTVBI
+USSIO	.incbin "highspeed-fastvbi.bin"
+.else
+USSIO	.incbin "highspeed.bin"
+.endif
+USLEN	= * - USSIO
+
+SPEEDTB	.DC 8 0
+HIBUF	.DC 4 0
+
+; copy highspeed code to right location
+INSTHI	COP768 SIOADR, USSIO, USLEN
+
+; this location is checked by the 2-stage loader.
+; If it contains the "RTS" the highspeed code is in memory
+; and can be used to speed up further loading
+HIAVAIL	RTS
+
+	.ENDIF
+
+
+
 
 ; MyPicoDos display list
 
@@ -278,14 +333,14 @@ SLMS	.WORD SCREEN
 TITLE	= *
 	.IF .DEF BAREBONE
 	.SBYTE " MyPicoDos 4.05B (c)"
-	.SBYTE " HiassofT 1992-2008 "
+	.SBYTE " HiassofT 1992-2009 "
 	.ELSE
 	.IF .DEF REMOTE
 	.SBYTE " MyPicoDos 4.05R (c)"
-	.SBYTE " HiassofT 1992-2008 "
+	.SBYTE " HiassofT 1992-2009 "
 	.ELSE
 	.SBYTE " MyPicoDos 4.05 (c) "
-	.SBYTE "HiassofT 1992-2008  "
+	.SBYTE "HiassofT 1992-2009  "
 	.ENDIF
 	.ENDIF
 
@@ -413,15 +468,6 @@ BASLEN	= * - BASLOAD
 COMLOAD	.incbin "comload.bin"
 COMLEN	= * - COMLOAD
 
-	.IF .DEF HIGHSPEED
-.if .def FASTVBI
-USSIO	.incbin "highspeed-fastvbi.bin"
-.else
-USSIO	.incbin "highspeed.bin"
-.endif
-USLEN	= * - USSIO
-	.ENDIF
-
 ;************************************
 
 ; start of main selection code
@@ -456,9 +502,10 @@ MENU 	= *
 	COP768 $0800, RREADB, RREADL
 
 	.IF .DEF HIGHSPEED
-	COP768 SIOADR, USSIO, USLEN
+	JSR INSTHI	; copy SIO code to right location
 
 	LDA HIFLG
+	AND #1
 	BEQ MENU2
 	LDA #<HISIO
 	STA NE459+1
@@ -2020,10 +2067,6 @@ DERRLEN	= *-DSKERR
 DSKEMPT	.SBYTE "Empty Dir! "
 DEMPTLEN	= *-DSKEMPT
 
-	.IF .DEF HIGHSPEED
-	.include "hisiodet.src"
-	.ENDIF
-
 	SIOVEC = NE459
 	.include "getdens.src"
 
@@ -2040,11 +2083,6 @@ PFTAB	.WORD FORSD, FORDD, FORSM, FORDM
 	.WORD FORASD, FORADD
 
 XTAB	.BYTE 1,14,27
-
-	.IF .DEF HIGHSPEED
-SPEEDTB	.DC 8 0
-HIBUF	.DC 4 0
-	.ENDIF
 
 	.IF .DEF MYPDOSBIN
 

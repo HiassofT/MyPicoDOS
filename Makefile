@@ -16,8 +16,8 @@ all: MYINIT.COM MYINITR.COM \
 
 #all: MYPDOS.COM mypdos.atr mypdoshs.atr myinit2.atr
 
-ASMFLAGS= -Ihisio
-#ASMFLAGS = -Ihisio -s
+#ASMFLAGS= -Ihisio
+ASMFLAGS = -Ihisio -s
 #ASMFLAGS = -Ihisio -s -dHWDEBUG
 
 MYPDOSINC = common.inc getdens.src longname.src \

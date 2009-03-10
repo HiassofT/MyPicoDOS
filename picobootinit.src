@@ -1,6 +1,6 @@
 ;  PicoBoot V4.05 - initializer program
 ;
-;  Copyright (C) 2008 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 2008-2009 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -180,7 +180,7 @@ DRIVENO	.BYTE 1
 TITEL	.BYTE 125
 
 	.BYTE "          PicoBoot Init V4.05",155
-	.BYTE "         (c) HiassofT 1992-2008",155
+	.BYTE "         (c) HiassofT 1992-2009",155
 	.BYTE 155
 	.BYTE "         single COM file loader",155
 	.BYTE "  for SD & DD disks, 720-65535 sectors",155
