@@ -414,7 +414,11 @@ COMLOAD	.incbin "comload.bin"
 COMLEN	= * - COMLOAD
 
 	.IF .DEF HIGHSPEED
+.if .def FASTVBI
+USSIO	.incbin "highspeed-fastvbi.bin"
+.else
 USSIO	.incbin "highspeed.bin"
+.endif
 USLEN	= * - USSIO
 	.ENDIF
 
@@ -1723,9 +1727,10 @@ SPDLO	LDA #$E4
 SPDHI	LDX DRIVENO
 	LDA SPEEDTB-1,X
 	BEQ SPDLO
-	CMP #$28
+	CMP #$29	; new highspeed code adds 1 to entries in table
 	BEQ SPDLO
-
+	SEC
+	SBC #1
 	STA SIOSPEED
 	LDA #<SIOADR
 	STA NE459+1

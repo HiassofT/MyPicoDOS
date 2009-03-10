@@ -16,8 +16,8 @@ all: MYINIT.COM MYINITR.COM \
 
 #all: MYPDOS.COM mypdos.atr mypdoshs.atr myinit2.atr
 
-#ASMFLAGS= -Ihisio
-ASMFLAGS = -Ihisio -s
+ASMFLAGS= -Ihisio
+#ASMFLAGS = -Ihisio -s
 #ASMFLAGS = -Ihisio -s -dHWDEBUG
 
 MYPDOSINC = common.inc getdens.src longname.src \
@@ -38,6 +38,10 @@ comload.bin: comload.src comloadcode.src common.inc rreadcode.src
 highspeed.bin: highspeed.src highspeedcode.src $(HISIOINC) \
 	common.inc rreadcode.src comloadcode.src
 	$(ATASM) $(ASMFLAGS) -r highspeed.src
+
+highspeed-fastvbi.bin: highspeed.src highspeedcode.src $(HISIOINC) \
+	common.inc rreadcode.src comloadcode.src
+	$(ATASM) $(ASMFLAGS) -r -ohighspeed-fastvbi.bin -dFASTVBI=1 highspeed.src
 
 mypdos.bin: mypdos.src $(MYPDOSINC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin
@@ -95,9 +99,9 @@ mypdos-code-b.bin: mypdos.src $(MYPDOSINC)
 	$(ATASM) $(ASMFLAGS) -r -omypdos-code-b.bin -dMYPDOSROM=1 -dBAREBONE=1 mypdos.src
 
 mypdos-atarisio.bin: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src $(HISIOINC) highspeed.bin \
+	highspeedcode.src $(HISIOINC) highspeed-fastvbi.bin \
 	remote.src
-	$(ATASM) $(ASMFLAGS) -r -omypdos-atarisio.bin -dMYPDOSBIN=1 -dHIGHSPEED=1 -dREMOTE=1 mypdos.src
+	$(ATASM) $(ASMFLAGS) -r -omypdos-atarisio.bin -dMYPDOSBIN=1 -dHIGHSPEED=1 -dREMOTE=1 -dFASTVBI=1 mypdos.src
 
 MYINIT.COM: myinit.src getdens.src longname.src qsort.src cio.inc \
 	mypdos.bin
