@@ -266,11 +266,7 @@ XRTS	RTS
 
 	.IF .DEF HIGHSPEED
 	.include "hisiodet.src"
-.if .def FASTVBI
-USSIO	.incbin "highspeed-fastvbi.bin"
-.else
 USSIO	.incbin "highspeed.bin"
-.endif
 USLEN	= * - USSIO
 
 SPEEDTB	.DC 8 0
