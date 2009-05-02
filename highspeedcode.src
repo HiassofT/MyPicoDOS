@@ -19,6 +19,7 @@
 	* = SIOADR
 
 	FASTVBI=1
+	FASTVBI_NOCLOCK=1
 	.include "hisiocode.src"
 
 SIOSPEED	.BYTE 0

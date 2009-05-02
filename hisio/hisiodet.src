@@ -19,6 +19,10 @@
 
 HISIO
 
+; the highspeed SIO patch checks for valid DUNIT values
+; before, so skip this test to save some memory
+
+.if .not .def HIPATCH
 	LDA DUNIT
 	BNE ?DOSIO
 
@@ -28,6 +32,7 @@ HISIO
 	DEX
 	BPL ?CLRLP
 	RTS
+.endif
 
 ?DOSIO	LDX DUNIT
 ?ABS02	LDA SPEEDTB-1,X
@@ -98,6 +103,7 @@ HISIO
 ?DOIMM	STX DCOMND
 	STA DSTATS
 ?DODET	LDA #1
+	LDX #DETCRETRY
 ?ABS17	JMP DOHIDET
 
 ?CHKHAP	LDX #$48	; check for happy 810

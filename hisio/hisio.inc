@@ -29,8 +29,14 @@
 ; $36/$37 are kept free to avoid troubles with TurboDOS
 
 ; re-using original SIO ZP locations $38 - $3C for my own code
-	CRETRY = $38
-	DRETRY = $39
+	CRETRY = $38	; command frame retries
+	DRETRY = $39	; data frame retries
+
+; default number of command frame retries
+	DEFCRETRY = $0E
+
+; number of command frame retries when checking highspeed mode
+	DETCRETRY = $05
 
 ; speed used by this SIO command (changed to standard for second retry)
 	MYSPEED = $3A
@@ -86,12 +92,12 @@
 	IMSEND = $10	; ready to send next byte
 	IMSCPL = $08	; transmission complete
 
-; and the samet, inverted, to reset IRQ status
+; and the same, inverted, to reset IRQ status
 	RMBRK = $7F
 	RMRECV = $DF
 	RMSEND = $EF
 
-; standard masks: break + send/receive + keyboard (kbd not handeled)
+; standard masks: break + send/receive
 	MSKRECV = $A0
 	MSKSEND = $90
 
