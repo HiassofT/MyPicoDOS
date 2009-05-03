@@ -1,6 +1,6 @@
 ;  highsio.inc - definitions for highspeed SIO code
 ;
-;  Copyright (c) by ABBUC e.V. (www.abbuc.de) and Matthias Reichl
+;  Copyright (c) by Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
