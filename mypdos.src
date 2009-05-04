@@ -141,17 +141,6 @@ TEMP	= $E8
 
 ; two-stage ATR loader
 
-.if .def HIGHSPEED
-	; if SELECT is pressed, disable highspeed SIO during boot
-	LDA $D01F
-	AND #2
-	BNE KEEPHF
-	; clear bit 7 of HIFLG
-	ASL HIFLG
-	LSR HIFLG
-KEEPHF
-.endif
-
 	LDA #$31
 	STA $300
 
@@ -181,7 +170,12 @@ LDSIO	JSR $E459
 	BMI LDREST
 
 .if .def HIGHSPEED
-	BIT HIFLG	; enable highspeed SIO during load?
+	; if SELECT is pressed, disable highspeed SIO
+	LDA $D01F
+	AND #2
+	BNE KEEPHF
+	STA HIFLG
+KEEPHF  BIT HIFLG	; enable highspeed SIO during load?
 	BPL LDNOHI	; bit7=0: no -> out of here
 	LDA HIAVAIL	; highspeed code completely loaded?
 	CMP #$60	; #$60 is RTS
@@ -252,16 +246,6 @@ HIFLG	.BYTE HIDEF
 CAUTORUN	.BYTE 0
 
 REST	
-.if .def HIGHSPEED
-	; if SELECT is pressed, disable highspeed SIO during boot
-	LDA $D01F
-	AND #2
-	BNE KEEPHF
-	; clear bit 7 of HIFLG
-	ASL HIFLG
-	LSR HIFLG
-KEEPHF
-.endif
 	LDA #$31
 	STA $300
 
@@ -304,7 +288,12 @@ LDSIO	JSR $E459
 	BMI LDREST
 
 .if .def HIGHSPEED
-	BIT HIFLG	; enable highspeed SIO during load?
+	; if SELECT is pressed, disable highspeed SIO
+	LDA $D01F
+	AND #2
+	BNE KEEPHF
+	STA HIFLG
+KEEPHF	BIT HIFLG	; enable highspeed SIO during load?
 	BPL LDNOHI	; bit7=0: no -> out of here
 	LDA HIAVAIL	; highspeed code completely loaded?
 	CMP #$60	; #$60 is RTS
