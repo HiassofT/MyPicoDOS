@@ -125,11 +125,96 @@ TEMP	= $E8
 ; boot header complete file
 
 	.BYTE 0
+
+	.if .def MYPDOSATR
+	; two-stage load
+	.BYTE 3
+	.else
+	; single-stage load
 	.BYTE (PICOEND-PICOSTART+127)/128
+	.endif
+
 	.WORD PICOSTART
 	.WORD XRTS
 
+	.if .def MYPDOSATR
+
+; two-stage ATR loader
+
+.if .def HIGHSPEED
+	; if SELECT is pressed, disable highspeed SIO during boot
+	LDA $D01F
+	AND #2
+	BNE KEEPHF
+	; clear bit 7 of HIFLG
+	ASL HIFLG
+	LSR HIFLG
+KEEPHF
+.endif
+
+	LDA #$31
+	STA $300
+
+	LDA #128
+	STA $308
+	ASL
+	STA $309	; A=0
+	STA DSEC+1
+	ROL
+	STA $301	; A=1
+	LDA #4
+	STA DSEC
+	
+	LDA #$52
+	STA $302
+	LDA #7
+	STA $306
+
+	LDA #<(PICOSTART+384)
+	STA DBUF
+	LDA #>(PICOSTART+384)
+	STA DBUF+1
+
+LDREST	LDA #$40
+	STA $303
+LDSIO	JSR $E459
+	BMI LDREST
+
+.if .def HIGHSPEED
+	BIT HIFLG	; enable highspeed SIO during load?
+	BPL LDNOHI	; bit7=0: no -> out of here
+	LDA HIAVAIL	; highspeed code completely loaded?
+	CMP #$60	; #$60 is RTS
+	BNE LDNOHI	; no, still loading
+	ASL HIFLG	; mask out enable-during-load bit so we only install
+	LSR HIFLG	; the SIO code once
+	JSR INSTHI	; copy highspeed code to right location
+	LDA #<HISIO	; change SIO vector to highspeed code
+	STA LDSIO+1
+	LDA #>HISIO
+	STA LDSIO+2
+LDNOHI
+.endif
+	INC DSEC
+	BNE NLR1
+	INC DSEC+1
+NLR1	CLC
+	LDA DBUF
+	ADC #$80
+	STA DBUF
+	BCC NLR2
+	INC DBUF+1
+NLR2	DEC BREMAIN
+	BNE LDREST
+
 	JMP MENU
+BREMAIN	.BYTE ((PICOEND-PICOSTART+127)/128)-3
+
+	.else
+	JMP MENU
+	.endif
+
+
 	.if .def HIGHSPEED
 HIFLG	.BYTE HIDEF
 	.endif
