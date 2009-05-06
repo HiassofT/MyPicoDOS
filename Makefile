@@ -25,7 +25,11 @@ MYPDOSINC = common.inc getdens.src longname.src \
 	rreadcode.src comloadcode.src basloadcode.src \
 	rread.bin comload.bin basload.bin
 
-HISIOINC = hisio/hisio.inc hisio/hisiocode.src hisio/hisiodet.src
+HISIOINC = hisio/hisio.inc hisio/hisiocode.src hisio/hisiodet.src \
+	hisio/hisiocode-break.src hisio/hisiocode-cleanup.src \
+	hisio/hisiocode-main.src hisio/hisiocode-send.src \
+	hisio/hisiocode-check.src hisio/hisiocode-diag.src \
+	hisio/hisiocode-receive.src hisio/hisiocode-vbi.src
 
 rread.bin: rread.src rreadcode.src common.inc
 	$(ATASM) $(ASMFLAGS) -r -o$@ $<
