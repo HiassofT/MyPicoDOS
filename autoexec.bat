@@ -1,7 +1,7 @@
 @ECHO OFF
 ECHO
-ECHO           MyPicoDos 4.04
-ECHO      (c) 1992-2007 by HiassofT
+ECHO           MyPicoDos 4.05
+ECHO      (c) 1992-2009 by HiassofT
 ECHO
 ECHO  1  Initializer (no remote console)
 ECHO  2  Initializer (remote console)

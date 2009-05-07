@@ -164,10 +164,18 @@ TEMP	= $E8
 	LDA #>(PICOSTART+384)
 	STA DBUF+1
 
+LDRERR
+.if .def HIGHSPEED
+	LDA #$59
+	STA LDSIO+1
+	LDA #$E4
+	STA LDSIO+2
+.endif
+
 LDREST	LDA #$40
 	STA $303
 LDSIO	JSR $E459
-	BMI LDREST
+	BMI LDRERR	; switch back to OS SIO and retry on errors
 
 .if .def HIGHSPEED
 	; if SELECT is pressed, disable highspeed SIO
@@ -282,10 +290,18 @@ REST
 	LDA RESTSEC+1
 	STA DSEC+1
 
+LDRERR
+.if .def HIGHSPEED
+	LDA #$59
+	STA LDSIO+1
+	LDA #$E4
+	STA LDSIO+2
+.endif
+
 LDREST	LDA #$40
 	STA $303
 LDSIO	JSR $E459
-	BMI LDREST
+	BMI LDRERR	; switch back to OS SIO and retry on errors
 
 .if .def HIGHSPEED
 	; if SELECT is pressed, disable highspeed SIO
@@ -918,11 +934,8 @@ KEYH	LDA NE459+2
 	CMP #$E4
 	BEQ HION
 
-	LDA #$59
-	STA NE459+1
-	LDA #$E4
-	STA NE459+2
-	BNE ENDHI
+	JSR SPDLO
+	JMP ENDHI
 
 HION	LDA #<HISIO
 	STA NE459+1
@@ -930,7 +943,7 @@ HION	LDA #<HISIO
 	STA NE459+2
 	LDA #0
 	STA $301
-	JSR NE459
+	JSR NE459	; clear SIO speed table
 	LDA DRIVENO
 	STA $301
 
@@ -1138,6 +1151,17 @@ READDIR	LDA DIRSEC
 
 RDDIRLP	JSR READSEC
 	BPL DIROK
+
+.if .def HIGHSPEED
+	LDA NE459+2
+	CMP #$E4
+	BEQ DIRERR	; report error if using standard SIO
+; disable highspeed SIO
+	JSR SPDLO
+	JSR HISTAT
+; and try again
+	JMP RDDIRLP
+.endif
 
 DIRERR	JSR CLS
 	LDA #0

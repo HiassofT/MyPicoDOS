@@ -5,6 +5,14 @@ Copyright (C) 1992-2009 by Matthias Reichl <hias@horus.com>
 This program is proteced under the terms of the GNU General Public
 License, version 2. Please read LICENSE for further details.
 
+0. IMPORTANT NOTE:
+
+Starting with V4.05 the builtin highspeed SIO support can be activated
+during booting. While this reduces boot time on enhanced floppies,
+SIO2PC, SIO2SD etc, BOOTING FROM (PBI) HARDDRIVES AND ON (PC)
+EMULATORS MIGHT FAIL. In this case PRESS SELECT WHILE BOOTING
+MYPICODOS TO DISABLE HIGHSPEED SIO.
+
 
 1. What is MyPicoDos
 
@@ -40,9 +48,35 @@ the following features:
   because the initializer will use the DOS functions to create
   a file named PICODOS.SYS on the disk!
 
-  In the initializer you can choose if you want the builtin
-  highspeed SIO code to be enabled or disabled by default
-  (unless you are using the barebone version, of course)
+  In the initializer you can choose if and when you want to
+  use the builtin highspeed SIO code (unless you are using the
+  barebone version, of course). There are 3 possibilities:
+
+  * HighSpeed at boot: enable highspeed while booting MyPicoDos.
+    Use this setting if you mainly use floppies, SIO2PC, SIO2SD, ...
+
+    Pro: faster booting if you use an enhanced floppy drive or SIO2PC.
+    Con: booting might fail with non-SIO devices (like most harddrives)
+         and on emulators (until emulators fix their POKEY emulation).
+         Press SELECT while booting to disable highspeed SIO in this case.
+
+  * HighSpeed auto: enable highspeed after MyPicoDos is booted.
+    Use this setting for ATR images easily usable both on SIO devices,
+    harddrives and emulators.
+
+    Pro: MyPicoDos is bootable from all devices and on emulators.
+         Programs are still loaded in highspeed.
+    Con: Booting takes longer on enhanced floppies / SIO2PC...
+         Harddrive/emulator users have to disable highspeed SIO
+         (by pressing 'H') in the menu.
+
+  * Highspeed off: highspeed SIO disabled, can be enabled in the menu.
+    Use this setting if you mainly use (PBI) harddrives or emulators.
+
+    Pro: Fully compatible with all devices and emulators.
+    Con: Floppy / SIO2PC users have to manually enable highspeed SIO
+         each time they want to load a program in highspeed.
+
 
   The image "myinit.atr" contains also MyDOS, so just load it
   into AtariSIO/APE/SIO2PC/... or into your favourite
@@ -115,8 +149,8 @@ AtariSIO with remote console support!
 3. Some remarks about the builtin highspeed SIO code
 
 In general I'd recommend using the version of MyPicoDos that has
-highspeed SIO enabled by default, so that you can access all of
-your floppy drives and also AtariSIO/SIO2PC/APE/... at the highest
+highspeed SIO set to auto, so that you can access all of your
+floppy drives and also AtariSIO/SIO2PC/APE/... at the highest
 possible speed.
 
 One drawback of the builtin highspeed SIO code is that it completely
@@ -450,4 +484,6 @@ version 4.04:
 - Added "barebone" version without highspeed SIO and remote console
 
 version 4.05:
-- Updated highspeed SIO code to latest version (1.12)
+- Updated highspeed SIO code to latest version (1.20)
+- Added option to enable highspeed SIO while booting MyPicoDos
+- Added fallback to OS SIO in case of highspeed SIO errors
