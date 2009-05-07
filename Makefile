@@ -99,7 +99,7 @@ mypdos-code-r-hioff.bin: mypdos.src $(MYPDOSINC) \
 mypdos-code-b.bin: mypdos.src $(MYPDOSINC)
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dBAREBONE=1 -r -o$@ $<
 
-mypdos-atarisio.bin: mypdos.src $(MYPDOSINC) \
+atarisio-mypdos.bin: mypdos.src $(MYPDOSINC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -dMYPDOSBIN=1 -dHIGHSPEED=1 -dREMOTE=1 -r -o$@ $<
@@ -164,7 +164,7 @@ PICOBOOT.COM: picobootinit.src picobootcode.bin getdens.src
 picoboot405.c: picobootcode.bin
 	dd if=$< bs=1 count=384 | xxd -i > $@
 
-atarisio: mypdos-atarisio.bin bootstd405.c bootrem405.c bootbare405.c \
+atarisio: atarisio-mypdos.bin bootstd405.c bootrem405.c bootbare405.c \
 	picostd405.c picorem405.c picobare405.c picoboot405.c
 
 MYINIT_COMS=MYINIT.COM MYINITR.COM MYINITB.COM \

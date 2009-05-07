@@ -27,6 +27,11 @@
 	DEFDRIVE=1
 	.ENDIF
 
+; default highspeed mode
+; $00 = off
+; $01 = auto (enable after booting)
+; $81 = enable during booting
+
 	.if .not .def HIDEF
 	HIDEF=$81
 	.endif
@@ -1156,11 +1161,16 @@ RDDIRLP	JSR READSEC
 	LDA NE459+2
 	CMP #$E4
 	BEQ DIRERR	; report error if using standard SIO
-; disable highspeed SIO
+
+; disable highspeed SIO and try again
 	JSR SPDLO
-	JSR HISTAT
-; and try again
-	JMP RDDIRLP
+	JSR READSEC
+	BMI RDDERR	; another error
+
+	JSR HISTAT	; read succeeded, stay at standard SIO
+	JMP DIROK
+
+RDDERR	JSR SPDHI	; permanent error, enable highspeed again
 .endif
 
 DIRERR	JSR CLS
@@ -1215,9 +1225,9 @@ NOFND	TXA
 	BEQ ENDRDIR
 
 	INC DSEC
-	BNE RDDIRLP
+	BNE NDSEC1
 	INC DSEC+1
-	JMP RDDIRLP
+NDSEC1	JMP RDDIRLP
 
 ENDRDIR	LDA USELONG
 	BEQ NONAMES
@@ -1856,7 +1866,7 @@ EBASOFF	RTS
 
 CHKHI	LDA NE459+2
 	CMP #$E4
-	BNE SPDHI
+	BNE CHSPDHI
 
 SPDLO	LDA #$E4
 	STA NE459+2
@@ -1865,7 +1875,7 @@ SPDLO	LDA #$E4
 	CLC
 	RTS
 
-SPDHI	LDX DRIVENO
+CHSPDHI	LDX DRIVENO
 	LDA SPEEDTB-1,X
 	BEQ SPDLO
 	CMP #$29	; new highspeed code adds 1 to entries in table
@@ -1873,12 +1883,13 @@ SPDHI	LDX DRIVENO
 	SEC
 	SBC #1
 	STA SIOSPEED
-	LDA #<SIOADR
+	LDX #<SIOEND
+	LDY #>SIOEND
+
+SPDHI	LDA #<SIOADR
 	STA NE459+1
 	LDA #>SIOADR
 	STA NE459+2
-	LDX #<SIOEND
-	LDY #>SIOEND
 	SEC
 	RTS
 
