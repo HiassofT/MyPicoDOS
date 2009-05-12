@@ -6,8 +6,9 @@ ECHO
 ECHO  1  Initializer (no remote console)
 ECHO  2  Initializer (remote console)
 ECHO  3  Initializer (barebone)
-ECHO  4  COM version (highspeed auto)
-ECHO  5  COM version (highspeed off)
+ECHO  4  PicoBoot Initializer
+ECHO  5  COM version (highspeed auto)
+ECHO  6  COM version (highspeed off)
 ECHO
 ECHO  0  exit to basic/DOS
 ECHO
@@ -22,9 +23,12 @@ IF ANSWER = 3
   LOAD D1:MYINITB.COM QUIT
 ENDIF
 IF ANSWER = 4
-  LOAD D1:MYPDOSR.COM QUIT
+  LOAD D1:PICOBOOT.COM QUIT
 ENDIF
 IF ANSWER = 5
+  LOAD D1:MYPDOSR.COM QUIT
+ENDIF
+IF ANSWER = 6
   LOAD D1:MYPDOSRN.COM QUIT
 ENDIF
 EXIT

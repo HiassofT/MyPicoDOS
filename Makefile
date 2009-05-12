@@ -172,7 +172,10 @@ MYINIT_COMS=MYINIT.COM MYINITR.COM MYINITB.COM \
 	MYPDOSR.COM MYPDOSRN.COM \
 	MYPDOSB.COM PICOBOOT.COM \
 
-myinit.atr: $(MYINIT_COMS) initdisk
+initdisk/AUTOEXEC.BAT: autoexec.bat
+	tr '\012' '\233' < $< > $@
+
+myinit.atr: $(MYINIT_COMS) initdisk initdisk/AUTOEXEC.BAT
 	cp -f $(MYINIT_COMS) initdisk
 	dir2atr -b MyDos453 720 myinit.atr initdisk
 
