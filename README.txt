@@ -37,6 +37,8 @@ the following features:
 - Optional builtin atariserver (AtariSIO) remote console.
 - Separate "barebone" version without highspeed SIO support and
   remote console support (for those who want to save space)
+- Separate boot-sector-only version "PicoBoot" supporting a single
+  COM file on a disk
 
 
 2. Using MyPicoDos
@@ -148,7 +150,36 @@ writing this document I haven't officially released a version of
 AtariSIO with remote console support!
 
 
-3. Some remarks about the builtin highspeed SIO code
+3. Using PicoBoot
+
+The main goal of PicoBoot is to create auto-booting disks, without
+having to convert the COM/EXE file to some non-standard format.
+
+PicoBoot is an extremely stripped-down version of MyPicoDos
+that fits into the 3 boot sectors of a disk. It simply loads
+the very first file on the disk, assuming it is a standard
+COM/EXE/XEX file.
+
+PicoBoot doesn't to any checks (if the file exists, if it
+really is a COM file etc), doesn't disable basic and also doesn't
+include highspeed SIO support. But it supports both single and
+double density images, up to 16MB.
+
+To initialize a disk, load PICOBOOT.COM and enter the drive number.
+The initializier program than writes the PicoBoot code to the 3
+boot sectors. It doesn't matter if there's already a COM file on
+the disk, you may also initialize a blank-formatted disk and copy
+the COM file later. The initializer program may also be loaded from
+a "gamedos", it doesn't need any DOS functions.
+
+After the three boot sectors are loaded, PicoBoot sets up the
+COM loader code with the information found in the first directory
+entry: it checks status bit 2 of the file to determine if
+the file uses 10bit or 16bit sector links and reads the starting
+sector number from the directory entry. Then it starts the COM loader.
+
+
+4. Some remarks about the builtin highspeed SIO code
 
 In general I'd recommend using the version of MyPicoDos that has
 highspeed SIO set to auto, so that you can access all of your
@@ -196,7 +227,7 @@ If the drive only supports standard SIO mode, the highspeed code
 is automatically turned off.
 
 
-4. Long filenames and disk/directory titles support
+5. Long filenames and disk/directory titles support
 
 By default MyPicoDos displays the directory in a short format
 (8.3 filenames).
@@ -225,7 +256,7 @@ which can contain a maximum of 64 files per directory, only
 BiboDos is able to store 128 files per directory on a QD (360k)
 disk - so, in general, this should not be a real limitation.
 
-4.1 Creating/editing long filenames with the initializer program
+5.1 Creating/editing long filenames with the initializer program
 
 First of all, the initializer program will ask you to enter
 the drive/directory for which you would like to create or edit
@@ -257,7 +288,7 @@ directory of a disk, and all other DOSses except BiboDos only
 handle 8 entries per directory sector (compared to 16 entries
 in BiboDos QD format).
 
-4.2 Creating the PICONAME.TXT file by hand
+5.2 Creating the PICONAME.TXT file by hand
 
 The file format of the PICONAME.TXT file is quite simple:
 it is a plain ATASCII file separated by returns (character 155).
@@ -289,7 +320,7 @@ BOULDERD2   Boulder Dash 2
 So, it's really quite simple :-)
 
 
-5. Usage hints
+6. Usage hints
 
 In the MyPicoDos initializer, you can abort the current operation
 by pressing the break key.
@@ -317,7 +348,7 @@ per sector) and should not be confused with the SD/ED/DD/QD/... disk
 formats.
 
 
-6. Compiling the sources
+7. Compiling the sources
 
 First of all, you don't need to compile MyPicoDos yourself, you
 may simply use the provided .COM and .ATR files.
@@ -414,7 +445,7 @@ If you've got any questions or if you have problems with MyPicoDos,
 feel free to contact me by email!
 
 
-7. Credits
+8. Credits
 
 Thanks go to:
 
@@ -424,7 +455,7 @@ bug reports and sending me hints!
 Crash and Forrest from the Atarimax forum for donating a MyIDE
 interface!
 
-8. Changelog
+9. Changelog
 
 version 3.0:
 - Initial GPL release.
@@ -489,6 +520,7 @@ version 4.04:
 - Added "barebone" version without highspeed SIO and remote console
 
 version 4.05:
+- Added boot-sector-only version "PicoBoot"
 - Updated highspeed SIO code to latest version (1.20)
 - Added option to enable highspeed SIO while booting MyPicoDos
 - Added fallback to OS SIO in case of highspeed SIO errors
