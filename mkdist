@@ -13,12 +13,13 @@ mkdir -p "${TMPDIR}/src/hisio"
 mkdir -p "${TMPDIR}/src/initdisk"
 
 cp -a README.txt LICENSE \
-MYINIT.COM MYINITR.COM MYINITB.COM \
+MYINIT.COM MYINITR.COM MYINITB.COM MYINITS.COM \
 MYPDOS.COM MYPDOSN.COM \
 MYPDOSR.COM MYPDOSRN.COM MYPDOSB.COM \
 myinit.atr \
 mypdos.atr mypdosn.atr \
 mypdosr.atr mypdosrn.atr mypdosb.atr \
+mypdoss0.atr mypdoss1.atr \
 "${TMPDIR}"
 cp -a Makefile *.inc *.src "${TMPDIR}/src"
 cp -a hisio/*.src hisio/*.inc "${TMPDIR}/src/hisio"

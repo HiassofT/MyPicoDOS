@@ -39,12 +39,14 @@ the following features:
   remote console support (for those who want to save space)
 - Separate boot-sector-only version "PicoBoot" supporting a single
   COM file on a disk
+- Separate "SDrive" version which configures the SDrive to use
+  110 or 126 kbit/sec transfer speed.
 
 
 2. Using MyPicoDos
 
-- Load the MyPicoDos initializer (MYINIT.COM, MYINITR.COM, MYINITB.COM)
-  from the myinit.atr image and write MyPicoDos to a disk.
+- Load the MyPicoDos initializer (MYINIT.COM, MYINITR.COM, MYINITB.COM
+  or MYINITS.COM) from the myinit.atr image and write MyPicoDos to a disk.
 
   Note: You must load it from a real DOS (not a gamedos!),
   because the initializer will use the DOS functions to create
@@ -52,7 +54,9 @@ the following features:
 
   In the initializer you can choose if and when you want to
   use the builtin highspeed SIO code (unless you are using the
-  barebone version, of course). There are 3 possibilities:
+  barebone version, which contains no highspeed code, or if you
+  are using the SDrive version, which defaults to highspeed enabled
+  at boot time). There are 3 possibilities:
 
   * HighSpeed at boot: enables highspeed while booting MyPicoDos,
     automatic fallback to standard OS SIO in case of errors.
@@ -96,14 +100,15 @@ the following features:
 - Use the standalone MYPDOS*.COM versions of MyPicoDos on the
   myinit.atr image. These files can be loaded directly from DOS.
 
-The initializer is avaliable in 3 versions:
-- without atariserver remote console (MYINIT.COM)
+The initializer is avaliable in 4 versions:
+- default, without atariserver remote console (MYINIT.COM)
 - with atariserver remote console (MYINITR.COM)
+- special SDrive version (MYINITS.COM)
 - barebone (MYINITB.COM)
 
 The standalone .COM version and the directly bootable ATR files
 are available in 5 configurations:
-- barebone (MYPDOSB.COM/mypdosb.atr)
+- barebone (mypdosb.atr/MYPDOSB.COM)
 - no remote console, highspeed auto (mypdos.atr/MYPDOS.COM)
 - no remote console, highspeed off (mypdosn.atr/MYPDOSN.COM)
 - remote console, highspeed auto (mypdosr.atr/MYPDOSR.COM),
@@ -523,4 +528,6 @@ version 4.05:
 - Added boot-sector-only version "PicoBoot"
 - Updated highspeed SIO code to latest version (1.20)
 - Added option to enable highspeed SIO while booting MyPicoDos
-- Added fallback to OS SIO in case of highspeed SIO errors
+- Added fallback to OS SIO in case of highspeed SIO errors while
+  booting MyPicoDos
+- Added SDrive version

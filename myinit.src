@@ -46,6 +46,7 @@ OFSBYT	= 11	; bytes per sector (125/253)
 OFSMASK	= 12	; sector link chaining mask
 OFSLEN	= 13	; sector length (128/256)
 OFSHI	= 15	; default highspeed flag
+OFSSD	= 17	; pokey divisor for SDrive
 
 ; run address
 	* = $02E0
@@ -104,10 +105,26 @@ ASKMAIN	JSR GETKEY
 	.IF .DEF BAREBONE
 	JMP INITN
 	.ELSE
+	.IF .DEF SDRIVE
+	LDA #0
+	STA MYHS+OFSSD	; pokey divisor 0
+	.ENDIF
 	JMP INITHSB
 	.ENDIF
 NINIHSB	CMP #$32
 	.IF .NOT .DEF BAREBONE
+
+	.IF .DEF SDRIVE
+	BNE NINIHS1
+	JSR PUTCHAR
+	LDA #155
+	JSR PUTCHAR
+	LDA #1
+	STA MYHS+OFSSD	; pokey divisor 1
+	JMP INITHSB
+NINIHS1	CMP #$33
+	.ELSE	; SDRIVE
+
 	BNE NINIHS
 	JSR PUTCHAR
 	LDA #155
@@ -120,7 +137,8 @@ NINIHS	CMP #$33
 	JSR PUTCHAR
 	JMP INIT
 NINIT	CMP #$34
-	.ENDIF
+	.ENDIF	; SDRIVE
+	.ENDIF	; BAREBONE
 	BNE NCRNAM
 	JSR PUTCHAR
 	LDA #155
@@ -833,7 +851,11 @@ TITEL	.BYTE 125
 	.IF .DEF REMOTE
 	.BYTE "          MyPicoDos Init V4.05R",155
 	.ELSE
+	.IF .DEF SDRIVE
+	.BYTE "          MyPicoDos Init V4.05S",155
+	.ELSE
 	.BYTE "          MyPicoDos Init V4.05",155
+	.ENDIF
 	.ENDIF
 	.ENDIF
 	.BYTE "         (c) HiassofT 1992-2009",155
@@ -844,6 +866,10 @@ TITEL	.BYTE 125
 	.BYTE "long filenames and subdirectory support",155
 	.IF .DEF REMOTE
 	.BYTE "and builtin atariserver remote console", 155
+	.ELSE
+	.IF .DEF SDRIVE
+	.BYTE "    and SDrive auto-highspeed-switch", 155
+	.ENDIF
 	.ENDIF
 	.BYTE 155,155
 	.BYTE "this program MUST be loaded from DOS,",155
@@ -853,10 +879,16 @@ TITEL	.BYTE 125
 	.BYTE "<1> init disk",155
 	.BYTE "<2> create/edit long filenames",155
 	.ELSE
+	.IF .DEF SDRIVE
+	.BYTE "<1> init disk (126kbit/sec)",155
+	.BYTE "<2> init disk (110kbit/sec)",155
+	.BYTE "<3> create/edit long filenames",155
+	.ELSE
 	.BYTE "<1> init disk (HighSpeed at boot)",155
 	.BYTE "<2> init disk (HighSpeed auto)",155
 	.BYTE "<3> init disk (HighSpeed off)",155
 	.BYTE "<4> create/edit long filenames",155
+	.ENDIF
 	.ENDIF
 	.BYTE "<0> exit MyPicoDos Init",155,155
 	.BYTE "-> "
@@ -930,7 +962,11 @@ MYHS	= *
 .IF .DEF REMOTE
 	.incbin "mypdosr.bin"
 .ELSE
+.IF .DEF SDRIVE
+	.incbin "mypdoss.bin"
+.ELSE
 	.incbin "mypdos.bin"
+.ENDIF
 .ENDIF
 .ENDIF
 MYHSLEN	= * - MYHS

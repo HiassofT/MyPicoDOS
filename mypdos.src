@@ -36,6 +36,11 @@
 	HIDEF=$81
 	.endif
 
+; default pokey divisor for SDrive
+	.if .not .def SDDEF
+	SDDEF=0
+	.endif
+
 	PICOSTART = $1000
 
 	.OPT NO OBJ
@@ -225,7 +230,12 @@ BREMAIN	.BYTE ((PICOEND-PICOSTART+127)/128)-3
 	.if .def HIGHSPEED
 HIFLG	.BYTE HIDEF
 	.endif
+
 CAUTORUN	.BYTE 0
+
+	.if .def SDRIVE
+SDDIV	.BYTE SDDEF
+	.endif
 
 	.ELSE	; no MYPDOSBIN
 	.IF .DEF MYPDOSROM
@@ -235,6 +245,10 @@ CAUTORUN	.BYTE 0
 HIFLG	.BYTE HIDEF
 	.endif
 CAUTORUN	.BYTE 0
+
+	.if .def SDRIVE
+SDDIV	.BYTE SDDEF
+	.endif
 
 	.ELSE ; no MYPDOSROM
 
@@ -257,6 +271,10 @@ RESTLEN	.WORD 128
 HIFLG	.BYTE HIDEF
 	.endif
 CAUTORUN	.BYTE 0
+
+	.if .def SDRIVE
+SDDIV	.BYTE SDDEF
+	.endif
 
 REST	
 	LDA #$31
@@ -430,8 +448,13 @@ TITLE	= *
 	.SBYTE " MyPicoDos 4.05R (c)"
 	.SBYTE " HiassofT 1992-2009 "
 	.ELSE
+	.IF .DEF SDRIVE
+	.SBYTE " MyPicoDos 4.05S (c)"
+	.SBYTE " HiassofT 1992-2009 "
+	.ELSE
 	.SBYTE " MyPicoDos 4.05 (c) "
 	.SBYTE "HiassofT 1992-2009  "
+	.ENDIF
 	.ENDIF
 	.ENDIF
 
@@ -597,12 +620,31 @@ MENU 	= *
 
 	LDA HIFLG
 	AND #1
-	BEQ MENU2
+	BEQ NODHI
 	LDA #<HISIO
 	STA NE459+1
 	LDA #>HISIO
 	STA NE459+2
+NODHI
+	.ENDIF
 
+	.IF .DEF SDRIVE
+	LDA #$71
+	STA $300
+	LDA #1
+	STA $301
+	LDA #$C1
+	STA $302
+	LDA #0
+	STA $303
+	LDA SDDIV
+	STA $30A
+	JSR $E459	; set SDrive pokey divisor
+	.IF .DEF HIGHSPEED
+	LDA #0
+	STA $301
+	JSR HISIO	; clear SIO speed table
+	.ENDIF
 	.ENDIF
 
 	LDA CAUTORUN
