@@ -1,6 +1,6 @@
 ;  MyPicoDos init V4.05 - initializer program
 ;
-;  Copyright (C) 1992-2009 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 1992-2010 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -858,7 +858,7 @@ TITEL	.BYTE 125
 	.ENDIF
 	.ENDIF
 	.ENDIF
-	.BYTE "         (c) HiassofT 1992-2009",155
+	.BYTE "         (c) HiassofT 1992-2010",155
 	.BYTE 155
 	.BYTE "      COM / EXE / BIN / BAS loader",155
 	.BYTE "  for SD & DD disks, 720-65535 sectors",155

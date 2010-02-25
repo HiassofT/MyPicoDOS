@@ -1,5 +1,5 @@
 # 
-# MyPicoDos V4.05 Makefile (c) 2003-2009 by Matthias Reichl <hias@horus.com>
+# MyPicoDos V4.05 Makefile (c) 2003-2010 by Matthias Reichl <hias@horus.com>
 #
 
 ATASM=atasm
@@ -215,7 +215,7 @@ initdisk/AUTOEXEC.BAT: autoexec.bat
 
 myinit.atr: $(MYINIT_COMS) initdisk initdisk/AUTOEXEC.BAT
 	cp -f $(MYINIT_COMS) initdisk
-	dir2atr -b MyDos453 720 myinit.atr initdisk
+	dir2atr -b MyDos4534 720 myinit.atr initdisk
 
 
 myinit3:
