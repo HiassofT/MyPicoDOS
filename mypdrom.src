@@ -18,7 +18,7 @@
 
 	.include "cio.inc"
 
-	CARTOFF = $D530
+	.include "cartsio.inc"
 
 ; MyPicoDos start address
 MYSTART = $1000
@@ -31,6 +31,9 @@ SRCADR  = $E0
 DSTADR  = $E2
 
 	ORG = $A000
+
+	* = $8000
+	.BYTE $FF
 
 	* = ORG
 
@@ -70,7 +73,7 @@ MYLP2	LDA (SRCADR),Y	; copy MyPicoDos code
 MYSETUP	SEI
 	LDA #0
 	STA $D40E
-	STA CARTOFF	; MyPicoDos init routine
+	CARTOFF
 	LDA $D013
 	STA $3FA
 	LDA #$40
@@ -83,27 +86,31 @@ MYSETUP	SEI
 	LDA $BFFF
 	EOR #$FF
 	STA $BFFF
+	LDY #1
+	LDX #$A0
 	CMP $BFFF
 	BNE NBASOFF
+	LDX #$C0
+	LDY #0
 
-	LDA #$C0
-	STA 106
-	STA 740
-	LDA #1
-	STA 1016
-	LDA #$90
+NBASOFF	STX 106
+	STX 740
+	STY 1016
+
+	LDA #$70
 	STA DSTADR+1
-	LDX #48
-	LDA #0
+CLRLP1	LDA #0
 	STA DSTADR
 	TAY
 CLRLP	STA (DSTADR),Y
 	DEY
 	BNE CLRLP
 	INC DSTADR+1
-	DEX
-	BNE CLRLP
-NBASOFF	OPEN 0,12,0,EDITOR-MYSETUP+MYRUNA
+	LDA DSTADR+1
+	CMP 106
+	BNE CLRLP1
+
+	OPEN 0,12,0,EDITOR-MYSETUP+MYRUNA
 	JMP MYSTART
 EDITOR	.BYTE "E:", 155
 MYSETL	= * - MYSETUP
@@ -111,10 +118,25 @@ MYSETL	= * - MYSETUP
 XRTS	RTS
 
 MYPDOS	= *
-	.incbin "mypdos-code-hioff.bin"
+	.incbin "mypdos-code-cartsio.bin"
 MYPDPG	= (*-MYPDOS+255) / 256
 
 XEND	= *
+
+	* = CARTTAB
+
+; dummy drive table
+; D1: 1040 SD
+	.BYTE 0		; SD
+	.WORD $40	; offset $4000 (bank 1)
+	.WORD 1040	; 1040 sectors
+	.BYTE $FF,$FF,$FF
+
+; D2: 720 DD
+	.BYTE 1		; DD
+	.WORD $280	; offset $28000 (bank 10)
+	.WORD 720	; 720 sectors
+	.BYTE $FF,$FF,$FF
 	
 	.DC ($BFFA-*) $FF
 	.WORD ORG

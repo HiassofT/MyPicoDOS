@@ -1,0 +1,261 @@
+;  cartsiocode.src - SIO code for accessing the cart
+;
+;  Copyright (c) 2010 by Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+DOCARSIO
+; calculate drive number
+	CLC
+	LDA DDEVIC
+	ADC DUNIT
+	ADC #$FF
+	CMP #$31
+	BCC ?NODEVIC
+	CMP #$39
+	BCC ?DEVICOK
+?NODEVIC
+	LDY #138	; no device - return "timeout error"
+	STY DSTATS
+	RTS
+
+; calculate offset in drive table
+?DEVICOK
+	SEC
+	SBC #$31
+	ASL
+	ASL
+	ASL
+	STA TABOFS
+
+; wait for VCOUNT to reach $70 so that the screen
+; doesn't flicker when accessing the cart
+
+	INC CRITIC
+
+?WTSCR	LDA $D40B
+	CMP #$70
+	BNE ?WTSCR
+
+; set cartridge bank containing drive table
+	CARTBNKI TABBANK
+
+; check if we should emulate this drive (bit 7 clear)
+	LDX TABOFS
+	LDA CARTBDR,X
+	STA DENSFLG	; remember density
+	STA DENSFL2	; also for number of bytes to transfer
+	BPL ?VALID	; yes
+
+; no, return error 138 (drive timeout)
+?ERR138	LDA #138
+?CSIOX	STA DSTATS
+
+?CSIOEND
+	CARTOFF
+	DEC CRITIC
+	LDY DSTATS
+	RTS
+
+?VALID
+; copy SIO buffer address to zeropage
+	LDA DBUF
+	STA ZBUFR
+	LDA DBUF+1
+	STA ZBUFR+1
+
+; now check for the command
+	LDA DCOMND
+	CMP #$53	; get status
+	BEQ ?CMDSTAT
+	CMP #$52	; read sector
+	BEQ ?CMDREAD
+
+; other commands are unsupported, return error 144 (device nak)
+?ERR144	LDA #144
+	BNE ?CSIOX
+
+?SIOOK	LDA #1
+	BNE ?CSIOX
+
+; get status command
+?CMDSTAT
+
+; check dstats / direction register
+	LDA DSTATS
+	AND #$C0
+	BEQ ?SIOOK	; immediate mode, just return "OK"
+	CMP #$40	; direction = in?
+	BNE ?ERR144	; no, return with error 144
+
+; check data length (must be 4) - otherwise return error 138
+	LDA DBYT+1
+	BNE ?ERR138
+	LDA DBYT
+	CMP #4
+	BNE ?ERR138
+
+; now build the first status byte
+
+; $08 = write protected
+; $10 = motor on
+; $20 = double density
+; $80 = enhanced density
+
+	LDA #$18
+	STA ZPTMP
+	LDA CARTBDR,X
+	BNE ?STATDD	; drive is double density
+
+; check if number of sectors = 1040
+	LDA CARTBSH
+	CMP #4
+	BNE ?STAT1X
+	LDA CARTBSL
+	CMP #$10
+	BNE ?STAT1X
+
+; yes, set "enhanced density" bit
+
+	LDA ZPTMP
+	ORA #$80
+	STA ZPTMP
+	BNE ?STAT1X	; always
+
+?STATDD	LDA ZPTMP
+	ORA #$20
+	STA ZPTMP
+
+?STAT1X
+; disable cartridge (the buffer might be in cart space!)
+	CARTOFF
+
+	LDY #0
+	LDA ZPTMP
+	STA (ZBUFR),Y	; drive status
+	INY
+	LDA #$FF
+	STA (ZBUFR),Y	; FDC status (always $FF)
+	INY
+	LDA #$E0
+	STA (ZBUFR),Y	; dummy format timeout value
+	INY
+	LDA #0
+	STA (ZBUFR),Y	; dummy value
+	JMP ?SIOOK
+
+; common exit routine for error 144 in read sector
+?RERR144
+	JMP ?ERR144
+
+; read command
+?CMDREAD
+
+; check if sector = 0
+	LDA DSEC+1
+	BNE ?RDOK1	; no, >= 256
+
+	LDA DSEC
+	BEQ ?RERR144	; sector = 0 -> error
+
+	CMP #4		; check if sector < 4
+	BCS ?RDOK1	; no
+
+	LDA #0		; yes, set density flag to 0 (128 bytes)
+	STA DENSFL2
+	
+; check if sector <= total number of sectors
+?RDOK1	LDA DSEC+1
+	CMP CARTBSH,X
+	BCC ?RDOK2
+	BNE ?RERR144
+	LDA DSEC
+	CMP CARTBSL,X
+	BCC ?RDOK2
+	BNE ?RERR144
+	
+; check dstats / direction register
+?RDOK2	LDA DSTATS
+	AND #$C0
+	BNE ?RDNOI
+	JMP ?SIOOK	; immediate mode, just return "OK"
+
+?RDNOI	CMP #$40	; direction = in?
+	BNE ?RERR144	; no, return with error 144
+
+	LDA #$80
+	STA BUFLEN
+	LDY #0
+	STY BUFLEN+1
+
+	LDA DENSFL2
+	BEQ ?RDSD	; density flag = 0 means 128 bytes
+
+	STY BUFLEN	; otherwise 256 bytes per sector
+	INY
+	STY BUFLEN+1
+	
+?RDSD
+; check if BUFLEN matches DBYT
+
+	LDA BUFLEN	; bytes lo
+	CMP DBYT
+	BNE ?RERR144	; no - return error
+	LDA BUFLEN+1	; bytes hi
+	CMP DBYT+1
+	BNE ?RERR144	; no - return error
+
+; calculate sector address
+	LDA #0
+	STA CADR
+	SEC
+	LDA DSEC
+	SBC #1
+	STA CADR+1
+	LDA DSEC+1
+	SBC #0
+	STA CADRB
+
+	LDA DENSFLG
+	BNE ?RDDD	; double density disk, address is OK
+; SD disk: divide address by 2
+
+	LSR CADRB
+	ROR CADR+1
+	ROR CADR
+
+?RDDD
+; add starting offset of image (in pages) to address
+	CLC
+	LDA CADR+1
+	ADC CARTBOL,X
+	STA CADR+1
+	LDA CADRB
+	ADC CARTBOH,X
+	STA CADRB
+	
+	; convert linear address into address/bank
+	CONVBANK CADR
+
+; now copy the data
+	LDY #0
+?RDLP	CARTBNK CADRB
+	LDA (CADR),Y
+	CARTOFF
+	STA (ZBUFR),Y
+	INY
+	CPY BUFLEN
+	BNE ?RDLP
+	JMP ?SIOOK
