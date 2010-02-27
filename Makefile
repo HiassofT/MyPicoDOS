@@ -106,6 +106,8 @@ testdisk.raw: testdisk.atr
 mypdrom.c: mypdos8.rom
 	xxd -i $< > $@
 
+atr2cart.o: mypdrom.c
+
 atr2cart: atr2cart.o AtrUtils.o Error.o
 	$(CXX) -o $@ $^
 
