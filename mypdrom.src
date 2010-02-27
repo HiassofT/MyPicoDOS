@@ -32,8 +32,8 @@ DSTADR  = $E2
 
 	ORG = $A000
 
-	* = $8000
-	.BYTE $FF
+;	* = $8000
+;	.BYTE $FF
 
 	* = ORG
 

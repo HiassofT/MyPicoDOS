@@ -5,7 +5,10 @@
 ATASM=atasm
 #ATASM=/data/src/xl/atasm103/src/atasm
 
-all: 512k.rom
+CXX=g++
+CXXFLAGS=-W -Wall
+
+all: 512k.rom atr2cart atr2cart.exe
 
 
 #all: MYINIT.COM MYINITR.COM \
@@ -66,7 +69,7 @@ mypdos-code-cartsio.bin: mypdos.src $(MYPDOSINC) \
 	cartsio.src $(CARTSIOINC) cartsio.bin
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dCARTSIO=1 -r -o$@ $<
 
-mypdos16.rom: mypdrom.src mypdos-code-cartsio.bin cartsio.bin
+mypdos8.rom: mypdrom.src mypdos-code-cartsio.bin cartsio.bin
 	$(ATASM) $(ASMFLAGS) -r -f255 -o$@ $<
 
 8kblank.rom:
@@ -75,8 +78,8 @@ mypdos16.rom: mypdrom.src mypdos-code-cartsio.bin cartsio.bin
 16kblank.rom:
 	dd if=/dev/zero bs=16k count=1 | tr '\000' '\377' > 16kblank.rom
 
-512kbase.rom: mypdos16.rom 16kblank.rom
-	cat mypdos16.rom 16kblank.rom 16kblank.rom 16kblank.rom \
+512kbase.rom: mypdos8.rom 8kblank.rom 16kblank.rom
+	cat 8kblank.rom mypdos8.rom 16kblank.rom 16kblank.rom 16kblank.rom \
 	16kblank.rom 16kblank.rom 16kblank.rom 16kblank.rom \
 	16kblank.rom 16kblank.rom 16kblank.rom 16kblank.rom \
 	16kblank.rom 16kblank.rom 16kblank.rom 16kblank.rom \
@@ -100,8 +103,18 @@ testdd.atr: testdisk testdisk/*
 testdisk.raw: testdisk.atr
 	dd if=$< of=$@ bs=16 skip=1
 
+mypdrom.c: mypdos8.rom
+	xxd -i $< > $@
+
+atr2cart: atr2cart.o AtrUtils.o Error.o
+	$(CXX) -o $@ $^
+
+atr2cart.exe: atr2cart.cpp AtrUtils.cpp Error.cpp
+	i586-mingw32msvc-g++ $(CXXFLAGS) -o $@ $^
+	i586-mingw32msvc-strip $@
+
 disk:
 	mkdir disk
 
 clean:
-	rm -f *.65o *.bin *.COM *.atr *.rom
+	rm -f atr2cart atr2cart.exe mypdrom.c *.65o *.o *.bin *.COM *.atr *.rom
