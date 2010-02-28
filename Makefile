@@ -24,20 +24,14 @@ all: 512k.rom atr2cart atr2cart.exe
 
 #all: MYPDOS.COM mypdos.atr mypdoshs.atr myinit2.atr
 
-ASMFLAGS= -Ihisio -Icartsio
-#ASMFLAGS = -Ihisio -Icartsio -s
-#ASMFLAGS = -Ihisio -Icartsio -v -s
-#ASMFLAGS = -Ihisio -Icartsio -s -dHWDEBUG
+ASMFLAGS= -Icartsio
+#ASMFLAGS = -Icartsio -s
+#ASMFLAGS = -Icartsio -v -s
+#ASMFLAGS = -Icartsio -s -dHWDEBUG
 
 MYPDOSINC = common.inc getdens.src longname.src \
 	rreadcode.src comloadcode.src basloadcode.src \
 	rread.bin comload.bin basload.bin
-
-HISIOINC = hisio/hisio.inc hisio/hisiocode.src hisio/hisiodet.src \
-	hisio/hisiocode-break.src hisio/hisiocode-cleanup.src \
-	hisio/hisiocode-main.src hisio/hisiocode-send.src \
-	hisio/hisiocode-check.src hisio/hisiocode-diag.src \
-	hisio/hisiocode-receive.src hisio/hisiocode-vbi.src
 
 CARTSIOINC = cartsio/cartsio.inc \
 	cartsio/cartsiocode-ram.src cartsio/cartsiocode-rom.src
@@ -51,20 +45,8 @@ basload.bin: basload.src basloadcode.src common.inc rreadcode.src
 comload.bin: comload.src comloadcode.src common.inc rreadcode.src
 	$(ATASM) $(ASMFLAGS) -r -o$@ $<
 
-highspeed.bin: highspeed.src highspeedcode.src $(HISIOINC) \
-	common.inc rreadcode.src comloadcode.src
-	$(ATASM) $(ASMFLAGS) -r -o$@ $<
-
 cartsio.bin: cartsiobin.src $(CARTSIOINC)
 	$(ATASM) $(ASMFLAGS) -r -o$@ $<
-
-mypdos-code.bin: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src $(HISIOINC) highspeed.bin
-	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -r -o$@ $<
-
-mypdos-code-hioff.bin: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src $(HISIOINC) highspeed.bin
-	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dHIDEF=0 -r -o$@ $<
 
 mypdos-code-cartsio.bin: mypdos.src $(MYPDOSINC) \
 	cartsio.src $(CARTSIOINC) cartsio.bin
