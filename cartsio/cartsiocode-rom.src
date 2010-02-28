@@ -1,0 +1,178 @@
+;  cartsiocode-rom.src - SIO code for accessing the cart, common ROM code
+;
+;  Copyright (c) 2010 by Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+; calculate drive number
+	CLC
+	LDA DDEVIC
+	ADC DUNIT
+	ADC #$FF
+	CMP #$31
+	BCC ?NODEVIC
+	CMP #$39
+	BCC ?DEVICOK
+?NODEVIC
+	LDY #138	; no device - return "timeout error"
+?CSEXIT	STY DSTATS
+	RTS
+
+; calculate offset in drive table (multiply drive number by  16)
+?DEVICOK
+	SEC
+	SBC #$31
+	ASL
+	ASL
+	ASL
+	ASL
+	TAX
+
+; check if we should emulate this drive (bit 7 clear)
+	LDA CARTBDR,X
+	STA DENSFLG	; store disk density
+	STA DENSFL2	; store sector size
+	BMI ?NODEVIC	; bit 7 is set - exit with error 138
+
+; copy SIO buffer address to zeropage
+	LDA DBUF
+	STA CSDST
+	LDA DBUF+1
+	STA CSDST+1
+
+; now check for the command
+	LDA DCOMND
+	CMP #$53	; get status
+	BEQ ?CMDSTAT
+	CMP #$52	; read sector
+	BEQ ?CMDREAD
+
+; other commands are unsupported, return error 144 (device nak)
+?ERR144	LDY #144
+	BNE ?CSEXIT
+
+?SIOOK	LDY #1
+	BNE ?CSEXIT
+
+; common code: verify SIO parameters
+?CHKBUF BIT DSTATS
+	BMI ?ERR144	; direction = out unsupported, return error
+	BVS ?DIRIN	; direction = in, normal read operation
+
+; handle immediate commands: set BUFLEN to 0
+	LDA #0
+	STA BUFLEN
+	STA BUFLEN+1
+	BEQ ?SIOOK	; no further checks needed
+
+; check if BUFLEN matches DBYT, return an error otherwise
+?DIRIN	LDA DBYT
+	CMP BUFLEN
+	BNE ?ERR144
+	LDA DBYT+1
+	CMP BUFLEN+1
+	BNE ?ERR144
+	BEQ ?SIOOK	; everything fine, return "OK"
+
+; get status command
+?CMDSTAT
+	LDA #4		; buffer length = 4
+	STA BUFLEN
+	LDA #0
+	STA BUFLEN+1
+
+	LDA #CSROMBK	; bank containing drive table & status data
+	STA CSSRCB
+
+	CLC		; setup address with "get status" data
+	TXA
+	ADC #<CARTBST
+	STA CSSRC
+	LDA #>CARTBST
+	ADC #0
+	STA CSSRC+1
+
+	JMP ?CHKBUF	; setup complete, now verify parameters
+
+; read command
+?CMDREAD
+
+; check if sector = 0
+	LDA DSEC+1
+	BNE ?RDOK1	; no, >= 256
+
+	LDA DSEC
+	BEQ ?ERR144	; sector = 0 -> error
+
+	CMP #4		; check if sector < 4
+	BCS ?RDOK1	; no
+
+	LDA #0		; yes, set density flag to 0 (128 bytes)
+	STA DENSFL2
+	
+; check if sector <= total number of sectors
+?RDOK1	LDA DSEC+1
+	CMP CARTBSH,X
+	BCC ?RDOK2	; high byte < max -> everything OK
+	BNE ?ERR144	; high byte > max -> error
+	LDA DSEC	; check low byte if high byte = max
+	CMP CARTBSL,X
+	BCC ?RDOK2	; lower -> OK
+	BNE ?ERR144	; higher -> error
+	
+; setup buffer length
+?RDOK2	LDY DENSFL2
+	LDA ?LENLO,Y
+	STA BUFLEN
+	LDA ?LENHI,Y
+	STA BUFLEN+1
+
+; calculate sector address
+	LDA #0
+	STA CSSRC
+	SEC
+	LDA DSEC
+	SBC #1
+	STA CSSRC+1
+	LDA DSEC+1
+	SBC #0
+	STA CSSRCB
+
+	LDA DENSFLG
+	BNE ?RDDD	; double density disk, address is OK
+
+; SD disk: divide address by 2
+	LSR CSSRCB
+	ROR CSSRC+1
+	ROR CSSRC
+
+?RDDD
+; add starting offset of image (in pages) to address
+	CLC
+	LDA CSSRC+1
+	ADC CARTBOL,X
+	STA CSSRC+1
+	LDA CSSRCB
+	ADC CARTBOH,X
+	STA CSSRCB
+	
+	; convert linear address into address/bank
+	CONVBANK CSSRC
+	JMP ?CHKBUF
+
+; length table for single density (idx=0), double density (idx=1)
+?LENLO	.BYTE $80, 0
+?LENHI	.BYTE 0, 1
+

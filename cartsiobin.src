@@ -27,5 +27,5 @@
 	.OPT OBJ
 
 	SIOADR = COMLEND
-	.include "cartsiocode.src"
+	.include "cartsiocode-ram.src"
 

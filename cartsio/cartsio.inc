@@ -16,12 +16,42 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-DDEVIC  = $0300
-DUNIT   = $0301
-DCOMND  = $0302
-DSTATS  = $0303
+	DDEVIC  = $0300
+	DUNIT   = $0301
+	DCOMND  = $0302
+	DSTATS  = $0303
+	CRITIC	= $42
 
 
+; zero-page addresses:
+	DENSFLG = $30	; density flag for disk image: 0 = SD 1 = DD
+	DENSFL2	= $31	; density flag for current sector
+
+	CSDST = $32	; ,$33: destination buffer vector
+	BUFLEN = $34	; ,$35: buffer length
+
+	CSSRC	= $38	; ,$39 source address lo/hi
+	CSSRCB	= $3A	; source address hi2 / bank number
+
+
+; address/bank of CARTSIO code
+	CSIOROM = $A000	; cartsio entry address
+	CSROMBK = 0	; ROM bank number of cartsio entry
+
+; drive table in ROM (stored in same bank as cartsio code)
+; the drive table has 8 entries (D1:..D8:) with 16 bytes each
+	CARTTAB	= $BF00	; drive table base address
+
+	CARTBDR = CARTTAB	; drive type: 0=sd, 1=dd, $FF=no drive
+	CARTBOL = CARTTAB+1	; starting offset (in pages) lo
+	CARTBOH = CARTTAB+2	; starting offset (in pages) hi
+	CARTBSL = CARTTAB+3	; number of sectors (lo)
+	CARTBSH = CARTTAB+4	; number of sectors (hi)
+	CARTBST = CARTTAB+5	; "get status" data (4 bytes)
+	; bytes 9..15 are unused
+
+
+; common macros
 	.MACRO CARTBNKX ; set bank from X register
 	STX $D500
 	.ENDM
@@ -60,63 +90,5 @@ DSTATS  = $0303
 	STA %1+1
 	.ENDM
 
-; offset in drive table
-	TABOFS = $30
 
-; density flag for disk image: 0 = SD 1 = DD
-	DENSFLG = $31
-
-; temporary buffer vector
-	ZBUFR = $32 ; + $33
-
-; buffer length
-	BUFLEN = $34 ; + $35
-
-
-; $36/$37 are kept free to avoid troubles with TurboDOS
-
-; SIO ZP locations $38 - $3C are used for temporary storage
-
-; for get status :
-	ZPTMP  = $38
-
-; for read sector:
-	CADR	= $38	; ,$39 address lo/hi
-	CADRB	= $3A	; address hi2 / bank number
-
-; density flag for current sector
-	DENSFL2	= $3B
-
-
-; flag if GETBYTE should return after receiving a single byte
-; 0 means no (we are in read loop), $80 means yes
-	GETFLG = $3C
-
-;       CRETRY = $29C
-;       DRETRY = $2BD
-;       STACKP = $318
-
-	CRITIC = $42
-
-
-; address of drive table in cartridge
-; format of table:
-; 8 bytes per entry
-;
-; byte 0: 0=sd, 1=dd, $FF=no drive
-; byte 1: starting offset (in pages) lo
-; byte 2: starting offset (in pages) hi
-; byte 3: number of sectors (lo)
-; byte 4: number of sectors (hi)
-
-	CARTTAB	= $BF00
-
-	CARTBDR = CARTTAB
-	CARTBOL = CARTTAB+1
-	CARTBOH = CARTTAB+2
-	CARTBSL = CARTTAB+3
-	CARTBSH = CARTTAB+4
-
-; cartridge bank number where CARTAB is stored
-	TABBANK = 0
 

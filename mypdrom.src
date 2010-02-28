@@ -18,6 +18,7 @@
 
 	.include "cio.inc"
 
+	.include "common.inc"
 	.include "cartsio.inc"
 
 ; MyPicoDos start address
@@ -30,16 +31,14 @@ MYRUNA  = $0F00
 SRCADR  = $E0
 DSTADR  = $E2
 
-	ORG = $A000
-
 ;	* = $8000
 ;	.BYTE $FF
 
-	* = ORG
+	* = $A000
 
-;	JSR $E483	; HDINIT
+	.include "cartsiocode-rom.src"
 
-RUNMY	LDX #MYSETL
+START	LDX #MYSETL
 	LDY #0
 MYLP1	LDA MYSETUP,Y	; copy init routine
 	STA MYRUNA,Y
@@ -115,32 +114,18 @@ CLRLP	STA (DSTADR),Y
 EDITOR	.BYTE "E:", 155
 MYSETL	= * - MYSETUP
 
-XRTS	RTS
+INIT	RTS
 
 MYPDOS	= *
 	.incbin "mypdos-code-cartsio.bin"
 MYPDPG	= (*-MYPDOS+255) / 256
 
 XEND	= *
-
-	* = CARTTAB
-
-; dummy drive table
-; D1: 1040 SD
-	.BYTE 0		; SD
-	.WORD $40	; offset $4000 (bank 1)
-	.WORD 1040	; 1040 sectors
-	.BYTE $FF,$FF,$FF
-
-; D2: 720 DD
-	.BYTE 1		; DD
-	.WORD $280	; offset $28000 (bank 10)
-	.WORD 720	; 720 sectors
-	.BYTE $FF,$FF,$FF
 	
-	.DC ($BFFA-*) $FF
-	.WORD ORG
+	* = $BFFA
+
+	.WORD START
 	.BYTE 0
-	.BYTE 0
-	.WORD ORG
+	.BYTE 4		; init & start cart, no disk boot allowed
+	.WORD INIT
 

@@ -24,8 +24,8 @@ all: 512k.rom atr2cart atr2cart.exe
 
 #all: MYPDOS.COM mypdos.atr mypdoshs.atr myinit2.atr
 
-#ASMFLAGS= -Ihisio -Icartsio
-ASMFLAGS = -Ihisio -Icartsio -s
+ASMFLAGS= -Ihisio -Icartsio
+#ASMFLAGS = -Ihisio -Icartsio -s
 #ASMFLAGS = -Ihisio -Icartsio -v -s
 #ASMFLAGS = -Ihisio -Icartsio -s -dHWDEBUG
 
@@ -39,7 +39,8 @@ HISIOINC = hisio/hisio.inc hisio/hisiocode.src hisio/hisiodet.src \
 	hisio/hisiocode-check.src hisio/hisiocode-diag.src \
 	hisio/hisiocode-receive.src hisio/hisiocode-vbi.src
 
-CARTSIOINC = cartsio/cartsiocode.src cartsio/cartsio.inc
+CARTSIOINC = cartsio/cartsio.inc \
+	cartsio/cartsiocode-ram.src cartsio/cartsiocode-rom.src
 
 rread.bin: rread.src rreadcode.src common.inc
 	$(ATASM) $(ASMFLAGS) -r -o$@ $<
