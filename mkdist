@@ -1,29 +1,22 @@
 #!/bin/sh
 
-VER=-`date '+%y%m%d'`
+VER=`date '+%y%m%d'`
 
 if [ $# -ge 1 ] ; then
 	VER=$1
 fi
 
-NAME=mypdos$VER
+NAME=mypdcart-$VER
 TMPDIR=dist/tmp/"${NAME}"
 
-mkdir -p "${TMPDIR}/src/hisio"
-mkdir -p "${TMPDIR}/src/initdisk"
+mkdir -p "${TMPDIR}/src/cartsio"
 
-cp -a README.txt LICENSE \
-MYINIT.COM MYINITR.COM MYINITB.COM MYINITS.COM \
-MYPDOS.COM MYPDOSN.COM \
-MYPDOSR.COM MYPDOSRN.COM MYPDOSB.COM \
-myinit.atr \
-mypdos.atr mypdosn.atr \
-mypdosr.atr mypdosrn.atr mypdosb.atr \
-mypdoss0.atr mypdoss1.atr \
+cp -a \
+	atr2cart.exe \
 "${TMPDIR}"
-cp -a Makefile *.inc *.src "${TMPDIR}/src"
-cp -a hisio/*.src hisio/*.inc "${TMPDIR}/src/hisio"
-cp -a initdisk/DOS.SYS initdisk/DUP.SYS initdisk/BFE.AR0 initdisk/AUTOEXEC.BAT "${TMPDIR}/src/initdisk"
+
+cp -a Makefile *.inc *.src *.cpp *.c *.h "${TMPDIR}/src"
+cp -a cartsio/*.src cartsio/*.inc "${TMPDIR}/src/cartsio"
 
 rm -f "dist/${NAME}".zip
 cd dist/tmp

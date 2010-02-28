@@ -8,8 +8,7 @@ ATASM=atasm
 CXX=g++
 CXXFLAGS=-W -Wall
 
-all: 512k.rom atr2cart atr2cart.exe
-
+all: atr2cart atr2cart.exe test.rom
 
 #all: MYINIT.COM MYINITR.COM \
 #	MYPDOS.COM MYPDOSN.COM \
@@ -82,6 +81,9 @@ testdisk.atr: testdisk testdisk/*
 
 testdd.atr: testdisk testdisk/*
 	dir2atr -b MyPicoDos405N -P -d 720 testdd.atr testdisk
+
+test.rom: atr2cart testdisk.atr testdd.atr
+	./atr2cart $@ testdisk.atr testdd.atr
 
 testdisk.raw: testdisk.atr
 	dd if=$< of=$@ bs=16 skip=1

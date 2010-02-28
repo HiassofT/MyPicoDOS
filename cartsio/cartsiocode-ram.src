@@ -24,6 +24,7 @@ DOCARSIO
 	CMP #$70
 	BNE ?WTSCR
 
+	SEI		; disable IRQs
 	LDA #0		; disable NMIs
 	STA $D40E
 ;	INC CRITIC	; disable deferred VBI
@@ -54,6 +55,7 @@ DOCARSIO
 ;	DEC CRITIC	; re-enable deferred VBI
 	LDA #$40	; re-enable NMIs
 	STA $D40E
+	CLI		; re-enable IRQs
 
 	LDY DSTATS
 	RTS
