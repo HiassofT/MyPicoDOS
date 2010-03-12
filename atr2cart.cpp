@@ -35,6 +35,16 @@ using namespace AtrUtils;
 
 #define DRVTAB_OFFSET 0x3F00
 
+// sector 0 of each image contains internal information:
+// byte  0 ..  3 is "get status" data
+// byte  4 .. 15 is "percom block" data
+// byte 16 .. 47 is image name (EOL terminated)
+
+#define STATUS_OFFSET 0
+#define PERCOM_OFFSET 4
+#define NAME_OFFSET 4
+#define NAME_LENGTH 32
+
 static uint8_t rom_image[IMAGESIZE];
 
 static unsigned int image_offset;
@@ -48,39 +58,21 @@ void set_drive_table(
 	unsigned int starting_offset_bytes)
 {
 	unsigned int ofs;
-	uint8_t status;
 
 	if (driveno < 1 or driveno > 8) {
 		Assert(false);
 		return;
 	}
-	ofs = (driveno - 1) * 16 + DRVTAB_OFFSET;
+	ofs = (driveno - 1) * 8 + DRVTAB_OFFSET;
 	memset(rom_image + ofs, 0xff, 8);
 
 	if (density <= 1) {
-		rom_image[ofs] = density;
-		rom_image[ofs+1] = (starting_offset_bytes >> 8) & 0xff;
-		rom_image[ofs+2] = (starting_offset_bytes >> 16) & 0xff;
-		rom_image[ofs+3] = sectors & 0xff;
-		rom_image[ofs+4] = (sectors >> 8) & 0xff;
-
-		// bytes 5..8 contain "get status" data
-
-		status = 0x18; // motor on, write protected
-		if (density == 0) {
-			// single density
-			if (sectors == 1040) {
-				// enhanced density
-				status |= 0x80;
-			}
-		} else {
-			// double density
-			status |= 0x20;
-		}
-		rom_image[ofs+5] = status;
-		rom_image[ofs+6] = 0xff; // dummy "last FDC status"
-		rom_image[ofs+7] = 0xe0; // dummy "format disk timeout"
-		rom_image[ofs+8] = 0;    // dummy "characters in output buffer"
+		rom_image[ofs] = 0; // slot active
+		rom_image[ofs+1] = density;
+		rom_image[ofs+2] = (starting_offset_bytes >> 8) & 0xff;
+		rom_image[ofs+3] = (starting_offset_bytes >> 16) & 0xff;
+		rom_image[ofs+4] = sectors & 0xff;
+		rom_image[ofs+5] = (sectors >> 8) & 0xff;
 	}
 }
 
@@ -126,7 +118,10 @@ bool add_atr_image(const char* filename)
         }
 	sector_size = isDD ? 256 : 128;
 
-	image_size = sectors * sector_size;
+	// round up offset to next page, in case the disk image contained
+	// an even number of SD sectors
+	image_size = ( (sectors+1) * sector_size + 0xff) & ~0xff;
+
 	if (image_offset + image_size > image_rom_end) {
 		cout	<< "not enough space in ROM (need "
 			<< image_size << ", have "
@@ -137,7 +132,7 @@ bool add_atr_image(const char* filename)
 	fseek(f, 16, SEEK_SET);
 
 	for (i = 1; i <= sectors; i++) {
-		ofs = image_offset + (i-1) * sector_size;
+		ofs = image_offset + i * sector_size;
 		s = (i<4) ? 128 : sector_size;
 		if (fread(rom_image + ofs, s, 1, f) != 1) {
 			cout << "error reading file" << endl;
@@ -148,6 +143,22 @@ bool add_atr_image(const char* filename)
 
 	set_drive_table(current_driveno, isDD ? 1 : 0, sectors, image_offset);
 
+	// set status info
+	uint8_t status = 0x18; // motor on, write protected
+	if (isDD) {
+		// double density
+		status |= 0x20;
+	} else {
+		// single density
+		if (sectors == 1040) {
+			// enhanced density
+			status |= 0x80;
+		}
+	}
+	rom_image[image_offset + STATUS_OFFSET] = status;
+	rom_image[image_offset + STATUS_OFFSET + 1] = 0xff; // dummy "last FDC status"
+	rom_image[image_offset + STATUS_OFFSET + 2] = 0xe0; // dummy "format disk timeout"
+	rom_image[image_offset + STATUS_OFFSET + 3] = 0; // dummy "characters in output buffer"
 	cout	<< "OK"
 		<< " (" << sectors << " " << (isDD ? "DD" : "SD") << " sectors"
 		<< " at page " << (image_offset >> 8) << ")"
@@ -155,10 +166,6 @@ bool add_atr_image(const char* filename)
 
 	current_driveno++;
 	image_offset += image_size;
-
-	// round up offset to next page, in case the disk image contained
-	// an odd number of SD sectors
-	image_offset = (image_offset + 0xff) & ~0xff;
 
 	fclose(f);
 	return true;
@@ -170,7 +177,7 @@ int main(int argc, char** argv)
 	bool ok = true;
 	const char* out_filename;
 
-	cout << "atr2cart V0.2 (c) 2010 by Matthias Reichl <hias@horus.com>" << endl;
+	cout << "atr2cart V0.3 (c) 2010 by Matthias Reichl <hias@horus.com>" << endl;
 	if (argc <= 2) {
 		goto usage;
 	}

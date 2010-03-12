@@ -16,8 +16,22 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-; calculate drive number
-	CLC
+; entry points
+
+	JMP ?NORSIO	; "normal" SIO entry point
+	JMP ?XSIO	; entry point for X=driveno (1..8)
+
+; simple entry point with X=driveno
+?XSIO	CPX #0		; check for valid driveno in X (1..8)
+	BEQ ?NODEVIC
+	CPX #9
+	BCS ?NODEVIC
+	DEX
+	TXA
+	JMP ?DEV8	; go on with table lookup
+
+; normal SIO entry point - calculate drive number
+?NORSIO	CLC
 	LDA DDEVIC
 	ADC DUNIT
 	ADC #$FF
@@ -30,21 +44,21 @@
 ?CSEXIT	STY DSTATS
 	RTS
 
-; calculate offset in drive table (multiply drive number by  16)
+; calculate offset in drive table
 ?DEVICOK
 	SEC
-	SBC #$31
-	ASL
-	ASL
+	SBC #$31	; make it zero-based
+?DEV8	ASL		; multiply by 8
 	ASL
 	ASL
 	TAX
 
 ; check if we should emulate this drive (bit 7 clear)
-	LDA CARTBDR,X
+	LDA CARTBAC,X
+	BNE ?NODEVIC
+	LDA CARTBDN,X
 	STA DENSFLG	; store disk density
 	STA DENSFL2	; store sector size
-	BMI ?NODEVIC	; bit 7 is set - exit with error 138
 
 ; copy SIO buffer address to zeropage
 	LDA DBUF
@@ -93,18 +107,13 @@
 	LDA #0
 	STA BUFLEN+1
 
-	LDA #CSROMBK	; bank containing drive table & status data
+	LDA #COFSTAT	; status data is placed in "sector 0" of image
+	STA CSSRC
+	LDA #0
+	STA CSSRC+1
 	STA CSSRCB
 
-	CLC		; setup address with "get status" data
-	TXA
-	ADC #<CARTBST
-	STA CSSRC
-	LDA #>CARTBST
-	ADC #0
-	STA CSSRC+1
-
-	JMP ?CHKBUF	; setup complete, now verify parameters
+	JMP ?ABSADR
 
 ; read command
 ?CMDREAD
@@ -139,15 +148,12 @@
 	LDA ?LENHI,Y
 	STA BUFLEN+1
 
-; calculate sector address
+; calculate sector address (sector 0 is reserved for internal data)
 	LDA #0
 	STA CSSRC
-	SEC
 	LDA DSEC
-	SBC #1
 	STA CSSRC+1
 	LDA DSEC+1
-	SBC #0
 	STA CSSRCB
 
 	LDA DENSFLG
@@ -159,8 +165,9 @@
 	ROR CSSRC
 
 ?RDDD
+
 ; add starting offset of image (in pages) to address
-	CLC
+?ABSADR	CLC
 	LDA CSSRC+1
 	ADC CARTBOL,X
 	STA CSSRC+1
@@ -168,7 +175,7 @@
 	ADC CARTBOH,X
 	STA CSSRCB
 	
-	; convert linear address into address/bank
+; convert linear address into address/bank
 	CONVBANK CSSRC
 	JMP ?CHKBUF
 
