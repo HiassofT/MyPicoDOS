@@ -10,13 +10,17 @@ NAME=mypdcart-$VER
 TMPDIR=dist/tmp/"${NAME}"
 
 mkdir -p "${TMPDIR}/src/cartsio"
+mkdir -p "${TMPDIR}/src/libflash"
 
 cp -a \
 	atr2cart.exe \
+	diskcart.atr \
+	diskcart.com \
 "${TMPDIR}"
 
 cp -a Makefile *.inc *.src *.cpp *.c *.h "${TMPDIR}/src"
 cp -a cartsio/*.src cartsio/*.inc "${TMPDIR}/src/cartsio"
+cp -a libflash/*.src libflash/*.inc "${TMPDIR}/src/libflash"
 
 rm -f "dist/${NAME}".zip
 cd dist/tmp

@@ -8,7 +8,7 @@ ATASM=atasm
 CXX=g++
 CXXFLAGS=-W -Wall
 
-all: atr2cart atr2cart.exe test.rom diskcart.com
+all: atr2cart atr2cart.exe test.rom diskcart.com diskcart.atr
 
 #all: MYINIT.COM MYINITR.COM \
 #	MYPDOS.COM MYPDOSN.COM \
@@ -105,6 +105,9 @@ diskcart.com: diskcart.src mypdos8.rom libflash/*.src libflash/*.inc \
 	$(ATASM) $(ASMFLAGS) -o$@ $<
 	mkdir -p disk
 	cp -f $@ disk
+
+diskcart.atr: diskcart.com
+	dir2atr -p -b MyPicoDos405 $@ disk
 
 clean:
 	rm -f atr2cart atr2cart.exe mypdrom.c *.65o *.o *.bin *.com *.atr *.rom
