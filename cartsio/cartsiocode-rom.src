@@ -18,16 +18,16 @@
 
 ; entry points
 
-	JMP ?NORSIO	; "normal" SIO entry point
-	JMP ?XSIO	; entry point for X=driveno (1..8)
+CSIO	JMP ?NORSIO	; "normal" SIO entry point
+CSIOA	JMP ?ASIO	; entry point for A=driveno (1..8)
 
 ; simple entry point with X=driveno
-?XSIO	CPX #0		; check for valid driveno in X (1..8)
+?ASIO	CMP #0		; check for valid driveno in A (1..8)
 	BEQ ?NODEVIC
-	CPX #9
+	CMP #9
 	BCS ?NODEVIC
-	DEX
-	TXA
+	SEC
+	SBC #1
 	JMP ?DEV8	; go on with table lookup
 
 ; normal SIO entry point - calculate drive number
