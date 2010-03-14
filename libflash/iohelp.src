@@ -1,0 +1,349 @@
+;  iohelp - various I/O helper routines
+;
+;  Copyright (C) 2004-2010 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+; returns Z=1: yes, Z=0: no, N=1: abort
+YESNO	JSR GETCHAR
+	CPY #128
+	BEQ ?YBRK
+	CMP #'Y
+	BEQ ?YYES
+	CMP #'y
+	BEQ ?YYES
+	CMP #'N
+	BEQ ?YNO
+	CMP #'n
+	BEQ ?YNO
+	JMP YESNO
+?YNO	LDX #1
+?YYES	PHP
+	JSR PUTCHAR
+	PLP
+	RTS
+
+?YBRK	LDY #$FF
+	RTS	; return with N=1
+
+
+; input filename
+GETFN	INPUT 0, FNBUF
+	BPL ?GETFN1
+?GETFN0 LDA #$FF
+	RTS
+
+?GETFN1	LDA FNBUF
+	CMP #155
+	BEQ ?GETFN0
+	LDX #0
+?GETFN2	LDA FNBUF,X
+	CMP #':
+	BEQ ?GETFNOK
+	CMP #155
+	BEQ ?GETFN3
+	INX
+	BPL ?GETFN2
+
+?GETFNX	LDA #$FF
+	RTS
+
+?GETFN3	LDA FNBUF,X
+	STA FNBUF+2,X
+	DEX
+	BPL ?GETFN3
+	LDA #'D
+	STA FNBUF
+	LDA #':
+	STA FNBUF+1
+?GETFNOK	LDA #0
+	RTS
+
+FNBUF	.DC 128 0
+
+.if 0
+
+; input size
+
+GETSZ	BPUT 0, SIZETL, SIZET
+SIZELP	JSR GETCHAR
+	CPY #128
+	BNE SIZEL1
+	LDY #$FF
+	RTS
+SIZEL1	CMP #'1
+	BCC SIZELP
+	CMP #'9
+	BCS SIZELP
+	PHA
+	JSR PUTCHAR
+	LDA #155
+	JSR PUTCHAR
+	PLA
+	SEC
+	SBC #'1
+	TAX
+	LDA SZTAB,X
+	STA NUMBANK
+	LDY #0
+	RTS
+.endif
+
+GR0	CLOSE 0
+	OPEN 0,12,0,EDITOR
+	LDA 20
+?WVBI	CMP 20
+	BEQ ?WVBI
+	RTS
+
+EDITOR	.BYTE "E:",155
+
+PUTCHAR	TAY
+	LDA $E407
+	PHA
+	LDA $E406
+	PHA
+	TYA
+	RTS
+
+GETCHAR	LDA $E425
+	PHA
+	LDA $E424
+	PHA
+	RTS
+
+?PHEX	PHA
+	LSR
+	LSR
+	LSR
+	LSR
+	TAX
+	LDA HEXTAB,X
+	ORA ?PINV
+	JSR PUTCHAR
+	PLA
+	AND #$0F
+	TAX
+	LDA HEXTAB,X
+	ORA ?PINV
+	JMP PUTCHAR
+
+; output A as hex value
+PUTHEX	PHA
+	LDA #0
+	STA ?PINV
+	PLA
+	JMP ?PHEX
+
+; output A as hex value (inverse characters)
+PUTHEXI	PHA
+	LDA #$80
+	STA ?PINV
+	PLA
+	JMP ?PHEX
+
+?PINV	.BYTE 0
+
+HEXTAB  .BYTE "0123456789ABCDEF"
+
+PSTAT	BMI PERROR
+
+POK	PRINT 0, OKT
+	RTS
+
+PERROR	PRINT 0, ERRT
+	RTS
+
+OKT	.BYTE " OK", 155
+ERRT	.BYTE " ERROR", 155
+
+; convert 16bit number (X=lo, Y=hi) into 5-digit decimal number
+; with leading zeroes (stored in DECBUF)
+
+TODEC	STX ?DECTMP
+	STY ?DECTMP+1
+	LDY #0
+?TODEC0	LDX #'0
+?TODEC1	SEC
+	LDA ?DECTMP
+	SBC ?DECLO,Y
+	PHA
+	LDA ?DECTMP+1
+	SBC ?DECHI,Y
+	BCC ?TODEC2	; finished, result is <0
+	STA ?DECTMP+1
+	PLA
+	STA ?DECTMP
+	INX
+	BNE ?TODEC1	; always
+?TODEC2	PLA
+	TXA
+	STA DECBUF,Y
+	INY
+	CPY #4
+	BNE ?TODEC0
+	CLC
+	LDA ?DECTMP
+	ADC #'0
+	STA DECBUF,Y
+	RTS
+
+?DECTMP	.WORD 0,0
+
+?DECLO	.BYTE <10000
+	.BYTE <1000
+	.BYTE <100
+	.BYTE <10
+
+?DECHI	.BYTE >10000
+	.BYTE >1000
+	.BYTE >100
+	.BYTE >10
+
+DECBUF	.BYTE "00000"
+	.BYTE 155	; add EOL so DECBUF can be PRINTed
+
+; convert leading zeroes in DECBUF into spaces
+DEC0SP	LDX #0
+?DEC0SP1
+	LDA DECBUF,X
+	CMP #'0
+	BNE ?DEC0SP2
+	LDA #32
+	STA DECBUF,X
+	INX
+	CPX #4
+	BNE ?DEC0SP1
+?DEC0SP2
+	RTS
+
+; return number of digits in DECBUF (in Y, 1..5) and index
+; of first non-zero digit (in X, 0..4)
+DECDIG	LDX #0
+	LDY #5
+?DECDIG1
+	LDA DECBUF,X
+	CMP #'0
+	BNE ?DECDIG2
+	DEY
+	INX
+	CPX #4
+	BNE ?DECDIG1
+?DECDIG2
+	RTS
+
+; print decimal number (without leading zeroes)
+PRDEC	JSR TODEC
+	JSR DECDIG
+?PRDEC1	LDA DECBUF,X
+	STX ?PRDECI
+	JSR PUTCHAR
+	LDX ?PRDECI
+	INX
+	CPX #5
+	BNE ?PRDEC1
+	RTS
+
+; print decimal number (without leading zeroes), inverted
+PRDECI	JSR TODEC
+	JSR DECDIG
+?PRDECI1
+	LDA DECBUF,X
+	ORA #$80
+	STX ?PRDECI
+	JSR PUTCHAR
+	LDX ?PRDECI
+	INX
+	CPX #5
+	BNE ?PRDECI1
+	RTS
+
+; temporary index
+?PRDECI	.BYTE 0
+
+.if 0
+; print bank number
+PBANK	CLC
+	LDA BANKNO
+	JSR TODEC
+	CLC
+	LDA DECBUF
+	ADC #'0
+	ORA #$80
+	STA BANKCH
+	CLC
+	LDA DECBUF+1
+	ADC #'0
+	ORA #$80
+	STA BANKCH+1
+	CLC
+	LDA DECBUF+2
+	ADC #'0
+	ORA #$80
+	STA BANKCH+2
+	PRINT 0, BNKTXT
+	RTS
+
+TODEC	LDX #2
+	CMP #200
+	BCC TODEC1
+	SBC #200
+	JMP TODEC00
+TODEC1	DEX
+	CMP #100
+	BCC TODEC0
+	SBC #100
+	JMP TODEC00
+TODEC0	DEX
+TODEC00	STX DECBUF
+
+	TAY
+	LDX #0
+TDLP	CPY #10
+	BCC TDEND
+	INX
+	TYA
+	SEC
+	SBC #10
+	TAY
+	JMP TDLP
+TDEND	STX DECBUF+1
+	STY DECBUF+2
+	RTS
+
+PRDEC	JSR TODEC
+	LDA DECBUF
+	BNE PRDEC3	; 3 digits
+	LDA DECBUF+1
+	BNE PRDEC2	; 2 digits
+	BEQ PRDEC1	; 1 digit
+
+PRDEC3	CLC
+	LDA DECBUF
+	ADC #'0
+	JSR PUTCHAR
+PRDEC2	CLC
+	LDA DECBUF+1
+	ADC #'0
+	JSR PUTCHAR
+PRDEC1	CLC
+	LDA DECBUF+2
+	ADC #'0
+	JSR PUTCHAR
+	RTS
+
+DECBUF	.DC 3 0
+.endif
+

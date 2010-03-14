@@ -54,9 +54,9 @@
 	TAX
 
 ; check if we should emulate this drive (bit 7 clear)
-	LDA CARTBAC,X
+	LDA CARTTAB+CTOACTI,X
 	BNE ?NODEVIC
-	LDA CARTBDN,X
+	LDA CARTTAB+CTODENS,X
 	STA DENSFLG	; store disk density
 	STA DENSFL2	; store sector size
 
@@ -133,11 +133,11 @@
 	
 ; check if sector <= total number of sectors
 ?RDOK1	LDA DSEC+1
-	CMP CARTBSH,X
+	CMP CARTTAB+CTOSECH,X
 	BCC ?RDOK2	; high byte < max -> everything OK
 	BNE ?ERR144	; high byte > max -> error
 	LDA DSEC	; check low byte if high byte = max
-	CMP CARTBSL,X
+	CMP CARTTAB+CTOSECL,X
 	BCC ?RDOK2	; lower -> OK
 	BNE ?ERR144	; higher -> error
 	
@@ -169,10 +169,10 @@
 ; add starting offset of image (in pages) to address
 ?ABSADR	CLC
 	LDA CSSRC+1
-	ADC CARTBOL,X
+	ADC CARTTAB+CTOSPL,X
 	STA CSSRC+1
 	LDA CSSRCB
-	ADC CARTBOH,X
+	ADC CARTTAB+CTOSPH,X
 	STA CSSRCB
 	
 ; convert linear address into address/bank

@@ -1,0 +1,394 @@
+;  diskio - various disk routines
+;
+;  Copyright (C) 1992-2010 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+; check a drive and determine size&density
+GETDENS	
+; read sector 4 with length=0
+; this is needed by the XF551 to check the disk density
+
+	LDA #$31
+	STA $300
+
+	LDA #<SECBUF
+	STA $304
+	LDA #>SECBUF
+	STA $305
+
+	LDA #$52
+	STA $302
+	LDA #0
+	STA $308
+	STA $309
+	STA $30B
+	LDA #4
+	STA $30A
+	LDA #7
+	STA $306
+	LDA #$00
+	STA $307
+	STA $303
+	JSR $E459
+	BPL ?GETDE1
+
+; no response - return an error
+?GETDERR
+	LDA #$FF
+	RTS
+
+?GETDE1
+
+; wait a bit for the sector data bytes to arrive
+
+	LDA 20
+	CLC
+	ADC #20
+?GETDE2 CMP 20
+	BNE ?GETDE2
+
+; check the disk status
+	LDA #<STATBUF
+	STA $304
+	LDA #>STATBUF
+	STA $305
+
+	LDA #$53
+	STA $302
+	LDA #4
+	STA $308
+
+	LDA #$40
+	STA $303
+	JSR $E459
+	BMI ?GETDERR
+
+	LDA #0
+	STA DISKSEC	; flag: 720 sectors
+	STA DISKDNS
+
+; check bit 7 ($80) of status: 1=ED, 0=SD/DD
+	LDA STATBUF
+	BPL ?GETDE3
+	INC DISKSEC
+	BNE ?GETDE4
+
+; check bit 5 ($20) of status: 1=DD, 0=SD
+?GETDE3	AND #$20
+	BEQ ?GETDE4
+	INC DISKDNS
+
+; try to read percom block
+?GETDE4	LDA #$4E
+	STA $302
+	LDA #<PERCBUF
+	STA $304
+	LDA #>PERCBUF
+	STA $305
+	LDA #12
+	STA $308
+	LDA #$40
+	STA $303
+	JSR $E459
+	BPL ?GETDE5
+
+; create default percom block
+; calculate offset in default table (X=0: ED, X=1: DD, X=2: SD)
+	LDX #0
+	LDA DISKSEC	; 1 if ED
+	BNE ?GETDP1
+	INX
+	LDA DISKDNS
+	BNE ?GETDP1
+	INX
+
+?GETDP1	TXA
+	ASL
+	ASL
+	STA PERCBUF
+	ASL
+	ORA PERCBUF
+	TAX
+	LDY #0
+
+?GETDP2	LDA ?DEFPERC,X
+	STA PERCBUF,Y
+	INX
+	INY
+	CPY #12
+	BNE ?GETDP2
+
+; check for 1440 DD sectors
+?GETDE5	LDA PERCBUF
+	CMP #40
+	BNE ?GETDE6
+	LDA PERCBUF+2
+	BNE ?GETDE6
+	LDA PERCBUF+3
+	CMP #18
+	BNE ?GETDE6
+	LDA PERCBUF+4
+	CMP #1
+	BNE ?GETDE6
+	LDA PERCBUF+5
+	CMP #4
+	BNE ?GETDE6
+	LDA PERCBUF+6
+	CMP #1
+	BNE ?GETDE6
+	LDA PERCBUF+7
+	BNE ?GETDE6
+
+; yes, 1440 DD sectors - now check if we can read sector 721
+	LDA #$52
+	STA $302
+	LDA #<SECBUF
+	STA $304
+	LDA #>SECBUF
+	STA $305
+	LDA #<721
+	STA $30A
+	LDA #>721
+	STA $30B
+	LDA #0
+	STA $308
+	LDA #1
+	STA $309
+	LDA #$40
+	STA $303
+	JSR $E459
+	BPL ?GETDE6
+
+; reading sector 721 failed, this must be a buggy XF551 so
+; set number of sectors to 720 (sides = 1)
+	LDA #0
+	STA PERCBUF+4
+
+; finally: calculate total number of sectors from percom block
+?GETDE6	LDA PERCBUF+3
+	STA ARIT1
+	LDA PERCBUF+2
+	STA ARIT1+1
+	LDA PERCBUF
+	STA ARIT2
+	LDA #0
+	STA ARIT1+2
+	STA ARIT1+3
+	STA ARIT2+1
+	STA ARIT2+2
+	STA ARIT2+3
+	JSR MUL32
+	LDX PERCBUF+4
+	INX
+	STX ARIT2
+	LDA #0
+	STA ARIT2+1
+	STA ARIT2+2
+	STA ARIT2+3
+	JSR MUL32
+	LDA ARIT1
+	STA DISKSEC
+	LDA ARIT1+1
+	STA DISKSEC+1
+	LDA #0
+	RTS
+
+; default percom blocks:
+?DEFPERC
+
+; ED
+	.BYTE 40	; tracks
+	.BYTE 0		; step rate
+	.BYTE 0,26	; sectors/track (H/L!)
+	.BYTE 0		; sides-1
+	.BYTE 4		; MFM
+	.WORD 128	; bytes/sector
+	.BYTE 1		; drive online
+	.BYTE 0,0,0	; unused
+
+; DD
+	.BYTE 40	; tracks
+	.BYTE 0		; step rate
+	.BYTE 0,18	; sectors/track (H/L!)
+	.BYTE 0		; sides-1
+	.BYTE 4		; MFM
+	.WORD 256	; bytes/sector
+	.BYTE 1		; drive online
+	.BYTE 0,0,0	; unused
+
+; SD
+	.BYTE 40	; tracks
+	.BYTE 0		; step rate
+	.BYTE 0,18	; sectors/track (H/L!)
+	.BYTE 0		; sides-1
+	.BYTE 0		; FM
+	.WORD 128	; bytes/sector
+	.BYTE 1		; drive online
+	.BYTE 0,0,0	; unused
+
+; buffer for GetStatus command
+STATBUF	.WORD 0,0
+
+; buffer for percom block
+PERCBUF	.DC 12 0
+
+; disk density: 0 = SD, 1 = DD
+DISKDNS	.BYTE 0
+
+; number of sectors on disk
+DISKSEC	.WORD 0
+
+; calculate size of disk (including virtual "sector 0"),
+; rounded up to full pages
+; input: A=density, X=sectorsLo, Y=sectorsHi
+
+CALCSIZ	STX DISKSIZ+1
+	STY DISKSIZ+2
+	LDX #0
+	STX DISKSIZ
+	STX DISKSIZ+3
+
+	INC DISKSIZ+1
+	BNE ?CALCSZ1
+	INC DISKSIZ+2
+	BNE ?CALCSZ1
+	INC DISKSIZ+3
+?CALCSZ1
+	CMP #0
+	BNE ?CALCSZ2	; DD -> everything fine.
+
+; SD: divide by 2
+	LSR DISKSIZ+3
+	ROR DISKSIZ+2
+	ROR DISKSIZ+1
+	ROR DISKSIZ
+	LDA DISKSIZ
+	BEQ ?CALCSZ2
+	LDA #0
+	STA DISKSIZ
+	INC DISKSIZ+1
+	BNE ?CALCSZ2
+	INC DISKSIZ+2
+	BNE ?CALCSZ2
+	INC DISKSIZ+3
+?CALCSZ2
+	RTS
+
+; size of disk, rounded up to pages
+DISKSIZ	.WORD 0,0
+
+; read up to 8k from disk and store in DATABUF
+; note: sector 0 is automatically skipped, at the end
+; READPAG is set to number of (full) pages
+READ8K	LDA #$20
+	LDX DISKDNS
+	BNE ?RD8K1
+	ASL
+?RD8K1	STA ?RDMAX
+	LDA #0
+	STA READPAG
+	LDA #$31	; setup SIO parameters
+	STA $300
+	LDA #$52
+	STA $302
+	LDA #<DATABUF
+	STA $304
+	LDA #>DATABUF
+	STA $305
+	LDA #7
+	STA $306
+	LDA #0
+	STA $307
+
+; read loop
+
+?RD8KLP	LDX DISKDNS
+	LDA ?DTABL,X
+	STA $308
+	LDA ?DTABH,X
+	STA $309
+	LDA $30B
+	BNE ?RD8K2
+	LDA $30A
+	BEQ ?RD8KN	; skip sector 0
+	CMP #4
+	BCS ?RD8K2
+	LDA #128	; sector 1-3 are 128 bytes
+	STA $308
+	LDA #0
+	STA $309
+?RD8K2	LDA #$40
+	STA $303
+	JSR $E459
+	BPL ?RD8KN
+	RTS		; disk error - return
+?RD8KN	LDA DISKDNS
+	BNE ?RD8K3	; DD - inc address by $100
+	CLC		; SD - inc address by $80
+	LDA $304
+	ADC #$80
+	STA $304
+	BCC ?RD8K4
+?RD8K3	INC $305
+?RD8K4	INC $30A
+	BNE ?RD8K5
+	INC $30B
+?RD8K5	INC READPAG
+	LDA READPAG
+	CMP ?RDMAX	; more sectors to read?
+	BEQ ?RD8KX	; no, finish
+	LDA $30B	; reached end of disk?
+	CMP DISKSEC+1
+	BCC ?RD8KLP
+	BNE ?RD8KX
+	LDA $30A
+	CMP DISKSEC
+	BCC ?RD8KLP
+	BEQ ?RD8KLP
+
+; end of reading, calculate number of pages
+?RD8KX	LDA DISKDNS
+	BNE ?RD8KXX	; DD - number of sectors read = number of pages
+	LDA READPAG
+	AND #1
+	BEQ ?RD8KX2	; read an even number of sectors, OK
+	INC READPAG	; round up
+
+; now clear the remaining $80 bytes with $FF
+	LDA $308
+	STA TMPVEC
+	LDA $309
+	STA TMPVEC+1
+	LDY #$7F
+	LDA #$FF
+?RD8KX1	STA (TMPVEC),Y
+	DEY
+	BPL ?RD8KX1
+
+; divide number of sectors by 2
+?RD8KX2	LSR READPAG
+
+; finished - success!
+?RD8KXX	LDA #0
+	RTS
+
+; maximum number of sectors to read
+?RDMAX	.BYTE 0
+READPAG	.BYTE 0
+
+; density table - number of bytes per sector
+?DTABL	.BYTE 128, 0
+?DTABH	.BYTE 0, 1

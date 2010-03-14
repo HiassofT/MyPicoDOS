@@ -42,18 +42,23 @@
 ; the drive table has 8 entries (D1:..D8:) with 16 bytes each
 	CARTTAB	= $BF00	; drive table base address
 
-	CARTBAC = CARTTAB	; slot active: 0=yes, $ff=no
-	CARTBDN = CARTTAB+1	; density: 0=sd, 1=dd
-	CARTBOL = CARTTAB+2	; starting offset (in pages) lo
-	CARTBOH = CARTTAB+3	; starting offset (in pages) hi
-	CARTBSL = CARTTAB+4	; number of sectors (lo)
-	CARTBSH = CARTTAB+5	; number of sectors (hi)
+; offsets in drive table
+	CTOACTI	= 0	; slot active: 0=yes, $ff=no
+	CTODENS	= 1	; density: 0=sd, 1=dd
+	CTOSPL	= 2	; starting offset (in pages) lo
+	CTOSPH	= 3	; starting offset (in pages) hi
+	CTOSECL	= 4	; number of sectors (lo)
+	CTOSECH	= 5	; number of sectors (hi)
 	; bytes 6 and 7 are unused
 
 ; "sector 0" of each image contains internal data:
 	COFSTAT	= 0		; 4 bytes "GetStatus" data
 	COFPERC	= 4		; 12 bytes "Percom block"
 	COFNAME	= 16		; 32 bytes image name (terminated with EOL)
+	CLNNAME	= 32		; length of name (32)
+
+; 16byte signature in ROM (contains "HiassofT" plus 8-byte serial number)
+	CARTSIG	= $BFE0	; drive table base address
 
 ; common macros
 	.MACRO CARTBNKX ; set bank from X register

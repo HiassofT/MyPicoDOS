@@ -1,0 +1,101 @@
+;  arith - 32bit arithmetics
+;
+;  Copyright (C) 2010 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+; 32bit multiplication: ARIT1 = ARIT1 * ARIT2
+MUL32	LDA ARIT1
+	STA ?ARITMP
+	LDA ARIT1+1
+	STA ?ARITMP+1
+	LDA ARIT1+2
+	STA ?ARITMP+2
+	LDA ARIT1+3
+	STA ?ARITMP+3
+
+	LDA #0
+	STA ARIT1
+	STA ARIT1+1
+	STA ARIT1+2
+	STA ARIT1+3
+
+	LDX #32
+?MUL321	LSR ARIT2+3
+	ROR ARIT2+2
+	ROR ARIT2+1
+	ROR ARIT2
+	BCC ?MUL322
+	CLC
+	LDA ARIT1
+	ADC ?ARITMP
+	STA ARIT1
+	LDA ARIT1+1
+	ADC ?ARITMP+1
+	STA ARIT1+1
+	LDA ARIT1+2
+	ADC ?ARITMP+2
+	STA ARIT1+2
+	LDA ARIT1+3
+	ADC ?ARITMP+3
+	STA ARIT1+3
+?MUL322	ASL ?ARITMP
+	ROL ?ARITMP+1
+	ROL ?ARITMP+2
+	ROL ?ARITMP+3
+	DEX
+	BNE ?MUL321
+	RTS
+
+; 32bit addition: ARIT1 = ARIT1 + ARIT2
+ADD32	CLC
+	LDA ARIT1
+	ADC ARIT2
+	STA ARIT1
+	LDA ARIT1+1
+	ADC ARIT2+1
+	STA ARIT1+1
+	LDA ARIT1+2
+	ADC ARIT2+2
+	STA ARIT1+2
+	LDA ARIT1+3
+	ADC ARIT2+3
+	STA ARIT1+3
+	RTS
+
+; 32bit subtraction: ARIT1 = ARIT1 - ARIT2
+SUB32	SEC
+	LDA ARIT1
+	SBC ARIT2
+	STA ARIT1
+	LDA ARIT1+1
+	SBC ARIT2+1
+	STA ARIT1+1
+	LDA ARIT1+2
+	SBC ARIT2+2
+	STA ARIT1+2
+	LDA ARIT1+3
+	SBC ARIT2+3
+	STA ARIT1+3
+	RTS
+
+
+
+ARIT1	.WORD 0,0
+ARIT2	.WORD 0,0
+?ARITMP	.WORD 0,0
+
+

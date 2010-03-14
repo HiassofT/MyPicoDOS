@@ -122,6 +122,10 @@ MYPDOS	= *
 MYPDPG	= (*-MYPDOS+255) / 256
 
 XEND	= *
+
+	* = CARTSIG
+	.BYTE "HiassofT"
+	.BYTE "20100314"
 	
 	* = $BFFA
 

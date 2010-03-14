@@ -8,7 +8,7 @@ ATASM=atasm
 CXX=g++
 CXXFLAGS=-W -Wall
 
-all: atr2cart atr2cart.exe test.rom
+all: atr2cart atr2cart.exe test.rom diskcart.com
 
 #all: MYINIT.COM MYINITR.COM \
 #	MYPDOS.COM MYPDOSN.COM \
@@ -23,10 +23,10 @@ all: atr2cart atr2cart.exe test.rom
 
 #all: MYPDOS.COM mypdos.atr mypdoshs.atr myinit2.atr
 
-ASMFLAGS= -Icartsio
-#ASMFLAGS = -Icartsio -s
-#ASMFLAGS = -Icartsio -v -s
-#ASMFLAGS = -Icartsio -s -dHWDEBUG
+ASMFLAGS= -Icartsio -Ilibflash
+#ASMFLAGS = -Icartsio -Ilibflash -s
+#ASMFLAGS = -Icartsio -Ilibflash -v -s
+#ASMFLAGS = -Icartsio -Ilibflash -s -dHWDEBUG
 
 MYPDOSINC = common.inc getdens.src longname.src \
 	rreadcode.src comloadcode.src basloadcode.src \
@@ -100,8 +100,11 @@ atr2cart.exe: atr2cart.cpp AtrUtils.cpp Error.cpp
 	i586-mingw32msvc-g++ $(CXXFLAGS) -o $@ $^
 	i586-mingw32msvc-strip $@
 
-disk:
-	mkdir disk
+diskcart.com: diskcart.src mypdos8.rom libflash/*.src libflash/*.inc \
+	arith.inc arith.src diskio.src
+	$(ATASM) $(ASMFLAGS) -o$@ $<
+	mkdir -p disk
+	cp -f $@ disk
 
 clean:
-	rm -f atr2cart atr2cart.exe mypdrom.c *.65o *.o *.bin *.COM *.atr *.rom
+	rm -f atr2cart atr2cart.exe mypdrom.c *.65o *.o *.bin *.com *.atr *.rom

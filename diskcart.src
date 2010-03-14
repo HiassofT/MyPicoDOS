@@ -1,0 +1,836 @@
+;  diskcart - load disks into flashcart
+;
+;  Copyright (C) 2010 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+	.include "cio.inc"
+	.include "libflash.inc"
+	.include "cartsio.inc"
+	.include "arith.inc"
+
+; offsets in 512k Mega16 flashcart
+
+; drive table
+OFSTABH	= 0
+OFSTABL	= CARTTAB-$8000
+
+; 16byte signature
+OFSSIGH	= 0
+OFSSIGL	= CARTSIG-$8000
+
+; start of disk image area
+OFSIMSL	= $4000
+OFSIMSH	= 0
+
+; end of disk image area
+OFSIMEL	= 0
+OFSIMEH	= 8
+
+; temporary ZP vector
+TMPVEC	= $E6	; ,$E7 ($E0-$E5 are used by libflash)
+
+START	= $2000
+
+	.BANK
+	* = START
+
+	JSR INIT
+
+MAINLP	BPUT 0, TTITLEL, TTITLE
+	JSR FINIT
+	JSR FENABLE
+	JSR FDETECT
+	JSR FDISABLE
+
+	LDA FTYPE
+	JSR PFTYPE
+	LDA FTYPE
+	BPL FOK
+
+	JSR GETCHAR
+	BPL MAINLP
+MXIT	JMP EXIT
+
+FOK	JSR CHKSIG
+	BEQ MOK
+
+	BPUT 0, TNOINIL, TNOINI
+	JSR YESNO
+	BMI MXIT
+	BNE MAINLP
+
+	JMP DOINIT
+
+MOK	JSR PVERS	; print software version
+
+	JSR GETDTAB	; read drive table and init DISKIDX, DISKOFS
+	JSR PIMG	; print loaded images
+	JSR PFREE	; print free image space
+	
+	BPUT 0, TMENUL, TMENU
+MENULP	JSR GETCHAR
+	BPL MENUL1
+	JMP MAINLP
+MENUL1	CMP #'0
+	BNE NEXIT
+EXIT	JSR CLEANUP
+	JMP ($A)
+
+NEXIT	CMP #'1
+	BNE NO1
+
+	JSR PUTCHAR
+
+	BPUT 0, TASKINL, TASKIN
+	JSR YESNO
+	BEQ DOINI1
+	JMP MAINLP
+DOINI1	LDA #155
+	JSR PUTCHAR
+	JMP DOINIT
+
+NO1	CMP #'2
+	BNE NO2
+	JSR PUTCHAR
+
+	JMP ADDDISK
+
+NO2	JMP MENULP
+
+; check for signature
+CHKSIG	LDA #<OFSSIGL
+	STA FLASHADR
+	LDA #>OFSSIGL
+	STA FLASHADR+1
+	LDA #OFSSIGH
+	STA FLASHADR+2
+	LDA #<TSIG
+	STA DATAADR
+	LDA #>TSIG
+	STA DATAADR+1
+	JSR FENABLE
+	LDY #0
+	LDX #8
+	JSR FCBYTE
+	PHP
+	JSR FDISABLE
+	PLP
+	RTS
+
+; setup data/flash address for accessing drive table
+SETTABA	LDA #<OFSTABL
+	STA FLASHADR
+	LDA #>OFSTABL
+	STA FLASHADR+1
+	LDA #OFSTABH
+	STA FLASHADR+2
+	LDA #<TABBUF
+	STA DATAADR
+	LDA #>TABBUF
+	STA DATAADR+1
+	RTS
+
+; get drive table from flash
+GETDTAB	JSR SETTABA
+	JSR FENABLE
+	LDY #0
+	LDX #$40
+	JSR FRBYTE
+	JSR FDISABLE
+
+; init disk image starting address
+	LDA #<OFSIMSL
+	STA DISKOFS
+	LDA #>OFSIMSL
+	STA DISKOFS+1
+	LDA #<OFSIMSH
+	STA DISKOFS+2
+	LDA #>OFSIMSH
+	STA DISKOFS+3
+
+	LDA #0
+	STA DISKIDX
+GETDTLP	LDX DISKIDX
+	LDA TABBUF+CTODENS,X	; entry is free - end of list
+	BMI GETDTX
+	PHA			; save density
+	LDA TABBUF+CTOSECH,X	; sectors per image high
+	TAY
+	LDA TABBUF+CTOSECL,X	; sectors per image lo
+	TAX
+	PLA
+	JSR CALCSIZ		; calculate size of image
+	MADD32 DISKOFS, DISKOFS, DISKSIZ ; add to offset
+	CLC
+	LDA DISKIDX
+	ADC #8
+	STA DISKIDX
+	CMP #$40
+	BNE GETDTLP
+GETDTX	MSUB32 IMGFREE, IMGEND, DISKOFS	; calculate free space
+	RTS
+
+; print free space
+PFREE	LDX #0
+PFREE0	LDA IMGFREE+1,X
+	STA TMP32,X
+	INX
+	CPX #3
+	BNE PFREE0
+
+; divide pages by 4 to get space in kb
+	LSR TMP32+2
+	ROR TMP32+1
+	ROR TMP32
+	LSR TMP32+2
+	ROR TMP32+1
+	ROR TMP32
+
+	LDX TMP32
+	LDY TMP32+1
+	JSR PRDEC
+
+	BPUT 0, TFREEL, TFREE
+
+.if 0
+; print offset
+	LDA #32
+	JSR PUTCHAR
+
+	LDX #3
+POFS0	STX TMPIDX
+	LDA DISKOFS,X
+	JSR PUTHEX
+	LDX TMPIDX
+	DEX
+	BPL POFS0
+
+	LDA #155
+	JSR PUTCHAR
+.endif
+	RTS
+
+; print software version
+PVERS	BPUT 0, TVERSL, TVERS
+	LDA #<[OFSSIGL+8]
+	STA FLASHADR
+	LDA #>[OFSSIGL+8]
+	STA FLASHADR+1
+	LDA #OFSSIGH
+	STA FLASHADR+2
+	LDA #<SECBUF
+	STA DATAADR
+	LDA #>SECBUF
+	STA DATAADR+1
+	JSR FENABLE
+	LDY #0
+	LDX #8
+	JSR FRBYTE
+	JSR FDISABLE
+	BPUT 0, 8, SECBUF
+	LDA #155
+	JMP PUTCHAR
+
+; print image infos
+PIMG	LDA #155
+	JSR PUTCHAR
+	LDA DISKIDX
+	BNE PIMG1
+PIMG0	RTS		; no images - return
+
+PIMG1	BPUT 0, TIMGL, TIMG
+	LDA #0
+	STA TMPIDX
+PIMGLP	LDX TMPIDX
+	LDA TABBUF+CTODENS,X
+	BMI PIMG0	; end of table
+	PHA		; save density
+	TXA		; calculate slot number
+	LSR
+	LSR
+	LSR
+	CLC
+	ADC #'1
+	PHA
+	LDA #'D		; output "Dx: "
+	JSR PUTCHAR
+	PLA
+	JSR PUTCHAR
+	LDA #':
+	JSR PUTCHAR
+	LDA #32
+	JSR PUTCHAR
+	LDX TMPIDX
+	LDA TABBUF+CTOSECH,X	; get number of sectors
+	TAY
+	LDA TABBUF+CTOSECL,X
+	TAX
+	JSR TODEC		; convert to decimal
+	JSR DEC0SP		; convert leading zeroes into spaces
+	BPUT 0, 5, DECBUF	; output number of sectors
+	LDA #32
+	JSR PUTCHAR
+	LDY #'S
+	PLA			; density
+	BEQ PIMG2
+	LDY #'D
+PIMG2	TYA
+	JSR PUTCHAR
+	LDA #'D
+	JSR PUTCHAR
+	LDA #32
+	JSR PUTCHAR
+	
+	LDX TMPIDX
+	LDA TABBUF+CTOACTI,X
+	BEQ PIMG3		; image active, output name
+
+	BPUT 0, TINACTL, TINACT
+	JMP PIMG4
+
+PIMG3
+; fetch image name from cart
+	LDA #COFNAME
+	STA FLASHADR
+	LDA TABBUF+CTOSPL,X
+	STA FLASHADR+1
+	LDA TABBUF+CTOSPH,X
+	STA FLASHADR+2
+	LDA #<NAMBUF
+	STA DATAADR
+	LDA #>NAMBUF
+	STA DATAADR+1
+	JSR FENABLE
+	LDY #0
+	LDX #CLNNAME
+	JSR FRBYTE
+	JSR FDISABLE
+	LDA #155
+	STA NAMBUF+CLNNAME-1	; add terminating EOL, just in case
+	PRINT 0, NAMBUF
+
+PIMG4	CLC
+	LDA TMPIDX
+	ADC #8
+	STA TMPIDX
+	CMP #$40
+	BEQ PIMGX
+	JMP PIMGLP
+PIMGX	RTS
+
+DOINIT	BPUT 0, TINITL, TINIT
+
+	BPUT 0, TERASL, TERAS
+
+	JSR FADRZERO
+	JSR FENABLE
+	JSR FCERAS
+	PHP
+	JSR FDISABLE
+	PLP
+	BPL DOINIT1
+	JSR PERROR
+	JMP DOCONT
+DOINIT1	
+	BPUT 0, TPROGFL, TPROGF
+	LDA #0
+	STA FLASHADR
+	STA FLASHADR+2
+	LDA #$20
+	STA FLASHADR+1
+	LDA #<MYPDOS
+	STA DATAADR
+	LDA #>MYPDOS
+	STA DATAADR+1
+	JSR FENABLE
+	LDX #$20
+	JSR FWPAGE
+	PHP
+	JSR FDISABLE
+	PLP
+	BPL DOINIT2
+	JSR PERRADR
+	JMP DOCONT
+DOINIT2	JSR POK
+
+DOCONTS	BPUT 0, TFINIL, TFINI
+
+DOCONT	BPUT 0, TCONTL, TCONT
+	JSR GETCHAR
+	JMP MAINLP
+
+ADDDISK	BPUT 0, TDRVNOL, TDRVNO
+ADDLP1	JSR GETCHAR
+	BPL ADDLP2
+	JMP DOCONT
+ADDLP2	CMP #'1
+	BCC ADDLP1
+	CMP #'9
+	BCS ADDLP1
+	PHA
+	JSR PUTCHAR
+	LDA #155
+	JSR PUTCHAR
+	PLA
+	SEC
+	SBC #'0
+	STA $301
+
+	JSR GETDENS
+	BPL ADDD1
+	BPUT 0, TDNERRL, TDNERR
+	JMP DOCONT
+
+; print disk info
+ADDD1	LDX DISKSEC		; number of sectors
+	LDY DISKSEC+1
+	JSR PRDEC
+
+	LDA #32
+	JSR PUTCHAR
+
+	LDA #'S
+	LDX DISKDNS
+	BEQ ADDD2
+	LDA #'D
+ADDD2	JSR PUTCHAR
+
+	BPUT 0, TSECTL, TSECT
+
+; calculate image size
+	LDA DISKDNS
+	LDX DISKSEC
+	LDY DISKSEC+1
+	JSR CALCSIZ
+	MCMP32 DISKSIZ,IMGFREE
+	BCC ADDD3
+	BEQ ADDD3
+
+	BPUT 0, TBIGL, TBIG
+	JMP DOCONT
+
+; input disk name
+ADDD3	BPUT 0, TDNAML, TDNAM
+	INPUT 0, NAMBUF
+	BPL ADDD4
+	JMP DOCONT
+; check for EOL
+ADDD4	LDX #0
+ADDD5	LDA NAMBUF,X
+	CMP #155
+	BEQ ADDD6
+	INX
+	CPX #CLNNAME
+	BNE ADDD5
+	DEX
+	LDA #155
+	STA NAMBUF,X
+ADDD6	INX			; fill rest of name buffer with $FF
+	CPX #CLNNAME
+	BEQ ADDD7
+	LDA #$FF
+	STA NAMBUF,X
+	BNE ADDD6		; always
+
+; setup drive table
+ADDD7	LDX DISKIDX
+	LDA #0
+	STA TABBUF+CTOACTI,X	; slot active
+	LDA DISKDNS
+	STA TABBUF+CTODENS,X	; disk density
+	LDA DISKOFS+1
+	STA TABBUF+CTOSPL,X	; starting page lo
+	LDA DISKOFS+2
+	STA TABBUF+CTOSPH,X	; starting page hi
+	LDA DISKSEC
+	STA TABBUF+CTOSECL,X	; sectors lo
+	LDA DISKSEC+1
+	STA TABBUF+CTOSECH,X	; sectors hi
+
+; clear first 1k of buffer with $FF
+	LDX #0
+	LDA #$FF
+ADDD8	STA DATABUF,X
+	STA DATABUF+$100,X
+	STA DATABUF+$200,X
+	STA DATABUF+$300,X
+	INX
+	BNE ADDD8
+
+; setup virtual sector 0
+; status data
+	LDX #3
+ADDD9	LDA STATBUF,X
+	STA DATABUF+COFSTAT,X
+	DEX
+	BPL ADDD9
+; percom block
+	LDX #11
+ADDD10	LDA PERCBUF,X
+	STA DATABUF+COFPERC,X
+	DEX
+	BPL ADDD10
+
+; image name
+	LDX #CLNNAME-1
+ADDD11	LDA NAMBUF,X
+	STA DATABUF+COFNAME,X
+	DEX
+	BPL ADDD11
+
+; now update the disk image table
+	BPUT 0, TPTABL, TPTAB
+	BPUT 0, TPROGFL, TPROGF
+	JSR SETTABA
+; only write image infos, but don't mark image as active yet
+	JSR FENABLE
+	LDY DISKIDX
+	INY		; skip active flag
+	LDX #7		; program 7 bytes
+	JSR FWBYTE
+	PHP
+	JSR FDISABLE
+	PLP
+	BPL ADDD12
+	JSR PERRADR
+	JMP DOCONT
+
+ADDD12	JSR POK
+
+	LDA #0		; start at sector 0
+	STA $30A
+	STA $30B
+
+; setup flash address
+	LDX #2
+ADDD12A	LDA DISKOFS,X
+	STA FLASHADR,X
+	DEX
+	BPL ADDD12A
+; setup data address
+	LDA #<DATABUF
+	STA DATAADR
+	LDA #>DATABUF
+	STA DATAADR+1
+
+ADDDLP	BPUT 0, TRSECL, TRSEC
+	LDX $30A
+	LDY $30B
+	TXA
+	ORA $30B	; sector 0?
+	BNE ADDD13	; no, everything's fine
+	INX		; output 1 instead
+ADDD13	JSR TODEC
+	JSR DEC0SP
+	BPUT 0, 4, DECBUF+1
+	LDA #':
+	JSR PUTCHAR
+
+	BPUT 0, TRDDSKL, TRDDSK
+	JSR READ8K	; read up to 8k
+	BPL ADDD14
+	BPUT 0, TERRSL, TERRS
+	LDX $30A
+	LDY $30B
+	JSR PRDEC 
+	JMP DOCONT
+
+ADDD14	BPUT 0, TPROGFL, TPROGF
+	JSR FENABLE
+	LDX READPAG
+	JSR FWPAGE
+	PHP
+	JSR FDISABLE
+	PLP
+	BPL ADDD15
+	JSR PERRADR
+	JMP DOCONT
+
+ADDD15	JSR POK
+
+; increment flash address
+	CLC
+	LDA FLASHADR+1
+	ADC READPAG
+	STA FLASHADR+1
+	BCC ADDD16
+	INC FLASHADR+2
+ADDD16
+
+; check for end of disk
+	LDA $30B
+	CMP DISKSEC+1
+	BCC ADDD20
+	BNE ADDD21
+	LDA $30A
+	CMP DISKSEC
+	BCC ADDD20
+	BNE ADDD21
+ADDD20	JMP ADDDLP
+
+; finished, now mark the image as active
+ADDD21	BPUT 0, TPTABFL, TPTABF
+
+	BPUT 0, TPROGFL, TPROGF
+	JSR SETTABA
+; only write image infos, but don't mark image as active yet
+	JSR FENABLE
+	LDY DISKIDX
+	LDX #1		; program 1 byte (active flag)
+	JSR FWBYTE
+	PHP
+	JSR FDISABLE
+	PLP
+	BPL ADDD22
+	JSR PERRADR
+	JMP DOCONT
+
+ADDD22	JSR POK
+	JMP DOCONTS	
+
+INIT	LDA 106
+	STA M106
+	LDA 740
+	STA M740
+	LDA #$80
+	STA 106
+	STA 740
+	JSR GR0
+
+	LDA $D301
+	STA MD301
+	ORA #2
+	STA $D301
+	RTS
+
+CLEANUP	LDA MD301
+	STA $D301
+	LDA M106
+	STA 106
+	LDA M740
+	STA 740
+	JMP GR0
+
+M106	.BYTE 0
+M740	.BYTE 0
+MD301	.BYTE 0
+
+
+TFA10	.BYTE "Detected ", $99
+	.BYTE +$80,"AMD 29F010"
+	.BYTE $19,155
+
+TFA10B	.BYTE "Detected ", $99
+	.BYTE +$80,"AMD 29F010B"
+	.BYTE $19,155
+
+TFA40B	.BYTE "Detected ", $99
+	.BYTE +$80,"AMD 29F040B"
+	.BYTE $19,155
+
+TFS10B	.BYTE "Detected ", $99
+	.BYTE +$80,"ST 29F010B"
+	.BYTE $19,155
+
+TFS40B	.BYTE "Detected ", $99
+	.BYTE +$80,"ST 29F040B"
+	.BYTE $19,155
+
+TFB40	.BYTE "Detected ", $99
+	.BYTE +$80,"BM 29F040"
+	.BYTE $19,155
+
+TUNKFL	.BYTE "No or unknown flash",155
+
+
+; print flash type
+PFTYPE	CMP #TAMD10
+	BNE PFTYPE1
+	PRINT 0, TFA10
+	RTS
+PFTYPE1	CMP #TAMD10B
+	BNE PFTYPE2
+	PRINT 0, TFA10B
+	RTS
+PFTYPE2	CMP #TAMD40B
+	BNE PFTYPE3
+	PRINT 0, TFA40B
+	RTS
+PFTYPE3	CMP #TST10B
+	BNE PFTYPE4
+	PRINT 0, TFS10B
+	RTS
+PFTYPE4	CMP #TST40B
+	BNE PFTYPE5
+	PRINT 0, TFS40B
+	RTS
+PFTYPE5	CMP #TBM40
+	BNE PFTYPE6
+	PRINT 0, TFB40
+	RTS
+
+PFTYPE6	PRINT 0, TUNKFL
+	RTS
+
+; print flash address
+PFLADR	LDA #$99
+	JSR PUTCHAR
+	LDA FLASHADR+2
+	JSR PUTHEXI
+	LDA FLASHADR+1
+	JSR PUTHEXI
+	LDA FLASHADR+0
+	JSR PUTHEXI
+	LDA #$19
+	JSR PUTCHAR
+	LDA #155
+	JMP PUTCHAR
+
+; print error plus internal flash address
+PERRADR	BPUT 0, TERRADRL, TERRADR
+	LDA FLASHADI+2
+	JSR PUTHEX
+	LDA FLASHADI+1
+	JSR PUTHEX
+	LDA FLASHADI
+	JSR PUTHEX
+	LDA #155
+	JMP PUTCHAR
+
+DISKIDX	.BYTE 0
+DISKOFS	.WORD 0,0
+
+; 32bit image space end address
+IMGEND	.WORD OFSIMEL, OFSIMEH
+
+; 32bit number of free image bytes
+IMGFREE	.WORD 0,0
+
+; temporary 32bit storage
+TMP32	.WORD 0,0
+
+; temporary index
+TMPIDX	.BYTE 0
+
+
+TTITLE	.BYTE 125, "512k Mega FlashCart DiskWriter V0.1",155
+	.BYTE "(c) 2010 by Matthias Reichl",155,155
+TTITLEL	= * - TTITLE
+
+TMENU	.BYTE 155
+	.BYTE "1) Init flash cart",155
+	.BYTE "2) Add disk",155
+	.BYTE "0) Exit program",155
+	.BYTE "> "
+TMENUL	= * - TMENU
+
+TASKIN	.BYTE 155, 155, "Initialize flash cart (y/n)? "
+TASKINL	= * - TASKIN
+
+TDNAM	.BYTE "disk name > "
+TDNAML	= * - TDNAM
+
+TERRADR	.BYTE 155, "Error at address $"
+TERRADRL = * - TERRADR
+
+TERAS	.BYTE " erasing"
+TERASL	= * - TERAS
+
+TRDDSK	.BYTE " reading"
+TRDDSKL	= * - TRDDSK
+
+TPROGF	.BYTE " programming"
+TPROGFL	= * - TPROGF
+
+TFINI	.BYTE 155, "operation successfully completed",155
+TFINIL	= * - TFINI
+
+TCONT	.BYTE 155
+	.BYTE "Press any key to continue > "
+TCONTL	= * - TCONT
+
+TNOINI	.BYTE 155, "cart uninitialized - init now (y/n)? "
+TNOINIL	= * - TNOINI
+
+TVERS	.BYTE "Software version: "
+TVERSL	= * - TVERS
+
+; signature in cartridge
+TSIG	.BYTE "HiassofT"
+
+TFREE	.BYTE "k free"
+TFREEL	= * - TFREE
+
+TIMG	.BYTE "stored images:",155
+TIMGL	= * - TIMG
+
+TINACT	.BYTE +$80, "incomplete data"
+	.BYTE 155
+TINACTL	= * - TINACT
+
+TDRVNO	.BYTE 155, 155, "enter drive number (1-8) >"
+TDRVNOL	= * - TDRVNO
+
+TDNERR	.BYTE "Error checking disk density",155
+TDNERRL	= * - TDNERR
+
+TSECT	.BYTE "D sectors",155
+TSECTL	= * - TSECT
+
+TBIG	.BYTE "not enough free space for disk",155
+TBIGL	= * - TBIG
+
+TINIT	.BYTE 155
+	.BYTE "init cart:"
+TINITL	= * - TINIT
+
+TPTAB	.BYTE 155
+	.BYTE "update slot:"
+TPTABL	= * - TPTAB
+
+TPTABF	.BYTE "     finish:"
+TPTABFL	= * - TPTABF
+
+TRSEC	.BYTE "sector "
+;	.BYTE "sector 1234: "
+TRSECL	= * - TRSEC
+
+TERRS	.BYTE 155, "Error reading sector "
+TERRSL	= * - TERRS
+
+	.include "iohelp.src"
+	.include "diskio.src"
+	.include "arith.src"
+
+	.include "libflash-mega512.src"
+
+; buffer for image name
+NAMBUF	* = * + 128
+
+; drive table (8 entries of 8 bytes each)
+TABBUF	* = * + $40
+
+	* = (*+255) & $FF00
+
+MYPDOS	.incbin "mypdos8.rom"
+
+SECBUF	* = * + 256
+DATABUF	= *
+
+	.BANK
+	* = $2E0
+	.WORD START
+
