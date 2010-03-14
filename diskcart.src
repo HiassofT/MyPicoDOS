@@ -280,7 +280,7 @@ PIMGLP	LDX TMPIDX
 	TAX
 	JSR TODEC		; convert to decimal
 	JSR DEC0SP		; convert leading zeroes into spaces
-	BPUT 0, 5, DECBUF	; output number of sectors
+	BPUT 0, 4, DECBUF+1	; output number of sectors
 	LDA #32
 	JSR PUTCHAR
 	LDY #'S
@@ -730,7 +730,7 @@ TTITLE	.BYTE 125, "512k Mega FlashCart DiskWriter V0.1",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 TTITLEL	= * - TTITLE
 
-TMENU	.BYTE 155
+TMENU	.BYTE 155,155
 	.BYTE "1) Init flash cart",155
 	.BYTE "2) Add disk",155
 	.BYTE "0) Exit program",155
@@ -746,13 +746,13 @@ TDNAML	= * - TDNAM
 TERRADR	.BYTE 155, "Error at address $"
 TERRADRL = * - TERRADR
 
-TERAS	.BYTE " erasing"
+TERAS	.BYTE " erase"
 TERASL	= * - TERAS
 
-TRDDSK	.BYTE " reading"
+TRDDSK	.BYTE " read"
 TRDDSKL	= * - TRDDSK
 
-TPROGF	.BYTE " programming"
+TPROGF	.BYTE " flash"
 TPROGFL	= * - TPROGF
 
 TFINI	.BYTE 155, "operation successfully completed",155
