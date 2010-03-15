@@ -97,7 +97,7 @@ atr2cart: atr2cart.o AtrUtils.o Error.o
 	$(CXX) -o $@ $^
 
 atr2cart.exe: atr2cart.cpp AtrUtils.cpp Error.cpp
-	i586-mingw32msvc-g++ $(CXXFLAGS) -o $@ $^
+	i586-mingw32msvc-g++ $(CXXFLAGS) -DWINVER -o $@ $^
 	i586-mingw32msvc-strip $@
 
 diskcart.com: diskcart.src mypdos8.rom libflash/*.src libflash/*.inc \
