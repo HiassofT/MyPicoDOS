@@ -48,7 +48,7 @@ cartsio.bin: cartsiobin.src $(CARTSIOINC)
 	$(ATASM) $(ASMFLAGS) -r -o$@ $<
 
 mypdos-code-cartsio.bin: mypdos.src $(MYPDOSINC) \
-	cartsio.src $(CARTSIOINC) cartsio.bin
+	cartsio.src $(CARTSIOINC) cartsio.bin imginfo.src
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dCARTSIO=1 -r -o$@ $<
 
 mypdos8.rom: mypdrom.src mypdos-code-cartsio.bin cartsio.bin

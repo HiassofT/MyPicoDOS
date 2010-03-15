@@ -1,0 +1,86 @@
+;  imginfo - list names of active CartSIO drives
+;
+;  Copyright (C) 2010 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+IMGINFO	LDA 560
+	PHA
+	LDA 561
+	PHA
+	JSR GR0
+	LDA #0
+	STA 82
+	STA 710
+	STA $309
+        BPUT 0, ITLEN, ITITLE
+
+	LDA $301
+	PHA
+	LDA #1
+	STA $301
+	STA 752
+	LDA #'n
+	STA $302
+	LDA #32
+	STA $308
+	LDA #<BUF
+	STA DBUF
+	LDA #>BUF
+	STA DBUF+1
+
+?IMGLP	LDA #$40
+	STA $303
+	JSR SIOADR
+	BMI ?IMGLP1
+
+	LDA #'D
+	JSR PUTCHAR
+	LDA $301
+	ORA #$30
+	JSR PUTCHAR
+	LDA #':
+	JSR PUTCHAR
+	LDA #32
+	JSR PUTCHAR
+
+	PRINT 0, BUF
+
+?IMGLP1	INC $301
+	LDA $301
+	CMP #9
+	BNE ?IMGLP
+	PLA
+	STA $301
+	JSR GETKEY
+	PLA
+	STA 561
+	PLA
+	STA 560
+	RTS
+
+PUTCHAR	TAY
+	LDA $E407
+	PHA
+	LDA $E406
+	PHA
+	TYA
+	RTS
+
+ITITLE	.BYTE 125
+	;     "9876543210987654321001234567890123456789
+	.BYTE "          images on cartridge:",155,155
+ITLEN	= * - ITITLE
+
