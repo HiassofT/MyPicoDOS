@@ -18,6 +18,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
+#include <string>
 #include <string.h>
 #include <stdint.h>
 #include <iostream>
@@ -27,6 +28,12 @@
 #include "Error.h"
 
 #include "mypdrom.c"
+
+#ifdef WINVER
+#define DIR_SEPARATOR '\\'
+#else
+#define DIR_SEPARATOR '/'
+#endif
 
 using namespace std;
 using namespace AtrUtils;
@@ -42,7 +49,7 @@ using namespace AtrUtils;
 
 #define STATUS_OFFSET 0
 #define PERCOM_OFFSET 4
-#define NAME_OFFSET 4
+#define NAME_OFFSET 16
 #define NAME_LENGTH 32
 
 static uint8_t rom_image[IMAGESIZE];
@@ -50,6 +57,24 @@ static uint8_t rom_image[IMAGESIZE];
 static unsigned int image_offset;
 static unsigned int image_rom_end;	// highest rom address to use
 static unsigned int current_driveno;
+
+string& prepare_imagename(string& name)
+{
+	string::size_type idx;
+
+	// strip directory
+	idx = name.find_last_of(DIR_SEPARATOR);
+	if (idx != string::npos) {
+		name.erase(0, idx+1);
+	}
+
+	idx = name.find_last_of('.');
+	if (idx != string::npos && idx+4 == name.length()) {
+		name.erase(idx);
+	}
+	return name;
+}
+
 
 void set_drive_table(
 	unsigned int driveno, // 1..8
@@ -74,6 +99,124 @@ void set_drive_table(
 		rom_image[ofs+4] = sectors & 0xff;
 		rom_image[ofs+5] = (sectors >> 8) & 0xff;
 	}
+}
+
+const uint8_t percom_block_sd[12] =
+{
+	40,	// tracks
+	0,	// step rate
+	0, 18,	// sectors per track hi/lo
+	0,	// sides -1
+	0,	// density FM/MFM
+	0, 128,	// bytes per sector hi/lo
+	1,	// drive online
+	1,0,0	// dummy transfer rate, reserved
+};
+
+const uint8_t percom_block_ed[12] =
+{
+	40,	// tracks
+	0,	// step rate
+	0, 26,	// sectors per track hi/lo
+	0,	// sides -1
+	4,	// density FM/MFM
+	0, 128,	// bytes per sector hi/lo
+	1,	// drive online
+	1,0,0	// dummy transfer rate, reserved
+};
+
+const uint8_t percom_block_dd[12] =
+{
+	40,	// tracks
+	0,	// step rate
+	0, 18,	// sectors per track hi/lo
+	0,	// sides -1
+	4,	// density FM/MFM
+	1, 0,	// bytes per sector hi/lo
+	1,	// drive online
+	1,0,0	// dummy transfer rate, reserved
+};
+
+const uint8_t percom_block_qd[12] =
+{
+	40,	// tracks
+	0,	// step rate
+	0, 18,	// sectors per track hi/lo
+	1,	// sides -1
+	4,	// density FM/MFM
+	1, 0,	// bytes per sector hi/lo
+	1,	// drive online
+	1,0,0	// dummy transfer rate, reserved
+};
+
+uint8_t percom_block_other[12] =
+{
+	1,	// tracks
+	0,	// step rate
+	0, 0,	// sectors per track hi/lo FILL IN
+	0,	// sides -1
+	4,	// density FM/MFM
+	0, 0,	// bytes per sector hi/lo FILL IN
+	1,	// drive online
+	1,0,0	// dummy transfer rate, reserved
+};
+
+void set_image_infos(bool isDD, unsigned int sectors, string name)
+{
+	// set status info
+	uint8_t status = 0x18; // motor on, write protected
+	if (isDD) {
+		// double density
+		status |= 0x20;
+	} else {
+		// single density
+		if (sectors == 1040) {
+			// enhanced density
+			status |= 0x80;
+		}
+	}
+	rom_image[image_offset + STATUS_OFFSET] = status;
+	rom_image[image_offset + STATUS_OFFSET + 1] = 0xff; // dummy "last FDC status"
+	rom_image[image_offset + STATUS_OFFSET + 2] = 0xe0; // dummy "format disk timeout"
+	rom_image[image_offset + STATUS_OFFSET + 3] = 0; // dummy "characters in output buffer"
+
+	const uint8_t* percom;
+	// set percom block
+	if (isDD) {
+		switch (sectors) {
+		case 720: percom = percom_block_dd; break;
+		case 1440: percom = percom_block_qd; break;
+		default:
+			percom_block_other[2] = sectors >> 8;
+			percom_block_other[3] = sectors & 0xff;
+			percom_block_other[6] = 1;	// bytes per sector
+			percom_block_other[7] = 0;
+			break;
+		}
+	} else {
+		switch (sectors) {
+		case 720: percom = percom_block_sd; break;
+		case 1040: percom = percom_block_ed; break;
+		default:
+			percom_block_other[2] = sectors >> 8;
+			percom_block_other[3] = sectors & 0xff;
+			percom_block_other[6] = 0;	// bytes per sector
+			percom_block_other[7] = 128;
+			break;
+		}
+	}
+	memcpy(rom_image + image_offset + PERCOM_OFFSET, percom, 12);
+
+	// set image name
+	name = prepare_imagename(name);
+
+	// check maximum size
+	if (name.length() > NAME_LENGTH-1) {
+		name.erase(NAME_LENGTH-1);
+	}
+	name += 0x9b;
+
+	memcpy(rom_image + image_offset + NAME_OFFSET, name.c_str(), name.length());
 }
 
 void init_rom_image()
@@ -143,22 +286,8 @@ bool add_atr_image(const char* filename)
 
 	set_drive_table(current_driveno, isDD ? 1 : 0, sectors, image_offset);
 
-	// set status info
-	uint8_t status = 0x18; // motor on, write protected
-	if (isDD) {
-		// double density
-		status |= 0x20;
-	} else {
-		// single density
-		if (sectors == 1040) {
-			// enhanced density
-			status |= 0x80;
-		}
-	}
-	rom_image[image_offset + STATUS_OFFSET] = status;
-	rom_image[image_offset + STATUS_OFFSET + 1] = 0xff; // dummy "last FDC status"
-	rom_image[image_offset + STATUS_OFFSET + 2] = 0xe0; // dummy "format disk timeout"
-	rom_image[image_offset + STATUS_OFFSET + 3] = 0; // dummy "characters in output buffer"
+	set_image_infos(isDD, sectors, filename);
+
 	cout	<< "OK"
 		<< " (" << sectors << " " << (isDD ? "DD" : "SD") << " sectors"
 		<< " at page " << (image_offset >> 8) << ")"
