@@ -68,10 +68,14 @@ CSIOA	JMP ?ASIO	; entry point for A=driveno (1..8)
 
 ; now check for the command
 	LDA DCOMND
-	CMP #$53	; get status
-	BEQ ?CMDSTAT
 	CMP #$52	; read sector
 	BEQ ?CMDREAD
+	CMP #$53	; get status
+	BEQ ?CMDSTAT
+	CMP #$4E	; read percom block
+	BEQ ?CMDPERC
+	CMP #$6E	; get image name
+	BEQ ?CMDNAME
 
 ; other commands are unsupported, return error 144 (device nak)
 ?ERR144	LDY #144
@@ -104,16 +108,33 @@ CSIOA	JMP ?ASIO	; entry point for A=driveno (1..8)
 ?CMDSTAT
 	LDA #4		; buffer length = 4
 	STA BUFLEN
+	LDA #COFSTAT	; offset to status data in "sector 0"
+	STA CSSRC
+
+; common code for get percom / name
+?COMMADR
 	LDA #0
 	STA BUFLEN+1
-
-	LDA #COFSTAT	; status data is placed in "sector 0" of image
-	STA CSSRC
-	LDA #0
-	STA CSSRC+1
+	STA CSSRC+1	; data is placed in "sector 0" of image
 	STA CSSRCB
 
 	JMP ?ABSADR
+
+; get percom block
+?CMDPERC
+	LDA #COFPERC
+	STA CSSRC
+	LDA #12
+	STA BUFLEN
+	BNE ?COMMADR	; always
+
+; get image name
+?CMDNAME
+	LDA #COFNAME
+	STA CSSRC
+	LDA #CLNNAME
+	STA BUFLEN
+	BNE ?COMMADR	; always
 
 ; read command
 ?CMDREAD
