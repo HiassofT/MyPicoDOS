@@ -16,7 +16,13 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-CONSOLE	JSR GR0
+CONSOLE	LDA 560
+	PHA
+	LDA 561
+	PHA
+	LDA $301
+	PHA
+	JSR GR0
 	LDA #0
 	STA 82
 	STA 710
@@ -28,9 +34,20 @@ LOOPC	PUT 0, '>
 	BPL GOTCMD
 	CPY #128
 	BNE LOOPC
+	LDA #2
+	STA 82
+	JSR GR0
 	LDA #$40
 	STA 702
-	JMP GR0
+	LDA #$31
+	STA $300
+	PLA
+	STA $301
+	PLA
+	STA 561
+	PLA
+	STA 560
+	RTS
 
 GOTCMD	JSR SETSIO
 

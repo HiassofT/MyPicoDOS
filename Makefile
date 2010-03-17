@@ -237,8 +237,9 @@ mytest.atr:	MYPDOS.COM mypdos.atr mypdoshs.atr disk
 
 clean:
 	rm -f *.65o *.bin *.COM *.atr *.ROM *.SYS \
-	bootstd*.c bootrem*.c bootbare*.c \
-	picostd*.c picorem*.c picobare*.c
+	bootstd*.c bootrem*.c bootbare*.c bootsd*.c \
+	picostd*.c picorem*.c picobare*.c picosd*.c \
+	picoboot*.c
 
 backup:
 	tar zcf bak/mypdos-`date '+%y%m%d-%H%M'`.tgz *.src *.inc \
