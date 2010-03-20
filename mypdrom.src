@@ -20,16 +20,42 @@
 
 	.include "common.inc"
 	.include "cartsio.inc"
+	.include "cartsiocode-osram.inc"
 
 ; MyPicoDos start address
 MYSTART = $1000
 
-; MyPicoDos setup routine
-MYRUNA  = $0F00
-
 ; temp vectors for MyPicoDos
 SRCADR  = $E0
 DSTADR  = $E2
+
+; RAM locations for init code
+DRVTAB	= $7000	; drive table: 0=no drive, otherwise drive present
+NUMDRV	= $7008 ; total number of drives
+DRIVENO	= $7009 ; temp: drive number
+NAMBUF	= $7010 ; 32byte temporary name buffer
+NAMSCR	= $7100 ; 8*40 bytes screen for image names
+
+; copy code to $400
+	.MACRO RAMCPY
+	LDY #[%1-1]
+CPLP	LDA %2,Y
+	STA $400,Y
+	DEY
+	BPL CPLP
+	.ENDM
+
+; copy code to $400 and JSR it
+	.MACRO RAMJSR
+	RAMCPY %1, %2
+	JSR $400
+	.ENDM
+
+; copy code to $400 and JMP to it
+	.MACRO RAMJMP
+	RAMCPY %1, %2
+	JMP $400
+	.ENDM
 
 ;	* = $8000
 ;	.BYTE $FF
@@ -38,13 +64,9 @@ DSTADR  = $E2
 
 	.include "cartsiocode-rom.src"
 
-START	LDX #MYSETL
-	LDY #0
-MYLP1	LDA MYSETUP,Y	; copy init routine
-	STA MYRUNA,Y
-	INY
-	DEX
-	BNE MYLP1
+STARTMY	JSR CHKBAS
+	JSR CLRRAM
+
 	LDA #<MYPDOS
 	STA SRCADR
 	LDA #>MYPDOS
@@ -53,6 +75,7 @@ MYLP1	LDA MYSETUP,Y	; copy init routine
 	STA DSTADR
 	LDA #>MYSTART
 	STA DSTADR+1
+
 	LDX #MYPDPG
 	LDY #0
 MYLP2	LDA (SRCADR),Y	; copy MyPicoDos code
@@ -63,63 +86,328 @@ MYLP2	LDA (SRCADR),Y	; copy MyPicoDos code
 	INC DSTADR+1
 	DEX
 	BNE MYLP2
-	JMP MYRUNA
+
+	LDX #$FF
+	TXS
+
+	RAMJMP MYSETL, MYSETUP
 
 ; MyPicoDos init routine:
-; disable cartridge emu and basic, open screen and
-; then run MyPicoDos
+; disable cartridge, open screen and then run MyPicoDos
 
-MYSETUP	SEI
-	LDA #0
-	STA $D40E
+MYSETUP	INC $42
 	CARTOFF
 	LDA $D013
 	STA $3FA
-	LDA #$40
-	STA $D40E
-	CLI
+	DEC $42
 
-	LDA $D301
-	ORA #2
-	STA $D301
-	LDA $BFFF
-	EOR #$FF
-	STA $BFFF
-	LDY #1
-	LDX #$A0
-	CMP $BFFF
-	BNE NBASOFF
-	LDX #$C0
-	LDY #0
-
-NBASOFF	STX 106
-	STX 740
-	STY 1016
-
-	LDA #$70
-	STA DSTADR+1
-CLRLP1	LDA #0
-	STA DSTADR
-	TAY
-CLRLP	STA (DSTADR),Y
-	DEY
-	BNE CLRLP
-	INC DSTADR+1
-	LDA DSTADR+1
-	CMP 106
-	BNE CLRLP1
-
-	CLOSE 0
-	OPEN 0,12,0,EDITOR-MYSETUP+MYRUNA
+	OPEN 0,12,0,EDITOR-MYSETUP+$400
 	JMP MYSTART
 EDITOR	.BYTE "E:", 155
 MYSETL	= * - MYSETUP
 
-INIT	RTS
+; check if basic is present
+CHKBAS	RAMJSR CKBASL, CKBAS
+	TYA
+	BEQ NOBAS
+	STA 1016
+	LDA #$A0
+	STA 106
+	STA 740
+	RTS
+NOBAS	STA 1016
+	LDA #$C0
+	STA 106
+	STA 740
+	RTS
+
+CKBAS	INC $42
+	CARTOFF
+	LDY #1
+	LDA $A000
+	INC $A000
+	CMP $A000
+	BEQ CKBAS1	; $A000 didn't change - ROM
+	DEY
+CKBAS1	CARTBNKI CSROMBK
+	DEC $42
+	RTS
+CKBASL	= * - CKBAS	
+
+; clear memory from $7000 to RAMTOP
+CLRRAM	LDA #0
+	STA 559
+	STA $D400
+	RAMJMP RCLRL, RCLR
+
+RCLR	INC $42
+	CARTOFF
+	LDA #$70
+	STA DSTADR+1
+	LDA #0
+	STA DSTADR
+	TAY
+RCLRLP	STA (DSTADR),Y
+	DEY
+	BNE RCLRLP
+	INC DSTADR+1
+	LDX DSTADR+1
+	CPX 106
+	BNE RCLRLP
+	CARTBNKI CSROMBK
+	DEC $42
+	RTS
+RCLRL	= * - RCLR
+
+INIT	LDA $D01F
+	AND #4
+	BNE NODIS
+
+; disable cart if option is pressed
+DISCAR	RAMJMP DISLEN, DISCODE
+
+DISCODE	INC $42
+	CARTOFF
+	JMP $E477
+DISLEN	= * - DISCODE
+
+; normal init
+NODIS	JSR CLRRAM
+
+; setup SIO table for "get image name"
+	LDX #$09
+NAMSL	LDA NAMSIO,X
+	STA $300,X
+	DEX
+	BPL NAMSL
+
+	RAMCPY RSIOLEN, RSIO
+
+	LDA #<NAMSCR
+	STA DSTADR
+	LDA #>NAMSCR
+	STA DSTADR+1
+	
+; now get the names from the cart
+NAMLP	LDA #$40
+	STA $303
+	JSR $400
+	BMI NONAM
+
+	INC NUMDRV
+	LDX $301
+	LDA #1
+	STA DRVTAB-1,X
+
+	LDY #0
+	LDA #$D9
+	STA (DSTADR),Y
+	INY
+	TXA
+	ORA #$90
+	STA (DSTADR),Y
+	INY
+	LDA #$59
+	STA (DSTADR),Y
+	INY
+	INY
+	LDX #0
+NAMLP1	LDA NAMBUF,X
+	CMP #155
+	BEQ NAMEND
+	JSR INTERNAL
+	STA (DSTADR),Y
+	INY
+	INX
+	CPX #32
+	BNE NAMLP1
+NAMEND	CLC
+	LDA DSTADR
+	ADC #40
+	STA DSTADR
+	BCC NONAM
+	INC DSTADR+1
+
+NONAM	INC $301
+	LDA $301
+	CMP #9
+	BNE NAMLP
+
+	LDA NUMDRV	; are there any drives in the cart?
+	BNE GOTDRV	; yes, continue
+	JMP DISCAR	; no, disable cartridge and exit
+
+GOTDRV	LDA #<MYDL
+	STA 560
+	LDA #>MYDL
+	STA 561
+	LDA #0
+	STA 710
+	STA 712
+	LDA #10
+	STA 709		; screen colors
+	LDA #$E0
+	STA 756		; default character set
+	LDA #2
+	STA 755		; display inverse characters
+	LDA #$22
+	STA 559
+
+; enable keyboard and break-key IRQs
+	LDA #$C0
+	STA $10
+	STA $D20E
+	CLI
+
+KEYLP	JSR GETKEY
+	BPL KEYLP1
+KXIT	JMP DISCAR
+KEYLP1	CMP #27
+	BEQ KXIT
+	CMP #$20
+	BNE NOKSPC
+	JMP STARTMY
+NOKSPC	CMP #'1
+	BCC NOKNUM
+	CMP #'9
+	BCS NOKNUM
+	SEC
+	SBC #'0
+	STA DRIVENO
+
+	JMP PATCHOS
+NOKNUM	JMP KEYLP
+
+; convert ATASCII to screen code
+INTERNAL
+	CMP #32
+	BCC INTGRAF
+	CMP #96
+	BCC INTNORM
+	CMP #128
+	BCC INTNO
+	CMP #160
+	BCC INTGRAF
+	CMP #224
+	BCS INTNO
+
+INTNORM	SEC
+	SBC #32
+	RTS
+
+INTGRAF	CLC
+	ADC #64
+INTNO	RTS
+
+GETKEY	LDA $E425
+	PHA
+	LDA $E424
+	PHA
+	RTS
+
+
+; simple SIO code for accessing the cart
+RSIO	INC $42
+	CARTBNKI CSROMBK
+	JSR CSIOROM
+	BMI RSIOX
+	CARTBNK CSSRCB
+	LDY #0
+RSIO1	LDA (CSSRC),Y
+	STA (CSDST),Y
+	INY
+	CPY BUFLEN
+	BNE RSIO1
+RSIOX	CARTBNKI CSROMBK
+	DEC $42
+	LDY $303
+	RTS
+RSIOLEN	= * - RSIO
+	
+NAMSIO	.BYTE $31, 1, $6E, $40
+	.WORD NAMBUF
+	.BYTE 7,0
+	.WORD CLNNAME
+
+; clear 4k from $7000
+CLR7	LDX #$10
+; clear X pages starting from $7000
+CLR7X	LDA #$70
+	STA SRCADR+1
+	LDA #0
+	STA SRCADR
+	TAY
+CLR7LP	STA (SRCADR),Y
+	INY
+	BNE CLR7LP
+	INC SRCADR+1
+	DEX
+	BNE CLR7LP
+	RTS
+
+MYDL	.BYTE 112,112,112
+	.BYTE $42
+	.WORD NAMSCR
+	.BYTE 0,2,0,2,0,2,0,2,0,2,0,2,0,2,0
+	.BYTE $41
+	.WORD MYDL
 
 MYPDOS	= *
 	.incbin "mypdos-code-cartsio.bin"
 MYPDPG	= (*-MYPDOS+255) / 256
+
+OSCOD	= *
+	.incbin "cartsiocode-osram.bin"
+OSCODL	= * - OSCOD
+
+TMPVEC	= DSTADR
+	.include "romram.src"
+
+PATCHOS	LDA #0
+	STA 559
+	LDA 20
+PW1	CMP 20
+	BEQ PW1
+	JSR ROMRAM
+
+; copy SIO replacement code to OS
+	LDY #OSCODL-1
+PATCHL1	LDA OSCOD,Y
+	STA CSSTART,Y
+	DEY
+	BPL PATCHL1
+
+; drive number
+	LDA DRIVENO
+	STA CSSLOT
+
+	LDA $E45A
+	STA STDSIO+1
+	LDA $E45B
+	STA STDSIO+2
+
+	LDA #<OSCSIO
+	STA $E45A
+	LDA #>OSCSIO
+	STA $E45B
+
+	JSR CHKBAS
+	JSR CLRRAM
+
+	LDA 1016
+	STA 6
+
+	RAMJMP BOOTL, BOOT
+
+; disable cartridge and continue boot process
+BOOT	INC $42
+	CARTOFF
+	LDA $D013
+	STA $3FA
+	DEC $42
+	RTS
+
+BOOTL	= * - BOOT
 
 XEND	= *
 
@@ -129,8 +417,9 @@ XEND	= *
 	
 	* = $BFFA
 
-	.WORD START
+	.WORD $E477
 	.BYTE 0
-	.BYTE 4		; init & start cart, no disk boot allowed
+;	.BYTE 4		; init & start cart, no disk boot allowed
+	.BYTE 1		; only init cart, allow disk boot
 	.WORD INIT
 

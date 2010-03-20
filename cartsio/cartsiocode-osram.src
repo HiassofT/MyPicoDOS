@@ -1,0 +1,75 @@
+;  cartsiocode-osram.src - SIO replacement code for RAM OS
+;
+;  Copyright (c) 2010 by Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+	.include "cartsio.inc"
+	.include "cartsiocode-osram.inc"
+
+	* = CSSTART
+	JMP $1234	; JMP to original OS SIO code
+
+	* = CSSLOT
+	.BYTE 0
+
+	* = OSCSIO
+
+	LDA $300
+	CMP #$31	; D:?
+	BNE STDSIO
+	LDA $301
+	CMP #1		; D1:?
+	BNE STDSIO
+	LDA CSSLOT	; slot active?
+	BEQ STDSIO
+
+; wait for VCOUNT to reach $70 so that the screen
+; doesn't flicker when accessing the cart
+?WTSCR	LDA $D40B
+	CMP #$70
+	BNE ?WTSCR
+
+	LDA #1
+	STA $42		; set critic
+
+; set cartridge bank containing ROM code
+	CARTBNKI CSROMBK
+; call alternate SIO setup code (check commands, setup addresses etc.)
+	LDA CSSLOT
+	JSR CSIOROMA
+
+	BMI ?CSEND	; an error ocurred, exit
+
+; check if we need to copy data
+	LDA BUFLEN
+	ORA BUFLEN+1
+	BEQ ?CSEND	; BUFLEN=0, no copying needed
+
+; now copy the data
+	LDY #0
+?CPLP	CARTBNK CSSRCB	; set source bank number
+	LDA (CSSRC),Y
+	CARTOFF		; disable cartridge so we can access $8000-$BFFF
+	STA (CSDST),Y
+	INY
+	CPY BUFLEN
+	BNE ?CPLP
+
+?CSEND	CARTOFF		; disable cartridge
+	DEC CRITIC	; re-enable deferred VBI
+
+	LDY DSTATS
+	RTS

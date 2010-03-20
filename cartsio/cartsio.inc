@@ -38,6 +38,9 @@
 	CSIOROM = $A000	; cartsio entry address
 	CSROMBK = 0	; ROM bank number of cartsio entry
 
+; alternate cartsio entry, set A to slot number
+	CSIOROMA= $A003
+
 ; drive table in ROM (stored in same bank as cartsio code)
 ; the drive table has 8 entries (D1:..D8:) with 16 bytes each
 	CARTTAB	= $BF00	; drive table base address

@@ -8,7 +8,8 @@ ATASM=atasm
 CXX=g++
 CXXFLAGS=-W -Wall
 
-all: atr2cart atr2cart.exe test.rom diskcart.com diskcart.atr
+all: atr2cart atr2cart.exe test.rom diskcart.com diskcart.atr 512kbase.rom \
+	mydos.rom
 
 #all: MYINIT.COM MYINITR.COM \
 #	MYPDOS.COM MYPDOSN.COM \
@@ -47,8 +48,13 @@ comload.bin: comload.src comloadcode.src common.inc rreadcode.src
 cartsio.bin: cartsiobin.src $(CARTSIOINC)
 	$(ATASM) $(ASMFLAGS) -r -o$@ $<
 
+cartsiocode-osram.bin: cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc \
+	$(CARTSIOINC)
+	$(ATASM) $(ASMFLAGS) -r -o$@ $<
+
 mypdos-code-cartsio.bin: mypdos.src $(MYPDOSINC) \
-	cartsio.src $(CARTSIOINC) cartsio.bin imginfo.src
+	cartsio.src $(CARTSIOINC) cartsio.bin imginfo.src \
+	cartsiocode-osram.bin
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dCARTSIO=1 -r -o$@ $<
 
 mypdos8.rom: mypdrom.src mypdos-code-cartsio.bin cartsio.bin
@@ -84,6 +90,9 @@ testdd.atr: testdisk testdisk/*
 
 test.rom: atr2cart testdisk.atr testdd.atr
 	./atr2cart $@ testdisk.atr testdd.atr
+
+mydos.rom: atr2cart
+	./atr2cart $@ /data/hias/xl/camel/boot/mydosx1.atr
 
 testdisk.raw: testdisk.atr
 	dd if=$< of=$@ bs=16 skip=1
