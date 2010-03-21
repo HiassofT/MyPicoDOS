@@ -726,7 +726,7 @@ TMP32	.WORD 0,0
 TMPIDX	.BYTE 0
 
 
-TTITLE	.BYTE 125, "512k Mega FlashCart DiskWriter V0.1",155
+TTITLE	.BYTE 125, "512k Mega FlashCart DiskWriter V0.3",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 TTITLEL	= * - TTITLE
 

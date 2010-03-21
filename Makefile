@@ -8,8 +8,8 @@ ATASM=atasm
 CXX=g++
 CXXFLAGS=-W -Wall
 
-all: atr2cart atr2cart.exe test.rom diskcart.com diskcart.atr 512kbase.rom \
-	mydos.rom
+all: atr2cart atr2cart.exe diskcart.com diskcart.atr
+#	mydos.rom 512kbase.rom test.rom
 
 #all: MYINIT.COM MYINITR.COM \
 #	MYPDOS.COM MYPDOSN.COM \

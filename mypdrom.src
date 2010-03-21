@@ -33,7 +33,10 @@ DSTADR  = $E2
 DRVTAB	= $7000	; drive table: 0=no drive, otherwise drive present
 NUMDRV	= $7008 ; total number of drives
 DRIVENO	= $7009 ; temp: drive number
+OSTYPE	= $700A	; OS type
 NAMBUF	= $7010 ; 32byte temporary name buffer
+SEPLINE	= $7030	; 40byte "separator line" line
+BASLINE	= $7058	; 40byte "toggle basic" line
 NAMSCR	= $7100 ; 8*40 bytes screen for image names
 
 ; copy code to $400
@@ -109,7 +112,7 @@ MYSETL	= * - MYSETUP
 ; check if basic is present
 CHKBAS	RAMJSR CKBASL, CKBAS
 	TYA
-	BEQ NOBAS
+	BNE NOBAS
 	STA 1016
 	LDA #$A0
 	STA 106
@@ -123,12 +126,12 @@ NOBAS	STA 1016
 
 CKBAS	INC $42
 	CARTOFF
-	LDY #1
+	LDY #0
 	LDA $A000
 	INC $A000
 	CMP $A000
 	BEQ CKBAS1	; $A000 didn't change - ROM
-	DEY
+	INY
 CKBAS1	CARTBNKI CSROMBK
 	DEC $42
 	RTS
@@ -173,6 +176,9 @@ DISLEN	= * - DISCODE
 
 ; normal init
 NODIS	JSR CLRRAM
+	LDA $D301
+	ORA #2		; disable basic
+	STA $D301
 
 ; setup SIO table for "get image name"
 	LDX #$09
@@ -200,16 +206,15 @@ NAMLP	LDA #$40
 	STA DRVTAB-1,X
 
 	LDY #0
-	LDA #$D9
+	LDA #$42
 	STA (DSTADR),Y
 	INY
 	TXA
 	ORA #$90
 	STA (DSTADR),Y
 	INY
-	LDA #$59
+	LDA #$56
 	STA (DSTADR),Y
-	INY
 	INY
 	LDX #0
 NAMLP1	LDA NAMBUF,X
@@ -237,9 +242,28 @@ NONAM	INC $301
 	BNE GOTDRV	; yes, continue
 	JMP DISCAR	; no, disable cartridge and exit
 
-GOTDRV	LDA #<MYDL
+GOTDRV	JSR CHKOS	; check for compatible OS
+	BEQ OSOK	; OS compatible with bootable images
+	JMP STARTMY	; OS incompatible - just start MyPicoDos
+
+OSOK
+
+; setup rest of screen
+	LDY #39
+SCRL1	LDA #$52
+	STA SEPLINE,Y
+	LDA TBASIC,Y
+	STA BASLINE,Y
+	DEY
+	BPL SCRL1
+
+	; display basic status
+	JSR PBAS
+
+; enable display
+	LDA #<DLIST
 	STA 560
-	LDA #>MYDL
+	LDA #>DLIST
 	STA 561
 	LDA #0
 	STA 710
@@ -276,7 +300,14 @@ NOKSPC	CMP #'1
 	STA DRIVENO
 
 	JMP PATCHOS
-NOKNUM	JMP KEYLP
+NOKNUM	CMP #'B
+	BNE NOKEYB
+	LDA $D301
+	EOR #$02
+	STA $D301
+	JSR PBAS
+	JMP KEYLP
+NOKEYB	JMP KEYLP
 
 ; convert ATASCII to screen code
 INTERNAL
@@ -305,6 +336,20 @@ GETKEY	LDA $E425
 	PHA
 	RTS
 
+; display basic status on/off
+PBAS	LDX #5
+	LDY #0
+	LDA $D301
+	AND #2
+	BEQ PBAS1	; basic is on
+	LDX #0
+PBAS1	LDA TOFF,X
+	STA BASLINE+OBAS,Y
+	INX
+	INY
+	CPY #5
+	BNE PBAS1
+	RTS
 
 ; simple SIO code for accessing the cart
 RSIO	INC $42
@@ -345,12 +390,74 @@ CLR7LP	STA (SRCADR),Y
 	BNE CLR7LP
 	RTS
 
-MYDL	.BYTE 112,112,112
+DLIST	.BYTE 112,112,112,112,112
+	.BYTE $42
+	.WORD TITLE
+	.BYTE 112,112
+	.BYTE 2
+	.BYTE $42
+	.WORD SEPLINE
+	.BYTE 0
 	.BYTE $42
 	.WORD NAMSCR
 	.BYTE 0,2,0,2,0,2,0,2,0,2,0,2,0,2,0
+	.BYTE $42
+	.WORD SEPLINE
+	.BYTE $42
+	.WORD THELP1
+	.BYTE 0, $42
+	.WORD THELP2
+	.BYTE 0, $42
+	.WORD BASLINE
+	.BYTE 0, $42
+	.WORD THELP3
 	.BYTE $41
-	.WORD MYDL
+	.WORD DLIST
+
+TITLE	.SBYTE "    "
+	.SBYTE "DiskCart V0.3 (c) 2010 HiassofT"
+	.SBYTE "     "
+
+	.SBYTE "          "
+	.SBYTE "images on cartridge:"
+	.SBYTE "          "
+
+THELP1	.SBYTE "        "
+	.BYTE $42, $91, $56, 13, $42, $98, $56
+	.SBYTE " = boot slot 1-8"
+	.SBYTE "         "
+
+THELP2	.SBYTE "       "
+	.BYTE $42
+	.SBYTE +$80, "SPACE"
+	.BYTE $56
+	.SBYTE " = start MyPicoDos"
+	.SBYTE "        "
+
+TBASIC	.SBYTE "           "
+	.BYTE $42
+	.SBYTE +$80, "B"
+	.BYTE $56
+	.SBYTE " = basic: "
+OBAS	= * - TBASIC
+	.SBYTE "     "
+	.SBYTE "           "
+
+THELP3	.SBYTE "              "
+	.BYTE $42
+	.SBYTE +$80, "ESC"
+	.BYTE $56
+	.SBYTE " = exit"
+	.SBYTE "              "
+
+TOFF	.BYTE $42
+	.SBYTE +$80, "OFF"
+	.BYTE $56
+
+TON	.BYTE $42
+	.SBYTE +$80, "ON"
+	.BYTE $56
+	.BYTE 0
 
 MYPDOS	= *
 	.incbin "mypdos-code-cartsio.bin"
@@ -370,31 +477,56 @@ PW1	CMP 20
 	BEQ PW1
 	JSR ROMRAM
 
-; copy SIO replacement code to OS
+; set destination address depending on OS
+	LDX OSTYPE
+	LDA OSTAB,X
+	STA DSTADR
+	LDA OSTAB+1,X
+	STA DSTADR+1
+
 	LDY #OSCODL-1
 PATCHL1	LDA OSCOD,Y
-	STA CSSTART,Y
+	STA (DSTADR),Y
 	DEY
 	BPL PATCHL1
 
-; drive number
+; slot number
+	LDY #OSLOTNO
 	LDA DRIVENO
-	STA CSSLOT
+	STA (DSTADR),Y
 
+; original SIO vector
+	LDY #OSTDSIO
 	LDA $E45A
-	STA STDSIO+1
+	STA (DSTADR),Y
+	INY
 	LDA $E45B
-	STA STDSIO+2
+	STA (DSTADR),Y
 
-	LDA #<OSCSIO
+	LDA DSTADR
 	STA $E45A
-	LDA #>OSCSIO
+	LDA DSTADR+1
 	STA $E45B
 
 	JSR CHKBAS
 	JSR CLRRAM
 
+; install reset handler
+	LDY #RESHL-1
+CPRES	LDA RESH,Y
+	STA RESADR,Y
+	DEY
+	BPL CPRES
+
+	LDA #2
+	STA 9
+	LDA #<RESADR
+	STA 2
+	LDA #>RESADR
+	STA 3
+
 	LDA 1016
+	EOR #1
 	STA 6
 
 	RAMJMP BOOTL, BOOT
@@ -406,14 +538,49 @@ BOOT	INC $42
 	STA $3FA
 	DEC $42
 	RTS
-
 BOOTL	= * - BOOT
+
+; reset handler
+RESH	LDA $D301
+	AND #$FE	; enable OS RAM
+	STA $D301
+	RTS
+RESHL	= * - RESH
+
+; check for compatible OS type
+CHKOS	LDX #0
+	STX OSTYPE
+CHKOSL	CPX #OSTABL
+	BNE CHKOS1
+	LDA #$FF
+	RTS
+CHKOS1	LDA OSTAB,X
+	STA SRCADR
+	LDA OSTAB+1,X
+	STA SRCADR+1
+	LDY #OSCODL-1
+CHKOS2	LDA (SRCADR),Y
+	BNE CHKOS3
+	DEY
+	BPL CHKOS2
+	STX OSTYPE
+	LDA #0
+	RTS
+CHKOS3	INX
+	INX
+	STX OSTYPE
+	JMP CHKOSL
+
+; free addresses in OS
+OSTAB	.WORD $CBB0	; XL/XE OS
+	.WORD $FFA0	; QMEG 4.04
+OSTABL	= * - OSTAB
 
 XEND	= *
 
 	* = CARTSIG
 	.BYTE "HiassofT"
-	.BYTE "20100314"
+	.BYTE "20100321"
 	
 	* = $BFFA
 

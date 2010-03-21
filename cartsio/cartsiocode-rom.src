@@ -20,8 +20,10 @@
 
 CSIO	JMP ?NORSIO	; "normal" SIO entry point
 CSIOA	JMP ?ASIO	; entry point for A=driveno (1..8)
+CSIOY	JMP ?YSIO	; entry point for Y=driveno (1..8)
 
 ; simple entry point with X=driveno
+?YSIO	TYA
 ?ASIO	CMP #0		; check for valid driveno in A (1..8)
 	BEQ ?NODEVIC
 	CMP #9

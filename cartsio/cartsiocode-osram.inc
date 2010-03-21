@@ -16,8 +16,10 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-CSSTART	= $CC00		; start
-STDSIO	= CSSTART	; code to use original SIO
-CSSLOT	= CSSTART+$F	; slot number to use
-OSCSIO	= CSSTART+$10	; SIO replacement code
+; offsets:
+OSLOTNO	= 1	; slot number
+OSTDSIO	= 5	; address of original SIO code
+
+; address of reset-handler (to enable OS RAM)
+RESADR  = $0120
 

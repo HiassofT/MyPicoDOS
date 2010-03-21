@@ -17,24 +17,18 @@
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 	.include "cartsio.inc"
-	.include "cartsiocode-osram.inc"
 
-	* = CSSTART
-	JMP $1234	; JMP to original OS SIO code
+	* = $1000
+ENTRY	LDY #0		; check slot number
+	BNE SLOTOK	; yes, slot is active
+STDSIO	JMP $1234	; call original OS SIO code
 
-	* = CSSLOT
-	.BYTE 0
-
-	* = OSCSIO
-
-	LDA $300
+SLOTOK	LDA $300
 	CMP #$31	; D:?
 	BNE STDSIO
 	LDA $301
 	CMP #1		; D1:?
 	BNE STDSIO
-	LDA CSSLOT	; slot active?
-	BEQ STDSIO
 
 ; wait for VCOUNT to reach $70 so that the screen
 ; doesn't flicker when accessing the cart
@@ -43,13 +37,13 @@
 	BNE ?WTSCR
 
 	LDA #1
-	STA $42		; set critic
+	STA CRITIC		; set critic
 
 ; set cartridge bank containing ROM code
 	CARTBNKI CSROMBK
+
 ; call alternate SIO setup code (check commands, setup addresses etc.)
-	LDA CSSLOT
-	JSR CSIOROMA
+	JSR CSIOROMY
 
 	BMI ?CSEND	; an error ocurred, exit
 
