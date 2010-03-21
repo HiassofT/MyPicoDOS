@@ -81,6 +81,11 @@
 	CARTBNKX
 	.ENDM
 
+	.MACRO CARTBASE	; set base ROM bank for cartsio
+	LDX #CSROMBK
+	CARTBNKX
+	.ENDM
+
 	.MACRO CARTBNK ; parameter: bank nummer (address)
 	LDX %1
 	CARTBNKX

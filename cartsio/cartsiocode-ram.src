@@ -30,7 +30,7 @@ DOCARSIO
 ;	INC CRITIC	; disable deferred VBI
 
 ; set cartridge bank containing ROM code
-	CARTBNKI CSROMBK
+	CARTBASE
 
 ; call SIO setup code (check commands, setup addresses etc.)
 	JSR CSIOROM

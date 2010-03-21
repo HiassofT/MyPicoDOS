@@ -40,7 +40,7 @@ SLOTOK	LDA $300
 	STA CRITIC		; set critic
 
 ; set cartridge bank containing ROM code
-	CARTBNKI CSROMBK
+	CARTBASE
 
 ; call alternate SIO setup code (check commands, setup addresses etc.)
 	JSR CSIOROMY
