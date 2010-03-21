@@ -8,7 +8,7 @@ ATASM=atasm
 CXX=g++
 CXXFLAGS=-W -Wall
 
-all: atr2cart atr2cart.exe diskcart.com diskcart.atr
+all: atr2cart atr2cart.exe diskcart.com diskcart-hi.com diskcart.atr
 #	mydos.rom 512kbase.rom test.rom
 
 #all: MYINIT.COM MYINITR.COM \
@@ -24,10 +24,10 @@ all: atr2cart atr2cart.exe diskcart.com diskcart.atr
 
 #all: MYPDOS.COM mypdos.atr mypdoshs.atr myinit2.atr
 
-ASMFLAGS= -Icartsio -Ilibflash
-#ASMFLAGS = -Icartsio -Ilibflash -s
-#ASMFLAGS = -Icartsio -Ilibflash -v -s
-#ASMFLAGS = -Icartsio -Ilibflash -s -dHWDEBUG
+ASMFLAGS= -Icartsio -Ilibflash -Ihisio
+#ASMFLAGS = -Icartsio -Ilibflash -Ihisio -s
+#ASMFLAGS = -Icartsio -Ilibflash -Ihisio -v -s
+#ASMFLAGS = -Icartsio -Ilibflash -Ihisio -s -dHWDEBUG
 
 MYPDOSINC = common.inc getdens.src longname.src \
 	rreadcode.src comloadcode.src basloadcode.src \
@@ -35,6 +35,12 @@ MYPDOSINC = common.inc getdens.src longname.src \
 
 CARTSIOINC = cartsio/cartsio.inc \
 	cartsio/cartsiocode-ram.src cartsio/cartsiocode-rom.src
+
+HISIOINC = hisio/hisio.inc hisio/hisiocode.src hisio/hisiodet.src \
+	hisio/hisiocode-break.src hisio/hisiocode-cleanup.src \
+	hisio/hisiocode-main.src hisio/hisiocode-send.src \
+	hisio/hisiocode-check.src hisio/hisiocode-diag.src \
+	hisio/hisiocode-receive.src hisio/hisiocode-vbi.src
 
 rread.bin: rread.src rreadcode.src common.inc
 	$(ATASM) $(ASMFLAGS) -r -o$@ $<
@@ -50,6 +56,9 @@ cartsio.bin: cartsiobin.src $(CARTSIOINC)
 
 cartsiocode-osram.bin: cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc \
 	$(CARTSIOINC)
+	$(ATASM) $(ASMFLAGS) -r -o$@ $<
+
+hisio.bin: hisio.src $(HISIOINC)
 	$(ATASM) $(ASMFLAGS) -r -o$@ $<
 
 mypdos-code-cartsio.bin: mypdos.src $(MYPDOSINC) \
@@ -115,8 +124,15 @@ diskcart.com: diskcart.src mypdos8.rom libflash/*.src libflash/*.inc \
 	mkdir -p disk
 	cp -f $@ disk
 
+diskcart-hi.com: diskcart.src mypdos8.rom libflash/*.src libflash/*.inc \
+	arith.inc arith.src diskio.src hisio.bin
+	$(ATASM) $(ASMFLAGS) -dHIGHSPEED -o$@ $<
+	mkdir -p disk
+	cp -f $@ disk/diskchi.com
+
 diskcart.atr: diskcart.com
-	dir2atr -p -b MyPicoDos405 $@ disk
+	atascii piconame.txt > disk/PICONAME.TXT
+	dir2atr -b MyPicoDos405 $@ disk
 
 clean:
-	rm -f atr2cart atr2cart.exe mypdrom.c *.65o *.o *.bin *.com *.atr *.rom
+	rm -rf atr2cart atr2cart.exe mypdrom.c *.65o *.o *.bin *.com *.atr *.rom disk

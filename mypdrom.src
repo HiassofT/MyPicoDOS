@@ -299,6 +299,11 @@ NOKSPC	CMP #'1
 	SBC #'0
 	STA DRIVENO
 
+; check if slot is active
+	TAX
+	LDA DRVTAB-1,X
+	BEQ KEYLP	; no, back to main loop
+
 	JMP PATCHOS
 NOKNUM	CMP #'B
 	BNE NOKEYB

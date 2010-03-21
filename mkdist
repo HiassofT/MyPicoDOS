@@ -16,6 +16,7 @@ cp -a \
 	atr2cart.exe \
 	diskcart.atr \
 	diskcart.com \
+	diskchi.com \
 "${TMPDIR}"
 
 cp -a Makefile *.inc *.src *.cpp *.c *.h "${TMPDIR}/src"

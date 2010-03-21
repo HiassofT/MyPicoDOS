@@ -42,7 +42,7 @@ GETDENS
 	LDA #$00
 	STA $307
 	STA $303
-	JSR $E459
+	JSR SIOVEC
 	BPL ?GETDE1
 
 ; no response - return an error
@@ -73,7 +73,7 @@ GETDENS
 
 	LDA #$40
 	STA $303
-	JSR $E459
+	JSR SIOVEC
 	BMI ?GETDERR
 
 	LDA #0
@@ -102,7 +102,7 @@ GETDENS
 	STA $308
 	LDA #$40
 	STA $303
-	JSR $E459
+	JSR SIOVEC
 	BPL ?GETDE5
 
 ; create default percom block
@@ -169,7 +169,7 @@ GETDENS
 	STA $309
 	LDA #$40
 	STA $303
-	JSR $E459
+	JSR SIOVEC
 	BPL ?GETDE6
 
 ; reading sector 721 failed, this must be a buggy XF551 so
@@ -332,7 +332,7 @@ READ8K	LDA #$20
 	STA $309
 ?RD8K2	LDA #$40
 	STA $303
-	JSR $E459
+	JSR SIOVEC
 	BPL ?RD8KN
 	RTS		; disk error - return
 ?RD8KN	LDA DISKDNS

@@ -39,15 +39,29 @@ OFSIMSH	= 0
 OFSIMEL	= 0
 OFSIMEH	= 8
 
-; temporary ZP vector
-TMPVEC	= $E6	; ,$E7 ($E0-$E5 are used by libflash)
+; temporary ZP vectors
+SRCVEC	= $E6	; ,$E7 ($E0-$E5 are used by libflash)
+DSTVEC	= $E8	; ,$E9
+TMPVEC	= SRCVEC	; for romram.src
 
 START	= $2000
+
+.if .def HIGHSPEED
+; address of highspeed code (1k)
+HIADR	= $8C00
+SIOVEC	= HIADR
+.else
+SIOVEC	= $E459
+.endif
+
+; address of cartridge code (8k)
+CCADR	= $9000
 
 	.BANK
 	* = START
 
 	JSR INIT
+	JSR MOVDATA
 
 MAINLP	BPUT 0, TTITLEL, TTITLE
 	JSR FINIT
@@ -345,15 +359,29 @@ DOINIT	BPUT 0, TINITL, TINIT
 	JSR PERROR
 	JMP DOCONT
 DOINIT1	
-	BPUT 0, TPROGFL, TPROGF
+	JSR PPROGF
+
+; copy cartridge code to data buffer
+	LDA #<CCADR
+	STA SRCVEC
+	LDA #>CCADR
+	STA SRCVEC+1
+	LDA #<DATABUF
+	STA DSTVEC
+	LDA #>DATABUF
+	STA DSTVEC+1
+	LDX #$20	; $20 pages = 8k
+	JSR COPYPAG
+
+; setup addresses
 	LDA #0
 	STA FLASHADR
 	STA FLASHADR+2
 	LDA #$20
 	STA FLASHADR+1
-	LDA #<MYPDOS
+	LDA #<DATABUF
 	STA DATAADR
-	LDA #>MYPDOS
+	LDA #>DATABUF
 	STA DATAADR+1
 	JSR FENABLE
 	LDX #$20
@@ -493,7 +521,7 @@ ADDD11	LDA NAMBUF,X
 
 ; now update the disk image table
 	BPUT 0, TPTABL, TPTAB
-	BPUT 0, TPROGFL, TPROGF
+	JSR PPROGF
 	JSR SETTABA
 ; only write image infos, but don't mark image as active yet
 	JSR FENABLE
@@ -548,7 +576,7 @@ ADDD13	JSR TODEC
 	JSR PRDEC 
 	JMP DOCONT
 
-ADDD14	BPUT 0, TPROGFL, TPROGF
+ADDD14	JSR PPROGF
 	JSR FENABLE
 	LDX READPAG
 	JSR FWPAGE
@@ -584,7 +612,7 @@ ADDD20	JMP ADDDLP
 ; finished, now mark the image as active
 ADDD21	BPUT 0, TPTABFL, TPTABF
 
-	BPUT 0, TPROGFL, TPROGF
+	JSR PPROGF
 	JSR SETTABA
 ; only write image infos, but don't mark image as active yet
 	JSR FENABLE
@@ -627,6 +655,45 @@ CLEANUP	LDA MD301
 M106	.BYTE 0
 M740	.BYTE 0
 MD301	.BYTE 0
+
+MOVDATA
+; copy cartridge code
+	LDA #<CARTCOD
+	STA SRCVEC
+	LDA #>CARTCOD
+	STA SRCVEC+1
+	LDA #<CCADR
+	STA DSTVEC
+	LDA #>CCADR
+	STA DSTVEC+1
+	LDX #$20	; $20 pages = 8k
+	JSR COPYPAG
+
+.if .def HIGHSPEED
+	LDA #<HICODE
+	STA SRCVEC
+	LDA #>HICODE
+	STA SRCVEC+1
+	LDA #<HIADR
+	STA DSTVEC
+	LDA #>HIADR
+	STA DSTVEC+1
+	LDX #4		; 4 pages = 1k
+	JSR COPYPAG
+.endif
+	RTS
+
+; copy X pages from srcvec to dstvec
+COPYPAG	LDY #0
+COPYPLP	LDA (SRCVEC),Y
+	STA (DSTVEC),Y
+	INY
+	BNE COPYPLP
+	INC SRCVEC+1
+	INC DSTVEC+1
+	DEX
+	BNE COPYPLP
+	RTS
 
 
 TFA10	.BYTE "Detected ", $99
@@ -709,6 +776,10 @@ PERRADR	BPUT 0, TERRADRL, TERRADR
 	JSR PUTHEX
 	LDA #155
 	JMP PUTCHAR
+
+; print "flash"
+PPROGF	BPUT 0, TPROGFL, TPROGF
+	RTS
 
 DISKIDX	.BYTE 0
 DISKOFS	.WORD 0,0
@@ -823,13 +894,14 @@ NAMBUF	* = * + 128
 ; drive table (8 entries of 8 bytes each)
 TABBUF	* = * + $40
 
-	* = (*+255) & $FF00
+SECBUF	= (*+255) & $FF00
+DATABUF = SECBUF + 256
 
-MYPDOS	.incbin "mypdos8.rom"
+CARTCOD	.incbin "mypdos8.rom"
 
-SECBUF	* = * + 256
-DATABUF	= *
-
+.if .def HIGHSPEED
+HICODE	.incbin "hisio.bin"
+.endif
 	.BANK
 	* = $2E0
 	.WORD START

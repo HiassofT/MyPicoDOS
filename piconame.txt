@@ -1,0 +1,3 @@
+DiskCart V0.3
+DISKCARTCOM DiskCart standard version
+DISKCHI COM DiskCart highspeed SIO version
