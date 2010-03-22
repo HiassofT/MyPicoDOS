@@ -67,7 +67,8 @@ CPLP	LDA %2,Y
 
 	.include "cartsiocode-rom.src"
 
-STARTMY	JSR CHKBAS
+STARTMY	JSR SCROFF
+	JSR CHKBAS
 	JSR CLRRAM
 
 	LDA #<MYPDOS
@@ -138,10 +139,7 @@ CKBAS1	CARTBASE
 CKBASL	= * - CKBAS	
 
 ; clear memory from $7000 to RAMTOP
-CLRRAM	LDA #0
-	STA 559
-	STA $D400
-	RAMJMP RCLRL, RCLR
+CLRRAM	RAMJMP RCLRL, RCLR
 
 RCLR	INC $42
 	CARTOFF
@@ -167,12 +165,8 @@ INIT	LDA $D01F
 	BNE NODIS
 
 ; disable cart if option is pressed
-DISCAR	RAMJMP DISLEN, DISCODE
-
-DISCODE	INC $42
-	CARTOFF
-	JMP $E477
-DISLEN	= * - DISCODE
+DISCAR	JSR SCROFF
+	JMP EXIT
 
 ; normal init
 NODIS	JSR CLRRAM
@@ -475,11 +469,15 @@ OSCODL	= * - OSCOD
 TMPVEC	= DSTADR
 	.include "romram.src"
 
-PATCHOS	LDA #0
+; disable screen and wait for VBI
+SCROFF	LDA #0
 	STA 559
 	LDA 20
-PW1	CMP 20
-	BEQ PW1
+SCWT	CMP 20
+	BEQ SCWT
+	RTS
+
+PATCHOS	JSR SCROFF
 	JSR ROMRAM
 
 ; set destination address depending on OS
@@ -513,9 +511,6 @@ PATCHL1	LDA OSCOD,Y
 	LDA DSTADR+1
 	STA $E45B
 
-	JSR CHKBAS
-	JSR CLRRAM
-
 ; install reset handler
 	LDY #RESHL-1
 CPRES	LDA RESH,Y
@@ -530,6 +525,10 @@ CPRES	LDA RESH,Y
 	LDA #>RESADR
 	STA 3
 
+EXIT	JSR CHKBAS
+	JSR CLRRAM
+
+; set TRAMSZ to mirror basic status
 	LDA 1016
 	EOR #1
 	STA 6
