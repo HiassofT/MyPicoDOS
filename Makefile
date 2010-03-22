@@ -29,9 +29,11 @@ ASMFLAGS= -Icartsio -Ilibflash -Ihisio
 #ASMFLAGS = -Icartsio -Ilibflash -Ihisio -v -s
 #ASMFLAGS = -Icartsio -Ilibflash -Ihisio -s -dHWDEBUG
 
-MYPDOSINC = common.inc getdens.src longname.src \
-	rreadcode.src comloadcode.src basloadcode.src \
+MYPDOSINC = mypdos/common.inc mypdos/getdens.src mypdos/longname.src \
+	mypdos/rreadcode.src mypdos/comloadcode.src mypdos/basloadcode.src \
 	rread.bin comload.bin basload.bin
+
+MYPDOSFLAGS = $(ASMFLAGS) -Imypdos
 
 CARTSIOINC = cartsio/cartsio.inc \
 	cartsio/cartsiocode-ram.src cartsio/cartsiocode-rom.src
@@ -42,17 +44,17 @@ HISIOINC = hisio/hisio.inc hisio/hisiocode.src hisio/hisiodet.src \
 	hisio/hisiocode-check.src hisio/hisiocode-diag.src \
 	hisio/hisiocode-receive.src hisio/hisiocode-vbi.src
 
-rread.bin: rread.src rreadcode.src common.inc
-	$(ATASM) $(ASMFLAGS) -r -o$@ $<
+rread.bin: mypdos/rread.src mypdos/rreadcode.src mypdos/common.inc
+	$(ATASM) $(MYPDOSFLAGS) -r -o$@ $<
 
-basload.bin: basload.src basloadcode.src common.inc rreadcode.src
-	$(ATASM) $(ASMFLAGS) -r -o$@ $<
+basload.bin: mypdos/basload.src mypdos/basloadcode.src mypdos/common.inc mypdos/rreadcode.src
+	$(ATASM) $(MYPDOSFLAGS) -r -o$@ $<
 
-comload.bin: comload.src comloadcode.src common.inc rreadcode.src
-	$(ATASM) $(ASMFLAGS) -r -o$@ $<
+comload.bin: mypdos/comload.src mypdos/comloadcode.src mypdos/common.inc mypdos/rreadcode.src
+	$(ATASM) $(MYPDOSFLAGS) -r -o$@ $<
 
-cartsio.bin: cartsiobin.src $(CARTSIOINC)
-	$(ATASM) $(ASMFLAGS) -r -o$@ $<
+cartsio.bin: mypdos/cartsiobin.src $(CARTSIOINC)
+	$(ATASM) $(MYPDOSFLAGS) -r -o$@ $<
 
 cartsiocode-osram.bin: cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc \
 	$(CARTSIOINC)
@@ -61,13 +63,13 @@ cartsiocode-osram.bin: cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.i
 hisio.bin: hisio.src $(HISIOINC)
 	$(ATASM) $(ASMFLAGS) -r -o$@ $<
 
-mypdos-code-cartsio.bin: mypdos.src $(MYPDOSINC) \
-	cartsio.src $(CARTSIOINC) cartsio.bin imginfo.src \
+mypdos-code-cartsio.bin: mypdos/mypdos.src $(MYPDOSINC) \
+	mypdos/cartsio.src $(CARTSIOINC) cartsio.bin mypdos/imginfo.src \
 	cartsiocode-osram.bin
-	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dCARTSIO=1 -r -o$@ $<
+	$(ATASM) $(MYPDOSFLAGS) -dMYPDOSROM=1 -dCARTSIO=1 -r -o$@ $<
 
 mypdos8.rom: mypdrom.src mypdos-code-cartsio.bin cartsio.bin
-	$(ATASM) $(ASMFLAGS) -r -f255 -o$@ $<
+	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ $<
 
 8kblank.rom:
 	dd if=/dev/zero bs=8k count=1 | tr '\000' '\377' > 8kblank.rom
