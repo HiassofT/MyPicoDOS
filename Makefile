@@ -57,37 +57,55 @@ basload.bin: mypdos/basload.src mypdos/basloadcode.src mypdos/common.inc mypdos/
 comload.bin: mypdos/comload.src mypdos/comloadcode.src mypdos/common.inc mypdos/rreadcode.src
 	$(ATASM) $(MYPDOSFLAGS) -r -o$@ $<
 
-cartsio-mega512.bin: mypdos/cartsiobin.src $(CARTSIOINC)
+cartsio-mega512-pal.bin: mypdos/cartsiobin.src $(CARTSIOINC)
+	$(ATASM) $(MYPDOSFLAGS) -r -o$@ -dMEGA512 -dPAL $<
+
+cartsio-mega512-ntsc.bin: mypdos/cartsiobin.src $(CARTSIOINC)
 	$(ATASM) $(MYPDOSFLAGS) -r -o$@ -dMEGA512 $<
 
-cartsio-atarimax8.bin: mypdos/cartsiobin.src $(CARTSIOINC)
+cartsio-atarimax8-pal.bin: mypdos/cartsiobin.src $(CARTSIOINC)
+	$(ATASM) $(MYPDOSFLAGS) -r -o$@ -dATARIMAX8 -dPAL $<
+
+cartsio-atarimax8-ntsc.bin: mypdos/cartsiobin.src $(CARTSIOINC)
 	$(ATASM) $(MYPDOSFLAGS) -r -o$@ -dATARIMAX8 $<
 
-cartsiocode-osram-mega512.bin: cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc \
+cartsiocode-osram-mega512-pal.bin: cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc \
+	$(CARTSIOINC)
+	$(ATASM) $(ASMFLAGS) -r -o$@ -dMEGA512 -dPAL $<
+
+cartsiocode-osram-mega512-ntsc.bin: cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc \
 	$(CARTSIOINC)
 	$(ATASM) $(ASMFLAGS) -r -o$@ -dMEGA512 $<
 
-cartsiocode-osram-atarimax8.bin: cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc \
+cartsiocode-osram-atarimax8-pal.bin: cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc \
+	$(CARTSIOINC)
+	$(ATASM) $(ASMFLAGS) -r -o$@ -dATARIMAX8 -dPAL $<
+
+cartsiocode-osram-atarimax8-ntsc.bin: cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc \
 	$(CARTSIOINC)
 	$(ATASM) $(ASMFLAGS) -r -o$@ -dATARIMAX8 $<
 
 hisio.bin: hisio.src $(HISIOINC)
 	$(ATASM) $(ASMFLAGS) -r -o$@ $<
 
-mypdos-code-mega512.bin: mypdos/mypdos.src $(MYPDOSINC) \
-	mypdos/cartsio.src $(CARTSIOINC) cartsio-mega512.bin mypdos/imginfo.src \
-	cartsiocode-osram-mega512.bin
+mypdos-code-mega512.bin: mypdos/mypdos.src $(MYPDOSINC) $(CARTSIOINC) \
+	mypdos/cartsio.src mypdos/imginfo.src \
+	cartsio-mega512-pal.bin cartsio-mega512-ntsc.bin \
+	cartsiocode-osram-mega512-pal.bin cartsiocode-osram-mega512-ntsc.bin
 	$(ATASM) $(MYPDOSFLAGS) -dMYPDOSROM -dCARTSIO -dMEGA512 -r -o$@ $<
 
-mypdos-code-atarimax8.bin: mypdos/mypdos.src $(MYPDOSINC) \
-	mypdos/cartsio.src $(CARTSIOINC) cartsio-atarimax8.bin mypdos/imginfo.src \
-	cartsiocode-osram-atarimax8.bin
+mypdos-code-atarimax8.bin: mypdos/mypdos.src $(MYPDOSINC) $(CARTSIOINC) \
+	mypdos/cartsio.src mypdos/imginfo.src \
+	cartsio-atarimax8-pal.bin cartsio-atarimax8-ntsc.bin \
+	cartsiocode-osram-atarimax8-pal.bin cartsiocode-osram-atarimax8-ntsc.bin
 	$(ATASM) $(MYPDOSFLAGS) -dMYPDOSROM -dCARTSIO -dATARIMAX8 -r -o$@ $<
 
-mypdos-mega512.rom: mypdrom.src mypdos-code-mega512.bin cartsio-mega512.bin
+mypdos-mega512.rom: mypdrom.src mypdos-code-mega512.bin \
+	cartsio-mega512-pal.bin cartsio-mega512-ntsc.bin
 	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dMEGA512 $<
 
-mypdos-atarimax8.rom: mypdrom.src mypdos-code-atarimax8.bin cartsio-atarimax8.bin
+mypdos-atarimax8.rom: mypdrom.src mypdos-code-atarimax8.bin \
+	cartsio-atarimax8-pal.bin cartsio-atarimax8-ntsc.bin
 	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dATARIMAX8 $<
 
 8kblank.rom:
@@ -117,15 +135,6 @@ testdisk.atr: testdisk testdisk/*
 
 testdd.atr: testdisk testdisk/*
 	dir2atr -b MyPicoDos405N -P -d 720 testdd.atr testdisk
-
-#test.rom: atr2cart testdisk.atr testdd.atr
-#	./atr2cart $@ testdisk.atr testdd.atr
-
-m512.rom: atr2cart
-	./atr2cart m512 m512.rom ~/private/xl/boot/turbo.atr ~/private/xl/boot/turbosd.atr ~/private/xl/boot/mydosx2.atr
-
-am8.rom: atr2cart
-	./atr2cart am8 am8.rom ~/private/xl/boot/turbo.atr ~/private/xl/boot/turbosd.atr ~/private/xl/boot/mydosx2.atr
 
 mydos.rom: atr2cart
 	./atr2cart $@ /data/hias/xl/camel/boot/mydosx1.atr
@@ -183,6 +192,16 @@ diskcart.atr: diskcart-mega512.com diskcart-mega512-hi.com \
 	ctest.com
 	atascii piconame.txt > disk/PICONAME.TXT
 	dir2atr -b MyPicoDos405 $@ disk
+
+#test.rom: atr2cart testdisk.atr testdd.atr
+#	./atr2cart $@ testdisk.atr testdd.atr
+
+m512.rom: atr2cart
+	./atr2cart m512 m512.rom ~/private/xl/boot/turbo.atr ~/private/xl/boot/turbosd.atr ~/private/xl/boot/mydosx1.atr
+
+am8.rom: atr2cart
+	./atr2cart am8 am8.rom ~/private/xl/boot/turbo.atr ~/private/xl/boot/turbosd.atr ~/private/xl/boot/mydosx2.atr ~/private/xl/boot/mydosx1.atr
+
 
 clean:
 	rm -rf atr2cart atr2cart.exe mypdrom.c *.65o *.o *.bin *.com *.atr *.rom disk

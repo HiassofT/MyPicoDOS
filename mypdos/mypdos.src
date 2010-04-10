@@ -403,16 +403,28 @@ HIAVAIL	RTS
 	.ELSE
 
 	.IF .DEF CARTSIO
-CSIO	
 .if .def MEGA512
-	.incbin "cartsio-mega512.bin"
+CSIOP	.incbin "cartsio-mega512-pal.bin"
+CSIOPL	= * - CSIOP
+CSION	.incbin "cartsio-mega512-ntsc.bin"
+CSIONL	= * - CSION
 .endif
 .if .def ATARIMAX8
-	.incbin "cartsio-atarimax8.bin"
+CSIOP	.incbin "cartsio-atarimax8-pal.bin"
+CSIOPL	= * - CSIOP
+CSION	.incbin "cartsio-atarimax8-ntsc.bin"
+CSIONL	= * - CSION
 .endif
-CSLEN	= * - CSIO
 
-INSTCS	COP768 SIOADR, CSIO, CSLEN
+INSTCS	LDA $D014
+	CMP #$01
+	BEQ INSTCSP
+; NTSC version
+	COP768 SIOADR, CSION, CSIONL
+	RTS
+INSTCSP
+; PAL version
+	COP768 SIOADR, CSIOP, CSIOPL
 	RTS
 
 	.ENDIF

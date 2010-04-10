@@ -467,14 +467,19 @@ MYPDOS	= *
 .endif
 MYPDPG	= (*-MYPDOS+255) / 256
 
-OSCOD	= *
 .if .def MEGA512
-	.incbin "cartsiocode-osram-mega512.bin"
+OSCODP	.incbin "cartsiocode-osram-mega512-pal.bin"
+OSCODPL	= * - OSCODP
+OSCODN	.incbin "cartsiocode-osram-mega512-ntsc.bin"
+OSCODNL	= * - OSCODN
 .endif
+
 .if .def ATARIMAX8
-	.incbin "cartsiocode-osram-atarimax8.bin"
+OSCODP	.incbin "cartsiocode-osram-atarimax8-pal.bin"
+OSCODPL	= * - OSCODP
+OSCODN	.incbin "cartsiocode-osram-atarimax8-ntsc.bin"
+OSCODNL	= * - OSCODN
 .endif
-OSCODL	= * - OSCOD
 
 TMPVEC	= DSTADR
 	.include "romram.src"
@@ -497,11 +502,27 @@ PATCHOS	JSR SCROFF
 	LDA OSTAB+1,X
 	STA DSTADR+1
 
-	LDY #OSCODL-1
-PATCHL1	LDA OSCOD,Y
+; check for pal/ntsc
+	LDA $D014
+	CMP #$01
+	BEQ PATCHP
+
+; NTSC
+	LDY #OSCODNL-1
+PATCHL1	LDA OSCODN,Y
 	STA (DSTADR),Y
 	DEY
 	BPL PATCHL1
+	JMP PATCH2
+
+; PAL
+PATCHP	LDY #OSCODPL-1
+PATCHL2	LDA OSCODP,Y
+	STA (DSTADR),Y
+	DEY
+	BPL PATCHL2
+
+PATCH2
 
 ; slot number
 	LDY #OSLOTNO
@@ -572,7 +593,7 @@ CHKOS1	LDA OSTAB,X
 	STA SRCADR
 	LDA OSTAB+1,X
 	STA SRCADR+1
-	LDY #OSCODL-1
+	LDY #OSCODPL-1
 CHKOS2	LDA (SRCADR),Y
 	BNE CHKOS3
 	DEY

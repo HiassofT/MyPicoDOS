@@ -32,14 +32,19 @@ SLOTOK	LDA $300
 
 ; wait for VCOUNT to reach $70 so that the screen
 ; doesn't flicker when accessing the cart
-?WTSCR	LDA $D40B
-	CMP #$70
+; PAL works fine up to $76 (SD and DD), NTSC needs $70 and only works in SD
+.if .def PAL
+	LDA #$74
+.else
+	LDA #$70
+.endif
+?WTSCR	CMP $D40B
 	BNE ?WTSCR
 
 	LDA #1
 	STA CRITIC		; set critic
 
-	LDA #$FF
+	LDA #$0F
 	STA $D01A
 
 ; set cartridge bank containing ROM code
@@ -56,6 +61,9 @@ SLOTOK	LDA $300
 	BEQ ?CSEND	; BUFLEN=0, no copying needed
 
 ; now copy the data
+	LDA #$84
+	STA $D01A
+
 	LDY #0
 ?CPLP	CARTBNK CSSRCB	; set source bank number
 	LDA (CSSRC),Y
