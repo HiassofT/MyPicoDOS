@@ -403,7 +403,13 @@ HIAVAIL	RTS
 	.ELSE
 
 	.IF .DEF CARTSIO
-CSIO	.incbin "cartsio.bin"
+CSIO	
+.if .def MEGA512
+	.incbin "cartsio-mega512.bin"
+.endif
+.if .def ATARIMAX8
+	.incbin "cartsio-atarimax8.bin"
+.endif
 CSLEN	= * - CSIO
 
 INSTCS	COP768 SIOADR, CSIO, CSLEN

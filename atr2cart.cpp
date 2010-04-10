@@ -27,7 +27,8 @@
 #include "AtariDebug.h"
 #include "Error.h"
 
-#include "mypdrom.c"
+#include "mypdos-mega512.c"
+#include "mypdos-atarimax8.c"
 
 #ifdef WINVER
 #define DIR_SEPARATOR '\\'
@@ -38,9 +39,16 @@
 using namespace std;
 using namespace AtrUtils;
 
-#define IMAGESIZE (512*1024)
+#define MAX_IMAGESIZE (1024*1024)
 
-#define DRVTAB_OFFSET 0x3F00
+static unsigned long drvtab_offset;
+enum ECartType {
+	eNoCart = 0,
+	eMega512,
+	eAtariMax8
+};
+
+static ECartType cartType = eNoCart;
 
 // sector 0 of each image contains internal information:
 // byte  0 ..  3 is "get status" data
@@ -52,11 +60,14 @@ using namespace AtrUtils;
 #define NAME_OFFSET 16
 #define NAME_LENGTH 32
 
-static uint8_t rom_image[IMAGESIZE];
+static uint8_t rom_image[MAX_IMAGESIZE];
 
 static unsigned int image_offset;
 static unsigned int image_rom_end;	// highest rom address to use
 static unsigned int current_driveno;
+
+static unsigned int image_size;
+
 
 string& prepare_imagename(string& name)
 {
@@ -88,7 +99,7 @@ void set_drive_table(
 		Assert(false);
 		return;
 	}
-	ofs = (driveno - 1) * 8 + DRVTAB_OFFSET;
+	ofs = (driveno - 1) * 8 + drvtab_offset;
 	memset(rom_image + ofs, 0xff, 8);
 
 	if (density <= 1) {
@@ -100,6 +111,37 @@ void set_drive_table(
 		rom_image[ofs+5] = (sectors >> 8) & 0xff;
 	}
 }
+
+void init_rom_image()
+{
+	int i;
+	memset(rom_image, 0xff, MAX_IMAGESIZE);
+	switch (cartType) {
+	case eMega512:
+		image_size = 512*1024;
+		memcpy(rom_image + 8192, mypdos_mega512_rom, 8192);
+		image_offset = 0x4000;
+		image_rom_end = image_size;
+		drvtab_offset = 0x3f00;
+		break;
+	case eAtariMax8:
+		image_size = 1024*1024;
+		memcpy(rom_image, mypdos_atarimax8_rom, 8192);
+		memcpy(rom_image+image_size-32, mypdos_atarimax8_rom + 8192-32, 32);
+		image_offset = 0x2000;
+		image_rom_end = image_size-8192;
+		drvtab_offset = 0x1f00;
+		break;
+	default:
+		assert(false);
+	}
+
+	for (i=1; i<=8; i++) {
+		set_drive_table(i, 0xff, 0, 0);
+	}
+	current_driveno = 1;
+}
+
 
 const uint8_t percom_block_sd[12] =
 {
@@ -219,19 +261,6 @@ void set_image_infos(bool isDD, unsigned int sectors, string name)
 	memcpy(rom_image + image_offset + NAME_OFFSET, name.c_str(), name.length());
 }
 
-void init_rom_image()
-{
-	int i;
-	memset(rom_image, 0xff, IMAGESIZE);
-	memcpy(rom_image + 8192, mypdos8_rom, 8192);
-	for (i=1; i<=8; i++) {
-		set_drive_table(i, 0xff, 0, 0);
-	}
-	image_offset = 0x4000;
-	image_rom_end = IMAGESIZE;
-	current_driveno = 1;
-}
-
 bool add_atr_image(const char* filename)
 {
 	FILE *f;
@@ -306,10 +335,25 @@ int main(int argc, char** argv)
 	bool ok = true;
 	const char* out_filename;
 
-	cout << "atr2cart V0.3 (c) 2010 by Matthias Reichl <hias@horus.com>" << endl;
-	if (argc <= 2) {
+	cout << "atr2cart V0.4 (c) 2010 by Matthias Reichl <hias@horus.com>" << endl;
+	if (argc <= 3) {
 		goto usage;
 	}
+
+	cartType = eNoCart;
+
+	if (strcasecmp(argv[idx], "m512") == 0) {
+		cartType = eMega512;
+		cout << "output type: MegaCart 512k" << endl;
+	}
+	if (strcasecmp(argv[idx], "am8") == 0) {
+		cartType = eAtariMax8;
+		cout << "output type: AtariMax 8MBit FlashCart" << endl;
+	}
+	if (cartType == eNoCart) {
+		goto usage;
+	}
+	idx++;
 
 	out_filename = argv[idx++];
 
@@ -324,7 +368,7 @@ int main(int argc, char** argv)
 			cout << "error creating image file \"" << out_filename << "\"" << endl;
 			return 1;
 		}
-		if (fwrite(rom_image, IMAGESIZE, 1, f) != 1) {
+		if (fwrite(rom_image, image_size, 1, f) != 1) {
 			cout << "error writing image file \"" << out_filename << "\"" << endl;
 			fclose(f);
 			unlink(out_filename);
@@ -338,6 +382,9 @@ int main(int argc, char** argv)
 
 	return 0;
 usage:
-	printf("usage: atr2catr outfile.rom file1.atr [file2.atr ...]\n");
+	cout << "usage: atr2catr type outfile.rom file1.atr [file2.atr ...]" << endl;
+	cout << "supported types:" << endl;
+	cout << " m512: MegaCart 512k" << endl;
+	cout << "  am8: AtariMax 8Mbit FlashCart" << endl;
 	return 1;
 }

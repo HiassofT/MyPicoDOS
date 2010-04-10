@@ -1,6 +1,6 @@
-;  mypdrom - MyPicoDos/MyIDE flashcart version
+;  mypdrom - DiskCart/MyPicoDos flashcart version
 ;
-;  Copyright (C) 2007 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 2007-2010 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -414,7 +414,7 @@ DLIST	.BYTE 112,112,112,112,112
 	.WORD DLIST
 
 TITLE	.SBYTE "    "
-	.SBYTE "DiskCart V0.3 (c) 2010 HiassofT"
+	.SBYTE "DiskCart V0.4 (c) 2010 HiassofT"
 	.SBYTE "     "
 
 	.SBYTE "          "
@@ -459,11 +459,21 @@ TON	.BYTE $42
 	.BYTE 0
 
 MYPDOS	= *
-	.incbin "mypdos-code-cartsio.bin"
+.if .def MEGA512
+	.incbin "mypdos-code-mega512.bin"
+.endif
+.if .def ATARIMAX8
+	.incbin "mypdos-code-atarimax8.bin"
+.endif
 MYPDPG	= (*-MYPDOS+255) / 256
 
 OSCOD	= *
-	.incbin "cartsiocode-osram.bin"
+.if .def MEGA512
+	.incbin "cartsiocode-osram-mega512.bin"
+.endif
+.if .def ATARIMAX8
+	.incbin "cartsiocode-osram-atarimax8.bin"
+.endif
 OSCODL	= * - OSCOD
 
 TMPVEC	= DSTADR
@@ -576,15 +586,34 @@ CHKOS3	INX
 	JMP CHKOSL
 
 ; free addresses in OS
-OSTAB	.WORD $CBB0	; XL/XE OS
+OSTAB	
+;	.WORD $CBB0	; XL/XE OS
+	.WORD $CBA0	; XL/XE OS
 	.WORD $FFA0	; QMEG 4.04
 OSTABL	= * - OSTAB
 
 XEND	= *
 
+	* = $BC20
+
+; default display list to avoid screen flickering with TurboDos
+
+	.DC 3 $70
+	.BYTE $42
+	.WORD $BC40
+	.DC 23 2
+	.BYTE $41
+	.WORD $BC20
+
 	* = CARTSIG
 	.BYTE "HiassofT"
-	.BYTE "20100321"
+	.BYTE "20100410"
+
+.if .def ATARIMAX8
+	* = $BFF0
+AMINIT	CARTBNKI 0
+	JMP INIT
+.endif
 	
 	* = $BFFA
 
@@ -592,5 +621,9 @@ XEND	= *
 	.BYTE 0
 ;	.BYTE 4		; init & start cart, no disk boot allowed
 	.BYTE 1		; only init cart, allow disk boot
+.if .def ATARIMAX8
+	.WORD AMINIT
+.else
 	.WORD INIT
+.endif
 

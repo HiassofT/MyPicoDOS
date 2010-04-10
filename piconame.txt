@@ -1,3 +1,6 @@
 DiskCart V0.3
-DISKCARTCOM DiskCart standard version
-DISKCHI COM DiskCart highspeed SIO version
+MDISK   COM Mega512 DiskCart
+MDISKHI COM Mega512 DiskCart HISIO
+ADISK   COM AtariMax 8Mbit DiskCart
+ADISKHI COM AtariMax 8Mbit DiskCart HISIO
+CTEST   COM Mega512 FlashCart Tester

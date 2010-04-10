@@ -39,6 +39,9 @@ SLOTOK	LDA $300
 	LDA #1
 	STA CRITIC		; set critic
 
+	LDA #$FF
+	STA $D01A
+
 ; set cartridge bank containing ROM code
 	CARTBASE
 
@@ -64,6 +67,9 @@ SLOTOK	LDA $300
 
 ?CSEND	CARTOFF		; disable cartridge
 	DEC CRITIC	; re-enable deferred VBI
+
+	LDA #0
+	STA $D01A
 
 	LDY DSTATS
 	RTS

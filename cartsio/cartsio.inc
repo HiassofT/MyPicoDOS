@@ -1,4 +1,4 @@
-;  cartsiocode.inc - definitions for highspeed SIO code
+;  cartsio.inc - definitions for cartsio code
 ;
 ;  Copyright (c) 2010 by Matthias Reichl <hias@horus.com>
 ;
@@ -66,49 +66,11 @@
 ; 16byte signature in ROM (contains "HiassofT" plus 8-byte serial number)
 	CARTSIG	= $BFE0	; drive table base address
 
-; common macros
-	.MACRO CARTBNKX ; set bank from X register
-	STX $D500
-	.ENDM
+.if .def MEGA512
+	.include "cartsio-mega512.inc"
+.endif
 
-	.MACRO CARTBNKI ; parameter: bank nummer (immediate)
-	LDX #%1
-	CARTBNKX
-	.ENDM
-
-	.MACRO CARTOFF	; disable cartridge
-	LDX #$FF
-	CARTBNKX
-	.ENDM
-
-	.MACRO CARTBASE	; set base ROM bank for cartsio
-	LDX #CSROMBK
-	CARTBNKX
-	.ENDM
-
-	.MACRO CARTBNK ; parameter: bank nummer (address)
-	LDX %1
-	CARTBNKX
-	.ENDM
-
-; convert relative linear address (lo/mid/hi) into
-; absolute address (lo/hi) plus bank number
-
-	.MACRO CONVBANK ; parameters: address
-	LDA %1+1
-	PHA	; save mid byte
-
-; for 16 k banks shift bits 7 and 6 into address register
-	ASL %1+1
-	ROL %1+2
-	ASL %1+1
-	ROL %1+2
-
-	PLA
-	AND #$3F	; mask out bits 7 and 6
-	ORA #$80	; set base address $80
-	STA %1+1
-	.ENDM
-
-
+.if .def ATARIMAX8
+	.include "cartsio-atarimax8.inc"
+.endif
 

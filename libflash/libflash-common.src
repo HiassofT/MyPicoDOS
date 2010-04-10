@@ -54,9 +54,9 @@ FADRZERO
 ; convert relative address in FLASHTMP (lo, mid) and FBANKTMP (hi)
 ; into absolute addresses
 FSETTMP
-.IF BANKSIZ = 16
 	LDA FLASHTMP+1
 	PHA
+.IF BANKSIZ = 16
 ; 16k banks
 	ASL FLASHTMP+1
 	ROL FBANKTMP
@@ -174,6 +174,8 @@ FBANKTMP .BYTE 0 ; temporary bank register
 
 ?ITYPE	.BYTE 0
 
+MBASEWR	= ?BASEWR
+
 ; common initialization stuff
 ?FINIT	JMP FADRZERO	; just clear flash address
 
@@ -191,6 +193,7 @@ FBANKTMP .BYTE 0 ; temporary bank register
 	JSR FSETTMP
 	LDA FBANKTMP
 	CBANKWR
+	ORA MBASEWR
 	TAX
 	SBANKX
 	LDX #0
