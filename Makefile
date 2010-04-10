@@ -12,7 +12,7 @@ CXXFLAGS=-W -Wall
 ##	mydos.rom 512kbase.rom test.rom
 
 #all: mypdos-mega512.rom mypdos-atarimax8.rom
-all: diskcart.atr atr2cart m512.rom am8.rom
+all: diskcart.atr atr2cart atr2cart.exe m512.rom am8.rom
 
 #all: MYINIT.COM MYINITR.COM \
 #	MYPDOS.COM MYPDOSN.COM \
