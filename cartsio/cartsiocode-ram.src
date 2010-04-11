@@ -24,8 +24,10 @@ DOCARSIO
 	CMP #$70
 	BNE ?WTSCR
 
+.if .def COLORS
 	LDA #$0F
 	STA $D01A
+.endif
 
 	SEI		; disable IRQs
 	LDA #0		; disable NMIs
@@ -44,10 +46,21 @@ DOCARSIO
 	ORA BUFLEN+1
 	BEQ ?CSEND	; BUFLEN=0, no copying needed
 
+.if .def COLORS
 	LDA #$84
 	STA $D01A
+.endif
 
 ; now copy the data
+.if .def FASTCOPY
+	CARTBNK CSSRCB	; set source bank number
+	LDY #0
+?CPLP	LDA (CSSRC),Y
+	STA (CSDST),Y
+	INY
+	CPY BUFLEN
+	BNE ?CPLP
+.else
 	LDY #0
 ?CPLP	CARTBNK CSSRCB	; set source bank number
 	LDA (CSSRC),Y
@@ -56,6 +69,7 @@ DOCARSIO
 	INY
 	CPY BUFLEN
 	BNE ?CPLP
+.endif
 
 ?CSEND	CARTOFF		; disable cartridge
 ;	DEC CRITIC	; re-enable deferred VBI
@@ -63,8 +77,10 @@ DOCARSIO
 	STA $D40E
 	CLI		; re-enable IRQs
 
+.if .def COLORS
 	LDA #0
 	STA $D01A
+.endif
 
 	LDY DSTATS
 	RTS

@@ -3,34 +3,21 @@
 #
 
 ATASM=atasm
-#ATASM=/data/src/xl/atasm103/src/atasm
 
 CXX=g++
 CXXFLAGS=-W -Wall
 
-#all: atr2cart atr2cart.exe diskcart.com ctest.com diskcart-hi.com diskcart.atr
-##	mydos.rom 512kbase.rom test.rom
+all: diskcart.atr atr2cart atr2cart.exe
+# m512.rom am8.rom
 
-#all: mypdos-mega512.rom mypdos-atarimax8.rom
-all: diskcart.atr atr2cart atr2cart.exe m512.rom am8.rom
+ASMFLAGS = 
+#ASMFLAGS = -s
+#ASMFLAGS = -v -s
+#ASMFLAGS = -s -dHWDEBUG
 
-#all: MYINIT.COM MYINITR.COM \
-#	MYPDOS.COM MYPDOSN.COM \
-#	MYPDOSR.COM MYPDOSRN.COM \
-#	MYPDOSB.COM PICOBOOT.COM \
-#	MYPDOSS.COM \
-#	mypdos.atr mypdosn.atr \
-#	mypdosr.atr mypdosrn.atr \
-#	mypdoss0.atr mypdoss1.atr \
-#	mypdosb.atr \
-#	myinit.atr
-
-#all: MYPDOS.COM mypdos.atr mypdoshs.atr myinit2.atr
-
-ASMFLAGS= -Icartsio -Ilibflash -Ihisio
-#ASMFLAGS = -Icartsio -Ilibflash -Ihisio -s
-#ASMFLAGS = -Icartsio -Ilibflash -Ihisio -v -s
-#ASMFLAGS = -Icartsio -Ilibflash -Ihisio -s -dHWDEBUG
+ASMFLAGS += -Icartsio -Ilibflash -Ihisio
+#ASMFLAGS += -dCOLORS -dFASTCOPY
+ASMFLAGS += -dCOLORS
 
 MYPDOSINC = mypdos/common.inc mypdos/getdens.src mypdos/longname.src \
 	mypdos/rreadcode.src mypdos/comloadcode.src mypdos/basloadcode.src \

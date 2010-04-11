@@ -210,6 +210,10 @@ void set_image_infos(bool isDD, unsigned int sectors, string name)
 	if (isDD) {
 		// double density
 		status |= 0x20;
+		if (sectors == 1440) {
+			// XF551 QD
+			status |= 0x40;
+		}
 	} else {
 		// single density
 		if (sectors == 1040) {

@@ -615,20 +615,20 @@ OSTABL	= * - OSTAB
 
 XEND	= *
 
+.if 0
+; default display list to avoid screen flickering (didn't help)
 	* = $BC20
-
-; default display list to avoid screen flickering with TurboDos
-
 	.DC 3 $70
 	.BYTE $42
 	.WORD $BC40
 	.DC 23 2
 	.BYTE $41
 	.WORD $BC20
+.endif
 
 	* = CARTSIG
 	.BYTE "HiassofT"
-	.BYTE "20100410"
+	.BYTE "20100411"
 
 .if .def ATARIMAX8
 	* = $BFF0
