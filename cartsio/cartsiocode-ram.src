@@ -62,8 +62,14 @@ DOCARSIO
 	BNE ?CPLP
 .else
 	LDY #0
+.if .def FREEZER
+	CARTBNK CSSRCB
+?CPLP	CARTON
+	LDA (CSSRC),Y
+.else
 ?CPLP	CARTBNK CSSRCB	; set source bank number
 	LDA (CSSRC),Y
+.endif
 	CARTOFF		; disable cartridge so we can access $8000-$BFFF
 	STA (CSDST),Y
 	INY

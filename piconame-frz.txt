@@ -1,0 +1,3 @@
+DiskCart V0.5
+FRDISK  COM Turbo Freezer DiskCart
+FRDISKHICOM Turbo Freezer DiskCart HISIO

@@ -56,8 +56,6 @@ BANKBAS	= $A000	; base address
 	AND #$40
 	.ENDM
 
-	.include "libflash-common.src"
-
 ; init flash library
 FINIT   JMP ?FINIT
 

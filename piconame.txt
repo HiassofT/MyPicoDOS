@@ -1,6 +1,8 @@
-DiskCart V0.3
-MDISK   COM Mega512 DiskCart
-MDISKHI COM Mega512 DiskCart HISIO
-ADISK   COM AtariMax 8Mbit DiskCart
-ADISKHI COM AtariMax 8Mbit DiskCart HISIO
+DiskCart V0.5
+AMDISK  COM AtariMax 8Mbit DiskCart
+AMDISKHICOM AtariMax 8Mbit DiskCart HISIO
+FRDISK  COM Turbo Freezer DiskCart
+FRDISKHICOM Turbo Freezer DiskCart HISIO
+MEDISK  COM Mega 512k DiskCart
+MEDISKHICOM Mega 512k DiskCart HISIO
 CTEST   COM Mega512 FlashCart Tester

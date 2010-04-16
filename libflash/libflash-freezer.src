@@ -1,4 +1,4 @@
-;  libflash-mega512 - code for Bernd's Mega512 cart
+;  libflash-freezer - code for Turbo Freezer 2005 cartemu
 ;
 ;  Copyright (C) 2004-2010 Matthias Reichl <hias@horus.com>
 ;
@@ -16,67 +16,89 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-BANKREG	= $D500
-BANKSIZ	= 16	; 8k banks
-BANKBAS	= $8000	; base address
+BANKREG	= $D540
+BANKSIZ	= 8	; 8k banks
+BANKBAS	= $A000	; base address
 
-; set bank number from X
-	.MACRO SBANKX ; parameter: address
-	STX BANKREG
-	.ENDM
+; Turbo Freezer CartEmu control registers
+
+; enable/disable CartEmu
+FRCAREN = $D581
+FRCARDIS = $D580
+
+; keep or reset settings on reset
+FRMODKEEP = $D583
+FRMODRES = $D582
+
+; enable/disable write access
+FRWREN	= $D585
+FRWRDIS	= $D584
+
+; mode RAM/ROM
+FRMODROM = $D586
+FRMODRAM = $D587
+
+; cart type 8k/16k/OSS/SDX
+FRMOD8K	= $D588
+FRMOD16K = $D589
+FRMODOSS = $D58A
+FRMODSDX = $D58B
 
 ; set bank number from memory location
 	.MACRO SBANK ; parameter: address
 	LDX [%1]
-	SBANKX
+	STA BANKREG,X
 	.ENDM
 
-; disable cartridge
+; set bank number from X
+	.MACRO SBANKX ; parameter: address
+	STA BANKREG,X
+	.ENDM
+
+; enable cartemu
+	.MACRO SBANKON
+	STA FRCAREN
+	.ENDM
+
+; disable cartemu
 	.MACRO SBANKOFF
-	LDX #$80
-	SBANKX
+	STA FRCARDIS
 	.ENDM
 
 ; convert bank number for reading (in: A, out: A)
 	.MACRO CBANKRD
-	AND #$1F
+	AND #$3F	; 64 8k banks
 	.ENDM
 
 ; convert bank number for writing (in: A, out: A)
 	.MACRO CBANKWR
-	AND #$1F
-	ORA #$40
+	AND #$3F	; 64 8k banks
 	.ENDM
 
 ; convert bank number for reading base (in: A, out: A)
 	.MACRO CBASERD
-	LDA #0
+	AND #0
 	.ENDM
 
 ; convert bank number for writing base (in: A, out: A)
 	.MACRO CBASEWR
-	LDA #$40
+	AND #0
 	.ENDM
 
 ; init flash library
-FINIT	JMP ?FINIT
+FINIT   SBANKOFF
+	STA FRWRDIS
+	STA FRMODROM
+	STA FRMOD8K
+	JMP ?FINIT
 
 ; enable flash access
-FENABLE
-	INC $42
-	LDX #0
-	SBANKX
-	LDA $D013
-	STA $3FA
-	DEC $42
+FENABLE	SBANKON
+	STA FRWREN
 	RTS
 
 ; disable flash access
-FDISABLE
-	INC $42
-	SBANKOFF
-	LDA $D013
-	STA $3FA
-	DEC $42
+FDISABLE SBANKOFF
+	STA FRWRDIS
 	RTS
 

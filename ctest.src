@@ -268,7 +268,7 @@ TCONTL	= * - TCONT
 	.include "iohelp.src"
 	.include "arith.src"
 
-	.include "libflash-mega512.src"
+	.include "libflash.src"
 
 DATABUF = (*+255) & $FF00
 

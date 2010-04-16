@@ -21,11 +21,14 @@
 	.include "cartsio.inc"
 	.include "arith.inc"
 
-.if .def MEGA512
-	.include "diskcart-mega512.inc"
-.endif
 .if .def ATARIMAX8
 	.include "diskcart-atarimax8.inc"
+.endif
+.if .def FREEZER
+	.include "diskcart-freezer.inc"
+.endif
+.if .def MEGA512
+	.include "diskcart-mega512.inc"
 .endif
 
 ; temporary ZP vectors
@@ -58,33 +61,10 @@ MAINLP	BPUT 0, TTITLEL, TTITLE
 	JSR FINIT
 	JSR FENABLE
 
-.if .def ATARIMAX8
-; detect second flash chip at $080000
-	LDA #8
-	STA FLASHADR+2
-	JSR FDETECT
-
-	LDA FTYPE
-	STA FTYPE2
-	LDA #0
-	STA FLASHADR+2
-.endif
-	JSR FDETECT
-	JSR FDISABLE
-
-.if .def ATARIMAX8
-	LDA FTYPE
-	CMP FTYPE2
-	BEQ AFOK
-	BPUT 0, TAFERRL, TAFERR
-	JMP FERR
-AFOK
-.endif
-
-	LDA FTYPE
-	JSR PFTYPE
+	JSR DETECT
 	LDA FTYPE
 	BPL FOK
+
 
 FERR	JSR GETCHAR
 	BPL MAINLP
@@ -145,6 +125,9 @@ NO2	CMP #'3
 
 DOSC1	INC $42
 	CARTBNKI CSROMBK
+.if .def FREEZER
+	CARTON
+.endif
 	JMP $E477
 
 NO3	JMP MENULP
@@ -374,27 +357,12 @@ DOINIT	BPUT 0, TINITL, TINIT
 
 	BPUT 0, TERASL, TERAS
 
-	JSR FADRZERO
-	JSR FENABLE
-	JSR FCERAS
-	PHP
-	JSR FDISABLE
-	PLP
+	JSR ERASE
 	BPL DOINIT1
 DOINIE1	JSR PERROR
 	JMP DOCONT
 DOINIT1	
-.if .def ATARIMAX8
-; erase second flash chip
-	LDA #8
-	STA FLASHADR+2
-	JSR FENABLE
-	JSR FCERAS
-	PHP
-	JSR FDISABLE
-	PLP
-	BMI DOINIE1
-.endif
+
 	JSR PPROGF
 
 ; copy cartridge code to data buffer
@@ -754,6 +722,131 @@ COPYPLP	LDA (SRCVEC),Y
 	BNE COPYPLP
 	RTS
 
+DETECT
+.if .def ATARIMAX8
+; detect second flash chip at $080000
+	LDA #8
+	STA FLASHADR+2
+	JSR FDETECT
+
+	LDA FTYPE
+	STA FTYPE2
+	LDA #0
+	STA FLASHADR+2
+.endif
+	JSR FDETECT
+	JSR FDISABLE
+
+.if .def ATARIMAX8
+	LDA FTYPE
+	CMP FTYPE2
+	BEQ AFOK
+	BPUT 0, TAFERRL, TAFERR
+	LDA #$FF
+	STA FTYPE
+	RTS
+AFOK
+.endif
+
+	LDA FTYPE
+	JSR PFTYPE	; print flash type
+
+	LDA FTYPE
+	BPL DETCHK	; detected a chip?
+	RTS		; no, skip compatibility checks
+
+DETCHK
+
+; detection OK, now check if chip is compatible with software
+
+.if .def ATARIMAX8 .or .def MEGA512
+; we are doing chip erase, so just check if the flash size is 512k
+	LDA FSIZE
+	ORA FSIZE+1
+	BNE DETERR
+	LDA FSIZE+2
+	CMP #8
+	BNE DETERR
+	RTS
+.endif
+
+.if .def FREEZER
+; we have to do block erase, so check if the flash size is 512k
+; and the flash consists of 8*64k blocks
+	LDA FSIZE
+	ORA FSIZE+1
+	ORA FBLKSIZ
+	ORA FBLKSIZ+1
+	BNE DETERR
+	LDA #8
+	CMP FSIZE+2
+	BNE DETERR
+	CMP FNUMBLK
+	BNE DETERR
+	LDA FBLKSIZ+2
+	CMP #1
+	BNE DETERR
+.endif
+	RTS
+
+DETERR	BPUT 0, TUNSUPL, TUNSUP
+	LDA #$FF
+	STA FTYPE
+	RTS
+
+; erase flash chip(s)
+
+ERASE	JSR FADRZERO
+	JSR FENABLE
+
+.if .def FREEZER
+; erase 7*64k blocks, combine status resulsts
+	LDA #0
+	STA TMP32
+
+ERASELP	JSR FPERAS
+	PHP
+	PLA
+	ORA TMP32
+	STA TMP32
+	INC FLASHADR+2
+	LDA FLASHADR+2
+	CMP #7
+	BNE ERASELP
+
+	JSR FDISABLE
+
+	LDA TMP32
+	PHA
+	PLP
+	RTS
+
+.else
+	JSR FCERAS
+
+.if .def ATARIMAX8
+; also erase second chip, combine status results
+	PHP
+	PLA
+	STA TMP32
+	LDA #8
+	STA FLASHADR+2
+	JSR FCERAS
+	PHP
+	PLA
+	ORA TMP32
+	PHA
+	PLP
+ERASE2
+.endif	; ATARIMAX8
+	PHP
+
+	JSR FDISABLE
+
+	PLP
+	RTS
+.endif	; FREEZER
+
 
 TFA10	.BYTE "Detected ", $99
 	.BYTE +$80,"AMD 29F010"
@@ -781,6 +874,8 @@ TFB40	.BYTE "Detected ", $99
 
 TUNKFL	.BYTE "No or unknown flash",155
 
+TUNSUP	.BYTE "sorry, this chip is not supported"
+TUNSUPL	= * - TUNSUP
 
 ; print flash type
 PFTYPE	CMP #TAMD10
@@ -856,12 +951,16 @@ TMP32	.WORD 0,0
 TMPIDX	.BYTE 0
 
 TTITLE
-.if .def MEGA512
-	.BYTE 125, "512k Mega FlashCart DiskWriter V0.4",155
+.if .def ATARIMAX8
+	.BYTE 125, "AtariMax 8MBit DiskWriter V0.5",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 .endif
-.if .def ATARIMAX8
-	.BYTE 125, "8MBit AtariMax DiskWriter V0.4",155
+.if .def FREEZER
+	.BYTE 125, "Turbo Freezer DiskWriter V0.5",155
+	.BYTE "(c) 2010 by Matthias Reichl",155,155
+.endif
+.if .def MEGA512
+	.BYTE 125, "Mega 512k FlashCart DiskWriter V0.5",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 .endif
 TTITLEL	= * - TTITLE
@@ -956,12 +1055,9 @@ TERRSL	= * - TERRS
 	.include "diskio.src"
 	.include "arith.src"
 
-.if .def MEGA512
-	.include "libflash-mega512.src"
-.endif
+	.include "libflash.src"
 
 .if .def ATARIMAX8
-	.include "libflash-atarimax8.src"
 
 FTYPE2	.BYTE 0
 
@@ -979,11 +1075,14 @@ SECBUF	= (*+255) & $FF00
 DATABUF = SECBUF + 256
 
 CARTCOD
-.if .def MEGA512
-	.incbin "mypdos-mega512.rom"
-.endif
 .if .def ATARIMAX8
 	.incbin "mypdos-atarimax8.rom"
+.endif
+.if .def FREEZER
+	.incbin "mypdos-freezer.rom"
+.endif
+.if .def MEGA512
+	.incbin "mypdos-mega512.rom"
 .endif
 
 .if .def HIGHSPEED

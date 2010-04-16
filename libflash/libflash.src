@@ -16,12 +16,25 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+.if .def ATARIMAX8
+	.include "libflash-atarimax8.src"
+.endif
+
+.if .def FREEZER
+	.include "libflash-freezer.src"
+.endif
+
+.if .def MEGA512
+	.include "libflash-mega512.src"
+.endif
+
 ; initialize flash address to 0
 FADRZERO
 	LDA #0
 	STA FLASHADR
 	STA FLASHADR+1
 	STA FLASHADR+2
+	STA FLASHADR+3
 	RTS
 
 ; copy external flash and user data addresses to
@@ -151,12 +164,14 @@ FSETTMP
 	RTS
 
 ; linear flash address (lo/mid/hi)
+; note: 4th byte is unused
 FLASHADR
-	.BYTE 0,0,0
+	.BYTE 0,0,0,0
 
 ; linear flash address (lo/mid/hi), internal use
+; note: 4th byte is unused
 FLASHADI
-	.BYTE 0,0,0
+	.BYTE 0,0,0,0
 
 ; user data address
 DATAADR	.BYTE 0,0
@@ -396,7 +411,7 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	LDA BANKBAS+1	; check device ID
 	CMP ?IDHI+2,X
 	BNE ?DET1
-	JMP ?SETREAD	; found chip, return
+	BEQ ?DET4
 
 ; detect flash chips with "low" signatures
 ?DET2	LDX #253	; start at index -3
@@ -412,9 +427,95 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	LDA BANKBAS+1	; check device ID
 	CMP ?IDLO+2,X
 	BNE ?DET3
-	JMP ?SETREAD	; found chip, return
 
-?DET4	JMP ?SETREAD	; try to leave ID mode anyways
+; setup flash/bank sizes etc.
+?DET4	
+; zero out unused padding bytes
+	LDA #0
+	STA FSIZE+3
+	STA FBLKSIZ+3
+	STA FBLKMSK+3
+
+; check flash type, first 512k types
+	LDA FTYPE
+	CMP #TAMD40B
+	BEQ ?DET512
+	CMP #TST40B
+	BEQ ?DET512
+	CMP #TBM40
+	BEQ ?DET512
+
+; and now 128k types
+	CMP #TAMD10
+	BEQ ?DET128
+	CMP #TAMD10B
+	BEQ ?DET128
+	CMP #TST10B
+	BEQ ?DET128
+
+; no flash - set dummy values
+	LDA #0
+	STA FSIZE
+	STA FSIZE+1
+	STA FSIZE+2
+	STA FBLKSIZ
+	STA FBLKSIZ+1
+	STA FBLKSIZ+2
+	STA FNUMBLK
+	LDA #$FF
+	STA FBLKMSK
+	STA FBLKMSK+1
+	STA FBLKMSK+1
+	JMP ?SETREAD	; try to leave ID mode anyways
+
+?DET512	LDA #0		; flash size 512k
+	STA FSIZE
+	STA FSIZE+1
+	LDA #8
+	STA FSIZE+2
+
+	LDA #0		; block size 64k
+	STA FBLKSIZ
+	STA FBLKSIZ+1
+	LDA #1
+	STA FBLKSIZ+2
+
+	LDA #8		; 8 blocks
+	STA FNUMBLK
+
+	LDA #$FF	; block mask is $00FFFF
+	STA FBLKMSK
+	STA FBLKMSK+1
+	LDA #0
+	STA FBLKMSK+2
+	JMP ?SETREAD
+
+?DET128	LDA #0		; flash size 128k
+	STA FSIZE
+	STA FSIZE+1
+	LDA #2
+	STA FSIZE+2
+
+	LDA #0		; block size 16k
+	STA FBLKSIZ
+	STA FBLKSIZ+2
+	LDA #$40
+	STA FBLKSIZ+1
+
+	LDA #8		; 8 blocks
+	STA FNUMBLK
+
+	LDA #$FF	; block mask is $003FFF
+	STA FBLKMSK
+	LDA #$3F
+	STA FBLKMSK+1
+	LDA #0
+	STA FBLKMSK+2
+	JMP ?SETREAD
+
+; detection was OK, setup bank sizes etc.
+?DET5	JSR ?SETREAD
+	RTS
 
 ; ID tables
 ; format: chip-type, manufacturer ID, device ID
@@ -429,7 +530,21 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	.BYTE TST40B, $20, $E2	; ST 29F040B
 	.BYTE $FF,$FF,$FF	; end of table
 
+; flash type ($FF means no flash)
 FTYPE	.BYTE 0
+
+; flash size in bytes (4th byte unused)
+FSIZE	.BYTE 0,0,0,0
+
+; number of flash blocks (0 means no blocks)
+FNUMBLK	.BYTE 0
+
+; size of a flash block (4th byte unused)
+FBLKSIZ	.BYTE 0,0,0,0
+
+; mask to apply to an address to get the block starting address
+; (4th byte unused)
+FBLKMSK	.BYTE 0,0,0,0
 
 ; DQ7 polling algorithm
 ?WTDATA	AND #$80

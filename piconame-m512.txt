@@ -1,0 +1,3 @@
+DiskCart V0.5
+MEDISK  COM Mega 512k DiskCart
+MEDISKHICOM Mega 512k DiskCart HISIO

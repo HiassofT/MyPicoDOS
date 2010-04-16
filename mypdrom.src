@@ -32,11 +32,13 @@ DSTADR  = $E2
 ; RAM locations for init code
 DRVTAB	= $7000	; drive table: 0=no drive, otherwise drive present
 NUMDRV	= $7008 ; total number of drives
-DRIVENO	= $7009 ; temp: drive number
+SLOTNO	= $7009 ; temp: slot number
 OSTYPE	= $700A	; OS type
+TARGDRV	= $700B ; target drive ($01 or $02)
 NAMBUF	= $7010 ; 32byte temporary name buffer
 SEPLINE	= $7030	; 40byte "separator line" line
 BASLINE	= $7058	; 40byte "toggle basic" line
+TARGLINE= $7080 ; 40byte "destination drive" line
 NAMSCR	= $7100 ; 8*40 bytes screen for image names
 
 ; copy code to $400
@@ -66,6 +68,97 @@ CPLP	LDA %2,Y
 	* = $A000
 
 	.include "cartsiocode-rom.src"
+
+DLIST	.BYTE 112,112,112,112,$40
+; 37 (4 * 8 + 5)
+	.BYTE $42
+	.WORD TITLE
+	.BYTE 112,112
+	.BYTE 2
+	.BYTE $42
+	.WORD SEPLINE
+	.BYTE 0
+; 41 (5 * 8 + 1)
+	.BYTE $42
+	.WORD NAMSCR
+	.BYTE 0,2,0,2,0,2,0,2,0,2,0,2,0,2,0
+; 72 (8 * (8 + 1))
+	.BYTE $42
+	.WORD SEPLINE
+	.BYTE $42
+	.WORD THELP1
+; 16 (2 * 8)
+	.BYTE 0, $42
+	.WORD THELP2
+	.BYTE 0, $42
+	.WORD TARGLINE
+	.BYTE 0, $42
+	.WORD BASLINE
+	.BYTE 0, $42
+	.WORD THELP3
+; 36 (4 * (1 + 8))
+	.BYTE $41
+	.WORD DLIST
+
+TITLE	.SBYTE "    "
+	.SBYTE "DiskCart V0.5 (c) 2010 HiassofT"
+	.SBYTE "     "
+
+	.SBYTE "          "
+	.SBYTE "images on cartridge:"
+	.SBYTE "          "
+
+THELP1	.SBYTE "       "
+	.BYTE $42
+	.SBYTE +$80, "SPACE"
+	.BYTE $56
+	.SBYTE " = start MyPicoDos"
+	.SBYTE "        "
+
+THELP2	.SBYTE "       "
+	.BYTE $42, $91, $56, 13, $42, $98, $56
+	.SBYTE " = select slot 1-8"
+	.SBYTE "        "
+
+TTARG	.SBYTE "          "
+	.BYTE $42
+	.SBYTE +$80, "D"
+	.BYTE $56
+	.SBYTE "slot target: D"
+OTARG	= * - TTARG
+	.SBYTE "1:"
+	.SBYTE "          "
+
+TBASIC	.SBYTE "           "
+	.BYTE $42
+	.SBYTE +$80, "B"
+	.BYTE $56
+	.SBYTE " = basic: "
+OBAS	= * - TBASIC
+	.SBYTE "     "
+	.SBYTE "           "
+
+THELP3	.SBYTE "              "
+	.BYTE $42
+	.SBYTE +$80, "ESC"
+	.BYTE $56
+	.SBYTE " = exit"
+	.SBYTE "              "
+
+TOFF	.BYTE $42
+	.SBYTE +$80, "OFF"
+	.BYTE $56
+
+TON	.BYTE $42
+	.SBYTE +$80, "ON"
+	.BYTE $56
+	.BYTE 0
+
+
+.if .def FREEZER
+	.include "hwdebug.src"
+	.include "hwdebsup.src"
+.endif
 
 STARTMY	JSR SCROFF
 	JSR CHKBAS
@@ -160,7 +253,13 @@ RCLRLP	STA (DSTADR),Y
 	RTS
 RCLRL	= * - RCLR
 
-INIT	LDA $D01F
+INIT	
+.if .def FREEZER
+	LDA #'A
+	DBGASC 0
+.endif
+
+	LDA $D01F
 	AND #4
 	BNE NODIS
 
@@ -169,7 +268,17 @@ DISCAR	JSR SCROFF
 	JMP EXIT
 
 ; normal init
-NODIS	JSR CLRRAM
+NODIS	
+.if .def FREEZER
+	LDA #'B
+	DBGASC 0
+.endif
+	JSR CLRRAM
+
+.if .def FREEZER
+	LDA #'C
+	DBGASC 0
+.endif
 	LDA $D301
 	ORA #2		; disable basic
 	STA $D301
@@ -189,7 +298,13 @@ NAMSL	LDA NAMSIO,X
 	STA DSTADR+1
 	
 ; now get the names from the cart
-NAMLP	LDA #$40
+NAMLP	
+.if .def FREEZER
+	LDA $301
+	ORA #'0
+	DBGASC 1
+.endif
+	LDA #$40
 	STA $303
 	JSR $400
 	BMI NONAM
@@ -232,6 +347,11 @@ NONAM	INC $301
 	CMP #9
 	BNE NAMLP
 
+.if .def FREEZER
+	LDA #'D
+	DBGASC 0
+.endif
+
 	LDA NUMDRV	; are there any drives in the cart?
 	BNE GOTDRV	; yes, continue
 	JMP DISCAR	; no, disable cartridge and exit
@@ -241,6 +361,10 @@ GOTDRV	JSR CHKOS	; check for compatible OS
 	JMP STARTMY	; OS incompatible - just start MyPicoDos
 
 OSOK
+.if .def FREEZER
+	LDA #'E
+	DBGASC 0
+.endif
 
 ; setup rest of screen
 	LDY #39
@@ -248,11 +372,18 @@ SCRL1	LDA #$52
 	STA SEPLINE,Y
 	LDA TBASIC,Y
 	STA BASLINE,Y
+	LDA TTARG,Y
+	STA TARGLINE,Y
 	DEY
 	BPL SCRL1
 
+; set default dest drive to D1:
+	LDA #1
+	STA TARGDRV
+
 	; display basic status
 	JSR PBAS
+	JSR PTARG
 
 ; enable display
 	LDA #<DLIST
@@ -277,6 +408,11 @@ SCRL1	LDA #$52
 	STA $D20E
 	CLI
 
+.if .def FREEZER
+	LDA #'F
+	DBGASC 0
+.endif
+
 KEYLP	JSR GETKEY
 	BPL KEYLP1
 KXIT	JMP DISCAR
@@ -291,7 +427,7 @@ NOKSPC	CMP #'1
 	BCS NOKNUM
 	SEC
 	SBC #'0
-	STA DRIVENO
+	STA SLOTNO
 
 ; check if slot is active
 	TAX
@@ -306,7 +442,13 @@ NOKNUM	CMP #'B
 	STA $D301
 	JSR PBAS
 	JMP KEYLP
-NOKEYB	JMP KEYLP
+NOKEYB	CMP #'D
+	BNE NOKEYD
+	LDA TARGDRV
+	EOR #3		; toggle between 1 and 2
+	STA TARGDRV
+	JSR PTARG
+NOKEYD	JMP KEYLP
 
 ; convert ATASCII to screen code
 INTERNAL
@@ -350,6 +492,12 @@ PBAS1	LDA TOFF,X
 	BNE PBAS1
 	RTS
 
+; display target drive number
+PTARG	LDA TARGDRV
+	ORA #$10
+	STA TARGLINE+OTARG
+	RTS
+
 ; simple SIO code for accessing the cart
 RSIO	INC $42
 	CARTBASE
@@ -389,90 +537,17 @@ CLR7LP	STA (SRCADR),Y
 	BNE CLR7LP
 	RTS
 
-DLIST	.BYTE 112,112,112,112,112
-	.BYTE $42
-	.WORD TITLE
-	.BYTE 112,112
-	.BYTE 2
-	.BYTE $42
-	.WORD SEPLINE
-	.BYTE 0
-	.BYTE $42
-	.WORD NAMSCR
-	.BYTE 0,2,0,2,0,2,0,2,0,2,0,2,0,2,0
-	.BYTE $42
-	.WORD SEPLINE
-	.BYTE $42
-	.WORD THELP1
-	.BYTE 0, $42
-	.WORD THELP2
-	.BYTE 0, $42
-	.WORD BASLINE
-	.BYTE 0, $42
-	.WORD THELP3
-	.BYTE $41
-	.WORD DLIST
-
-TITLE	.SBYTE "    "
-	.SBYTE "DiskCart V0.4 (c) 2010 HiassofT"
-	.SBYTE "     "
-
-	.SBYTE "          "
-	.SBYTE "images on cartridge:"
-	.SBYTE "          "
-
-THELP1	.SBYTE "        "
-	.BYTE $42, $91, $56, 13, $42, $98, $56
-	.SBYTE " = boot slot 1-8"
-	.SBYTE "         "
-
-THELP2	.SBYTE "       "
-	.BYTE $42
-	.SBYTE +$80, "SPACE"
-	.BYTE $56
-	.SBYTE " = start MyPicoDos"
-	.SBYTE "        "
-
-TBASIC	.SBYTE "           "
-	.BYTE $42
-	.SBYTE +$80, "B"
-	.BYTE $56
-	.SBYTE " = basic: "
-OBAS	= * - TBASIC
-	.SBYTE "     "
-	.SBYTE "           "
-
-THELP3	.SBYTE "              "
-	.BYTE $42
-	.SBYTE +$80, "ESC"
-	.BYTE $56
-	.SBYTE " = exit"
-	.SBYTE "              "
-
-TOFF	.BYTE $42
-	.SBYTE +$80, "OFF"
-	.BYTE $56
-
-TON	.BYTE $42
-	.SBYTE +$80, "ON"
-	.BYTE $56
-	.BYTE 0
-
 MYPDOS	= *
-.if .def MEGA512
-	.incbin "mypdos-code-mega512.bin"
-.endif
 .if .def ATARIMAX8
 	.incbin "mypdos-code-atarimax8.bin"
 .endif
-MYPDPG	= (*-MYPDOS+255) / 256
-
-.if .def MEGA512
-OSCODP	.incbin "cartsiocode-osram-mega512-pal.bin"
-OSCODPL	= * - OSCODP
-OSCODN	.incbin "cartsiocode-osram-mega512-ntsc.bin"
-OSCODNL	= * - OSCODN
+.if .def FREEZER
+	.incbin "mypdos-code-freezer.bin"
 .endif
+.if .def MEGA512
+	.incbin "mypdos-code-mega512.bin"
+.endif
+MYPDPG	= (*-MYPDOS+255) / 256
 
 .if .def ATARIMAX8
 OSCODP	.incbin "cartsiocode-osram-atarimax8-pal.bin"
@@ -480,6 +555,19 @@ OSCODPL	= * - OSCODP
 OSCODN	.incbin "cartsiocode-osram-atarimax8-ntsc.bin"
 OSCODNL	= * - OSCODN
 .endif
+.if .def FREEZER
+OSCODP	.incbin "cartsiocode-osram-freezer-pal.bin"
+OSCODPL	= * - OSCODP
+OSCODN	.incbin "cartsiocode-osram-freezer-ntsc.bin"
+OSCODNL	= * - OSCODN
+.endif
+.if .def MEGA512
+OSCODP	.incbin "cartsiocode-osram-mega512-pal.bin"
+OSCODPL	= * - OSCODP
+OSCODN	.incbin "cartsiocode-osram-mega512-ntsc.bin"
+OSCODNL	= * - OSCODN
+.endif
+
 
 TMPVEC	= DSTADR
 	.include "romram.src"
@@ -526,7 +614,12 @@ PATCH2
 
 ; slot number
 	LDY #OSLOTNO
-	LDA DRIVENO
+	LDA SLOTNO
+	STA (DSTADR),Y
+
+; target drive number
+	LDY #OTARGDRV
+	LDA TARGDRV
 	STA (DSTADR),Y
 
 ; original SIO vector
@@ -608,8 +701,11 @@ CHKOS3	INX
 
 ; free addresses in OS
 OSTAB	
-;	.WORD $CBB0	; XL/XE OS
+.if .def COLORS
 	.WORD $CBA0	; XL/XE OS
+.else
+	.WORD $CBB0	; XL/XE OS
+.endif
 	.WORD $FFA0	; QMEG 4.04
 OSTABL	= * - OSTAB
 
@@ -628,7 +724,7 @@ XEND	= *
 
 	* = CARTSIG
 	.BYTE "HiassofT"
-	.BYTE "20100411"
+	.BYTE "20100416"
 
 .if .def ATARIMAX8
 	* = $BFF0

@@ -1,6 +1,6 @@
-;  cartsiocode-osram.inc - SIO replacement code for RAM OS
+;  diskcart-freezer.inc - definitions for Turbo Freezer CartEmu
 ;
-;  Copyright (c) 2010 by Matthias Reichl <hias@horus.com>
+;  Copyright (C) 2010 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -16,11 +16,25 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-; offsets:
-OSLOTNO	= 1	; slot number
-OSTDSIO	= 5	; address of original SIO code
-OTARGDRV= $12	; target drive number
+; offsets in Turbo Freezer CartEmu
 
-; address of reset-handler (to enable OS RAM)
-RESADR  = $0120
+; code starts at offset 0
+OFSCODH = 0
+OFSCODL = 0
+
+; drive table
+OFSTABH	= 0
+OFSTABL	= CARTTAB-$A000
+
+; 16byte signature
+OFSSIGH	= 0
+OFSSIGL	= CARTSIG-$A000
+
+; start of disk image area
+OFSIMSL	= $2000
+OFSIMSH	= 0
+
+; end of disk image area (last 64k reserved for Freezer)
+OFSIMEL	= $0000
+OFSIMEH	= $7
 

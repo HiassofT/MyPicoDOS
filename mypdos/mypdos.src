@@ -403,16 +403,22 @@ HIAVAIL	RTS
 	.ELSE
 
 	.IF .DEF CARTSIO
-.if .def MEGA512
-CSIOP	.incbin "cartsio-mega512-pal.bin"
-CSIOPL	= * - CSIOP
-CSION	.incbin "cartsio-mega512-ntsc.bin"
-CSIONL	= * - CSION
-.endif
 .if .def ATARIMAX8
 CSIOP	.incbin "cartsio-atarimax8-pal.bin"
 CSIOPL	= * - CSIOP
 CSION	.incbin "cartsio-atarimax8-ntsc.bin"
+CSIONL	= * - CSION
+.endif
+.if .def FREEZER
+CSIOP	.incbin "cartsio-freezer-pal.bin"
+CSIOPL	= * - CSIOP
+CSION	.incbin "cartsio-freezer-ntsc.bin"
+CSIONL	= * - CSION
+.endif
+.if .def MEGA512
+CSIOP	.incbin "cartsio-mega512-pal.bin"
+CSIOPL	= * - CSIOP
+CSION	.incbin "cartsio-mega512-ntsc.bin"
 CSIONL	= * - CSION
 .endif
 
