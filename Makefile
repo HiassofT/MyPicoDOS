@@ -7,7 +7,7 @@ ATASM=atasm
 CXX=g++
 CXXFLAGS=-W -Wall
 
-all: diskcart.atr diskcart-a8.atr diskcart-frz.atr atr2cart atr2cart.exe
+all: diskcart.atr diskcart-atarimax8.atr diskcart-freezer.atr diskcart-mega512.atr atr2cart atr2cart.exe
 # m512.rom am8.rom
 
 ASMFLAGS = 
@@ -176,71 +176,53 @@ atr2cart.exe: atr2cart.cpp AtrUtils.cpp Error.cpp
 	i586-mingw32msvc-strip $@
 
 diskcart-atarimax8.com: diskcart.src mypdos-atarimax8.rom $(LIBFLASHINC) \
-	iohelp.src arith.inc arith.src diskio.src
+	iohelp.src arith.inc arith.src diskio.src hisio.bin
 	$(ATASM) $(ASMFLAGS) -o$@ -dATARIMAX8 $<
 
-diskcart-atarimax8-hi.com: diskcart.src mypdos-atarimax8.rom $(LIBFLASHINC) \
-	iohelp.src arith.inc arith.src diskio.src hisio.bin
-	$(ATASM) $(ASMFLAGS) -dHIGHSPEED -o$@ -dATARIMAX8 $<
-
 diskcart-freezer.com: diskcart.src mypdos-freezer.rom $(LIBFLASHINC) \
-	iohelp.src arith.inc arith.src diskio.src
+	iohelp.src arith.inc arith.src diskio.src hisio.bin
 	$(ATASM) $(ASMFLAGS) -o$@ -dFREEZER $<
 
-diskcart-freezer-hi.com: diskcart.src mypdos-freezer.rom $(LIBFLASHINC) \
-	iohelp.src arith.inc arith.src diskio.src hisio.bin
-	$(ATASM) $(ASMFLAGS) -dHIGHSPEED -o$@ -dFREEZER $<
-
 diskcart-mega512.com: diskcart.src mypdos-mega512.rom $(LIBFLASHINC) \
-	iohelp.src arith.inc arith.src diskio.src
-	$(ATASM) $(ASMFLAGS) -o$@ -dMEGA512 $<
-
-diskcart-mega512-hi.com: diskcart.src mypdos-mega512.rom $(LIBFLASHINC) \
 	iohelp.src arith.inc arith.src diskio.src hisio.bin
-	$(ATASM) $(ASMFLAGS) -dHIGHSPEED -o$@ -dMEGA512 $<
+	$(ATASM) $(ASMFLAGS) -o$@ -dMEGA512 $<
 
 ctest.com: ctest.src $(LIBFLASHINC) \
 	iohelp.src arith.inc arith.src
 	$(ATASM) $(ASMFLAGS) -dMEGA512 -o$@ $<
 
 diskcart.atr: \
-	diskcart-atarimax8.com diskcart-atarimax8-hi.com \
-	diskcart-freezer.com diskcart-freezer-hi.com \
-	diskcart-mega512.com diskcart-mega512-hi.com \
+	diskcart-atarimax8.com \
+	diskcart-freezer.com \
+	diskcart-mega512.com \
 	ctest.com
 	rm -rf disk
 	mkdir -p disk
 	cp -f diskcart-atarimax8.com disk/amdisk.com
-	cp -f diskcart-atarimax8-hi.com disk/amdiskhi.com
 	cp -f diskcart-freezer.com disk-frz/frdisk.com
-	cp -f diskcart-freezer-hi.com disk-frz/frdiskhi.com
 	cp -f diskcart-mega512.com disk/medisk.com
-	cp -f diskcart-mega512-hi.com disk/mediskhi.com
 	cp -f ctest.com disk
 	atascii piconame.txt > disk/PICONAME.TXT
 	dir2atr -b MyPicoDos405 $@ disk
 
-diskcart-a8.atr: diskcart-atarimax8.com diskcart-atarimax8-hi.com
+diskcart-atarimax8.atr: diskcart-atarimax8.com
 	rm -rf disk-a8
 	mkdir -p disk-a8
 	cp -f diskcart-atarimax8.com disk-a8/amdisk.com
-	cp -f diskcart-atarimax8-hi.com disk-a8/amdiskhi.com
 	atascii piconame-a8.txt > disk-a8/PICONAME.TXT
 	dir2atr -b MyPicoDos405 $@ disk-a8
 
-diskcart-frz.atr: diskcart-freezer.com diskcart-freezer-hi.com
+diskcart-freezer.atr: diskcart-freezer.com
 	rm -rf disk-frz
 	mkdir -p disk-frz
 	cp -f diskcart-freezer.com disk-frz/frdisk.com
-	cp -f diskcart-freezer-hi.com disk-frz/frdiskhi.com
 	atascii piconame-frz.txt > disk-frz/PICONAME.TXT
 	dir2atr -b MyPicoDos405 $@ disk-frz
 
-diskcart-m512.atr: diskcart-mega512.com diskcart-mega512-hi.com
+diskcart-mega512.atr: diskcart-mega512.com
 	rm -rf disk-m512
 	mkdir -p disk-m512
 	cp -f diskcart-mega512.com disk-m512/medisk.com
-	cp -f diskcart-mega512-hi.com disk-m512/mediskhi.com
 	atascii piconame-m512.txt > disk-m512/PICONAME.TXT
 	dir2atr -b MyPicoDos405 $@ disk-m512
 

@@ -25,6 +25,9 @@
 ; MyPicoDos start address
 MYSTART = $1000
 
+; DiskWriter start address
+DWSTART	= $2000
+
 ; temp vectors for MyPicoDos
 SRCADR  = $E0
 DSTADR  = $E2
@@ -35,11 +38,15 @@ NUMDRV	= $7008 ; total number of drives
 SLOTNO	= $7009 ; temp: slot number
 OSTYPE	= $700A	; OS type
 TARGDRV	= $700B ; target drive ($01 or $02)
+
 NAMBUF	= $7010 ; 32byte temporary name buffer
 SEPLINE	= $7030	; 40byte "separator line" line
 BASLINE	= $7058	; 40byte "toggle basic" line
 TARGLINE= $7080 ; 40byte "destination drive" line
-NAMSCR	= $7100 ; 8*40 bytes screen for image names
+
+MYDL	= $7100 ; display list
+
+NAMSCR	= $7200 ; 8*40 bytes screen for image names
 
 ; copy code to $400
 	.MACRO RAMCPY
@@ -65,57 +72,80 @@ CPLP	LDA %2,Y
 ;	* = $8000
 ;	.BYTE $FF
 
-	* = $A000
+	* = CARTSTRT
 
 	.include "cartsiocode-rom.src"
 
-DLIST	.BYTE 112,112,112,112,$40
-; 37 (4 * 8 + 5)
+DLIST	.BYTE 112,112,112,96
+; 32 (4 * 8)
+
+ODLJB	= * - DLIST
+	.BYTE 1
+	.WORD MYDL+ODLTIT
+; 1
+
+ODLTIT	= * - DLIST
 	.BYTE $42
 	.WORD TITLE
 	.BYTE 112,112
 	.BYTE 2
+	.BYTE 0
 	.BYTE $42
 	.WORD SEPLINE
 	.BYTE 0
-; 41 (5 * 8 + 1)
+; 42 (5 * 8 + 2)
 	.BYTE $42
 	.WORD NAMSCR
 	.BYTE 0,2,0,2,0,2,0,2,0,2,0,2,0,2,0
 ; 72 (8 * (8 + 1))
 	.BYTE $42
 	.WORD SEPLINE
+ODLHELP	= * - DLIST
+	.BYTE 0
 	.BYTE $42
-	.WORD THELP1
-; 16 (2 * 8)
+	.WORD TMYPDOS
+; 17 (2 * 8 + 1)
+ODLSEL	= * - DLIST
 	.BYTE 0, $42
-	.WORD THELP2
+	.WORD TSLOT
+
+ODLTARG	= * - DLIST
 	.BYTE 0, $42
 	.WORD TARGLINE
-	.BYTE 0, $42
+
+	.BYTE 0
+ODLBAS	= * - DLIST
+	.BYTE $42
 	.WORD BASLINE
+
+	.BYTE 0
+ODLWR	= * - DLIST
+	.BYTE $42
+	.WORD TDISKWR
 	.BYTE 0, $42
-	.WORD THELP3
-; 36 (4 * (1 + 8))
+	.WORD TEXIT
+; 45 (5 * (1 + 8))
 	.BYTE $41
-	.WORD DLIST
+	.WORD MYDL
+
+DLISTL	= * - DLIST
 
 TITLE	.SBYTE "    "
-	.SBYTE "DiskCart V0.5 (c) 2010 HiassofT"
+	.SBYTE "DiskCart V0.6 (c) 2010 HiassofT"
 	.SBYTE "     "
 
 	.SBYTE "          "
 	.SBYTE "images on cartridge:"
 	.SBYTE "          "
 
-THELP1	.SBYTE "       "
+TMYPDOS	.SBYTE "       "
 	.BYTE $42
 	.SBYTE +$80, "SPACE"
 	.BYTE $56
 	.SBYTE " = start MyPicoDos"
 	.SBYTE "        "
 
-THELP2	.SBYTE "       "
+TSLOT	.SBYTE "       "
 	.BYTE $42, $91, $56, 13, $42, $98, $56
 	.SBYTE " = select slot 1-8"
 	.SBYTE "        "
@@ -138,7 +168,14 @@ OBAS	= * - TBASIC
 	.SBYTE "     "
 	.SBYTE "           "
 
-THELP3	.SBYTE "              "
+TDISKWR	.SBYTE "         "
+	.BYTE $42
+	.SBYTE +$80, "W"
+	.BYTE $56
+	.SBYTE " = start DiskWriter"
+	.SBYTE "         "
+
+TEXIT	.SBYTE "              "
 	.BYTE $42
 	.SBYTE +$80, "ESC"
 	.BYTE $56
@@ -154,11 +191,6 @@ TON	.BYTE $42
 	.BYTE $56
 	.BYTE 0
 
-
-.if .def FREEZER
-	.include "hwdebug.src"
-	.include "hwdebsup.src"
-.endif
 
 STARTMY	JSR SCROFF
 	JSR CHKBAS
@@ -253,12 +285,51 @@ RCLRLP	STA (DSTADR),Y
 	RTS
 RCLRL	= * - RCLR
 
-INIT	
-.if .def FREEZER
-	LDA #'A
-	DBGASC 0
+; start diskwriter software
+STARTDW	JSR SCROFF
+	JSR CHKBAS
+	JSR CLRRAM
+
+	LDA #<CDWADDR
+	STA SRCADR
+	LDA #>CDWADDR
+	STA SRCADR+1
+	LDA #<DWSTART
+	STA DSTADR
+	LDA #>DWSTART
+	STA DSTADR+1
+
+	LDX #$FF
+	TXS
+
+	RAMJMP DWSETL, DWSETUP
+
+DWSETUP	INC $42
+	CARTBNKI CDWBANK
+	LDX #$1C
+	LDY #0
+
+DWSLP1	LDA (SRCADR),Y	; copy DiskWriter code
+	STA (DSTADR),Y
+	INY
+	BNE DWSLP1
+	INC SRCADR+1
+	INC DSTADR+1
+	DEX
+	BNE DWSLP1
+
+	CARTOFF
+	LDA $D013
+	STA $3FA
+	DEC $42
+
+	OPEN 0,12,0,EDITOR2-DWSETUP+$400
+	JMP DWSTART
+EDITOR2	.BYTE "E:", 155
+DWSETL	= * - DWSETUP
 .endif
 
+INIT	
 	LDA $D01F
 	AND #4
 	BNE NODIS
@@ -269,16 +340,8 @@ DISCAR	JSR SCROFF
 
 ; normal init
 NODIS	
-.if .def FREEZER
-	LDA #'B
-	DBGASC 0
-.endif
 	JSR CLRRAM
 
-.if .def FREEZER
-	LDA #'C
-	DBGASC 0
-.endif
 	LDA $D301
 	ORA #2		; disable basic
 	STA $D301
@@ -299,11 +362,6 @@ NAMSL	LDA NAMSIO,X
 	
 ; now get the names from the cart
 NAMLP	
-.if .def FREEZER
-	LDA $301
-	ORA #'0
-	DBGASC 1
-.endif
 	LDA #$40
 	STA $303
 	JSR $400
@@ -347,25 +405,55 @@ NONAM	INC $301
 	CMP #9
 	BNE NAMLP
 
-.if .def FREEZER
-	LDA #'D
-	DBGASC 0
-.endif
+; copy display list to RAM
+	LDY #0
+COPDLL	LDA DLIST,Y
+	STA MYDL,Y
+	INY
+	CPY DLISTL
+	BNE COPDLL
 
-	LDA NUMDRV	; are there any drives in the cart?
-	BNE GOTDRV	; yes, continue
-	JMP DISCAR	; no, disable cartridge and exit
+	LDA NUMDRV
+	BNE GOTDRV
 
-GOTDRV	JSR CHKOS	; check for compatible OS
+; no images - don't show slot/mypdos/basic/target options
+	LDA #1
+	STA MYDL+ODLHELP
+	LDA #<(MYDL+ODLWR)
+	STA MYDL+ODLHELP+1
+	LDA #>(MYDL+ODLWR)
+	STA MYDL+ODLHELP+2
+
+; change "JMP xxyy" in blank-display area to 8+8+2=18 blank lines
+	LDA #$70
+	STA MYDL+ODLJB
+	STA MYDL+ODLJB+1
+	LDA #$10
+	STA MYDL+ODLJB+2
+	JMP OSOK
+
+GOTDRV
+
+; check for compatible OS
+	JSR CHKOS
 	BEQ OSOK	; OS compatible with bootable images
-	JMP STARTMY	; OS incompatible - just start MyPicoDos
+
+; skip display of 'select slot', 'target drive' and 'basic'
+	LDA #1
+	STA MYDL+ODLSEL
+	LDA #<(MYDL+ODLWR)
+	STA MYDL+ODLSEL+1
+	LDA #>(MYDL+ODLWR)
+	STA MYDL+ODLSEL+2
+
+; change "JMP xxyy" in blank-display area to 8+3+3=14 blank lines
+	LDA #$70
+	STA MYDL+ODLJB
+	LDA #$20
+	STA MYDL+ODLJB+1
+	STA MYDL+ODLJB+2
 
 OSOK
-.if .def FREEZER
-	LDA #'E
-	DBGASC 0
-.endif
-
 ; setup rest of screen
 	LDY #39
 SCRL1	LDA #$52
@@ -386,9 +474,9 @@ SCRL1	LDA #$52
 	JSR PTARG
 
 ; enable display
-	LDA #<DLIST
+	LDA #<MYDL
 	STA 560
-	LDA #>DLIST
+	LDA #>MYDL
 	STA 561
 	LDA #0
 	STA 710
@@ -408,20 +496,26 @@ SCRL1	LDA #$52
 	STA $D20E
 	CLI
 
-.if .def FREEZER
-	LDA #'F
-	DBGASC 0
-.endif
-
 KEYLP	JSR GETKEY
 	BPL KEYLP1
 KXIT	JMP DISCAR
 KEYLP1	CMP #27
 	BEQ KXIT
+
+	CMP #'W
+	BNE NOKEYW
+	JMP STARTDW	; start diskwriter software
+
+NOKEYW	LDX NUMDRV
+	BEQ KEYLP	; no images - disable other functions
+
 	CMP #$20
 	BNE NOKSPC
 	JMP STARTMY
-NOKSPC	CMP #'1
+
+NOKSPC	BIT OSTYPE	; N=1 if incompatible OS
+	BMI KEYLP	; skip image boot checks
+	CMP #'1
 	BCC NOKNUM
 	CMP #'9
 	BCS NOKNUM
@@ -681,6 +775,7 @@ CHKOS	LDX #0
 CHKOSL	CPX #OSTABL
 	BNE CHKOS1
 	LDA #$FF
+	STA OSTYPE
 	RTS
 CHKOS1	LDA OSTAB,X
 	STA SRCADR
@@ -711,20 +806,9 @@ OSTABL	= * - OSTAB
 
 XEND	= *
 
-.if 0
-; default display list to avoid screen flickering (didn't help)
-	* = $BC20
-	.DC 3 $70
-	.BYTE $42
-	.WORD $BC40
-	.DC 23 2
-	.BYTE $41
-	.WORD $BC20
-.endif
-
 	* = CARTSIG
 	.BYTE "HiassofT"
-	.BYTE "20100418"
+	.BYTE "20100420"
 
 .if .def ATARIMAX8
 	* = $BFF0

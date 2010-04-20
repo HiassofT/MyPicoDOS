@@ -30,6 +30,14 @@ OFSTABL	= CARTTAB-$A000
 OFSSIGH	= 0
 OFSSIGL	= CARTSIG-$A000
 
+; diskwriter code
+OFSDWH  = $F
+OFSDWL  = $E000
+
+; highspeed SIO code
+OFSHISH = $F
+OFSHISL = $FC00
+
 ; start of disk image area
 OFSIMSL	= $2000
 OFSIMSH	= 0

@@ -30,11 +30,19 @@ OFSTABL	= CARTTAB-$8000
 OFSSIGH	= 0
 OFSSIGL	= CARTSIG-$8000
 
+; diskwriter code
+OFSDWH  = 0
+OFSDWL  = 0
+
+; highspeed SIO code
+OFSHISH = 0
+OFSHISL = $1C00
+
 ; start of disk image area
-OFSIMSL	= $4000
 OFSIMSH	= 0
+OFSIMSL	= $4000
 
 ; end of disk image area
-OFSIMEL	= 0
 OFSIMEH	= 8
+OFSIMEL	= 0
 

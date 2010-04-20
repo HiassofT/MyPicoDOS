@@ -1,3 +1,2 @@
-DiskCart V0.5
+DiskCart V0.6
 AMDISK  COM AtariMax 8Mbit DiskCart
-AMDISKHICOM AtariMax 8Mbit DiskCart HISIO

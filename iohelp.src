@@ -38,7 +38,7 @@ YESNO	JSR GETCHAR
 ?YBRK	LDY #$FF
 	RTS	; return with N=1
 
-
+.if 0
 ; input filename
 GETFN	INPUT 0, FNBUF
 	BPL ?GETFN1
@@ -73,7 +73,6 @@ GETFN	INPUT 0, FNBUF
 
 FNBUF	.DC 128 0
 
-.if 0
 
 ; input size
 

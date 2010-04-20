@@ -57,3 +57,8 @@
 	ORA #$80	; set base address $80
 	STA %1+1
 	.ENDM
+
+; bank and address of diskwriter code
+CDWBANK = 0
+CDWADDR = $8000
+

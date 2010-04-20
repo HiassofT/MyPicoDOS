@@ -30,11 +30,19 @@ OFSTABL	= CARTTAB-$A000
 OFSSIGH	= 0
 OFSSIGL	= CARTSIG-$A000
 
+; diskwriter code
+OFSDWH	= 0
+OFSDWL	= $2000
+
+; highspeed SIO code
+OFSHISH	= 0
+OFSHISL	= $3C00
+
 ; start of disk image area
-OFSIMSL	= $2000
 OFSIMSH	= 0
+OFSIMSL	= $4000
 
 ; end of disk image area (last 64k reserved for Freezer)
-OFSIMEL	= $0000
 OFSIMEH	= $7
+OFSIMEL	= $0000
 

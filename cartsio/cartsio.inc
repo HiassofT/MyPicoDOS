@@ -33,9 +33,11 @@
 	CSSRC	= $38	; ,$39 source address lo/hi
 	CSSRCB	= $3A	; source address hi2 / bank number
 
+; start address of ROM code
+	CARTSTRT=$A000
 
 ; address/bank of CARTSIO code
-	CSIOROM = $A000	; cartsio entry address
+	CSIOROM = CARTSTRT	; cartsio entry address
 	CSROMBK = 0	; ROM bank number of cartsio entry
 
 ; alternate cartsio entry, set A to slot number
