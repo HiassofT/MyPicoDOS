@@ -199,7 +199,7 @@ diskcart.atr: \
 	rm -rf disk
 	mkdir -p disk
 	cp -f diskcart-atarimax8.com disk/amdisk.com
-	cp -f diskcart-freezer.com disk-frz/frdisk.com
+	cp -f diskcart-freezer.com disk/frdisk.com
 	cp -f diskcart-mega512.com disk/medisk.com
 	cp -f ctest.com disk
 	atascii piconame.txt > disk/PICONAME.TXT
