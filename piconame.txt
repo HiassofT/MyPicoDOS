@@ -1,5 +1,6 @@
 DiskCart V0.6
-AMDISK  COM AtariMax 8Mbit DiskCart
+AMDISK  COM AtariMax 8MBit DiskCart
 FRDISK  COM Turbo Freezer DiskCart
 MEDISK  COM Mega 512k DiskCart
-CTEST   COM Mega512 FlashCart Tester
+CTESTA8 COM AtariMax 8MBit FlashCart Tester
+CTESTME COM Mega 512k FlashCart Tester
