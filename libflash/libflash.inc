@@ -29,3 +29,14 @@ TST10B	= 3	; ST 29F010B
 TST40B	= 4	; ST 29F040B
 TBM40	= 5	; BM 29F040
 
+; error codes (in FERROR)
+; no error - call to libflash is OK
+EFLOK	= 0
+; page address error - called FxPAGE on non-page boundary
+EFLPAE	= $80
+; flash timeout (error programming flash cell)
+EFLFTO	= $81
+; data verify error after programming flash cell or when
+; using FCBYTE/FCPAGE
+EFLDVE	= $82
+
