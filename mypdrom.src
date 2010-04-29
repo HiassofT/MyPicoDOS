@@ -809,7 +809,7 @@ XEND	= *
 
 	* = CARTSIG
 	.BYTE "HiassofT"
-	.BYTE "20100422"
+	.BYTE "20100429"
 
 .if .def ATARIMAX8
 	* = $BFF0
