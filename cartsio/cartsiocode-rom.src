@@ -24,9 +24,9 @@ CSIOY	JMP ?YSIO	; entry point for Y=driveno (1..8)
 
 ; simple entry point with X=driveno
 ?YSIO	TYA
-?ASIO	CMP #0		; check for valid driveno in A (1..8)
+?ASIO	CMP #0		; check for valid driveno in A (1..CTENUM)
 	BEQ ?NODEVIC
-	CMP #9
+	CMP #[CTENUM+1]
 	BCS ?NODEVIC
 	SEC
 	SBC #1
@@ -39,7 +39,7 @@ CSIOY	JMP ?YSIO	; entry point for Y=driveno (1..8)
 	ADC #$FF
 	CMP #$31
 	BCC ?NODEVIC
-	CMP #$39
+	CMP #[$31+CTENUM]
 	BCC ?DEVICOK
 ?NODEVIC
 	LDY #138	; no device - return "timeout error"
@@ -50,7 +50,7 @@ CSIOY	JMP ?YSIO	; entry point for Y=driveno (1..8)
 ?DEVICOK
 	SEC
 	SBC #$31	; make it zero-based
-?DEV8	ASL		; multiply by 8
+?DEV8	ASL		; multiply by 8 (CTESIZE)
 	ASL
 	ASL
 	TAX

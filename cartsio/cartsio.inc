@@ -47,8 +47,13 @@
 	CSIOROMY= $A006
 
 ; drive table in ROM (stored in same bank as cartsio code)
-; the drive table has 8 entries (D1:..D8:) with 16 bytes each
+; the drive table has 8 entries (D1:..D8:) with 8 bytes each
 	CARTTAB	= $BF00	; drive table base address
+
+; size and number of entries in drive table
+	CTENUM	= 8	; number of entries in drive table
+	CTESIZE	= 8	; size of each entry (8 bytes)
+	CTTSIZE	= [CTENUM*CTESIZE]	; total size of drive table
 
 ; offsets in drive table
 	CTOACTI	= 0	; slot active: 0=yes, $ff=no
