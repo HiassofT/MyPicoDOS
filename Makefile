@@ -2,8 +2,7 @@
 # MyPicoDos V4.05 Makefile (c) 2003-2010 by Matthias Reichl <hias@horus.com>
 #
 
-ATASM=atasm
-#ATASM=/data/src/xl/atasm103/src/atasm
+ATASM ?= atasm
 
 all: MYINIT.COM MYINITR.COM \
 	MYPDOS.COM MYPDOSN.COM \
