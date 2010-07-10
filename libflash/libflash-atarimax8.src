@@ -36,23 +36,13 @@ BANKBAS	= $A000	; base address
 	STA BANKREG+$80
 	.ENDM
 
-; convert bank number for reading (in: A, out: A)
-	.MACRO CBANKRD
+; calculate bank number (in: A, out: A)
+	.MACRO CBANK
 	AND #$7F	; 128 8k banks
 	.ENDM
 
-; convert bank number for writing (in: A, out: A)
-	.MACRO CBANKWR
-	AND #$7F	; 128 8k banks
-	.ENDM
-
-; convert bank number for reading base (in: A, out: A)
-	.MACRO CBASERD
-	AND #$40
-	.ENDM
-
-; convert bank number for writing base (in: A, out: A)
-	.MACRO CBASEWR
+; calculate base bank number (in: A, out: A)
+	.MACRO CBASE
 	AND #$40
 	.ENDM
 

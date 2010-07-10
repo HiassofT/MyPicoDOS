@@ -93,7 +93,7 @@ FSETTMP
 	RTS
 
 ; convert internal flash address in FLASHADI to absolute address/bank,
-; sets FLASHVEC (absolute adress) and ?BANKRD/WR, ?BASERD/WR
+; sets FLASHVEC (absolute adress) and ?BANKNO/WR, ?BASEBNK/WR
 ?FSETADR
 ; copy address in temporary storage
 	LDA FLASHADI
@@ -112,21 +112,12 @@ FSETTMP
 
 ; setup bank registers
 	LDA FBANKTMP
-	CBASERD
-	STA ?BASERD
+	CBASE
+	STA ?BASEBNK
 
 	LDA FBANKTMP
-	CBASEWR
-	STA ?BASEWR
-
-	LDA FBANKTMP
-	CBANKRD
-	STA ?BANKRD
-
-	LDA FBANKTMP
-	CBANKWR
-	STA ?BANKWR
-
+	CBANK
+	STA ?BANKNO
 	RTS
 
 ; setup addresses and check if flash address starts
@@ -195,10 +186,8 @@ FERRUD	.BYTE 0
 DATAADR	.BYTE 0,0
 
 FBANKTMP .BYTE 0 ; temporary bank register
-?BANKRD	.BYTE 0	; current bank number for reading
-?BANKWR	.BYTE 0	; current bank number for writing
-?BASERD	.BYTE 0	; base bank number for reading signatures etc.
-?BASEWR	.BYTE 0 ; base bank number for writing signatures etc.
+?BANKNO	.BYTE 0	; current bank number
+?BASEBNK	.BYTE 0	; base bank number for signatures etc.
 
 ?FBCOUNT	.BYTE 0		; byte counter
 ?FPCOUNT	.BYTE 0		; page counter
@@ -209,8 +198,6 @@ FBANKTMP .BYTE 0 ; temporary bank register
 ;TSSTWIN	= 2	; SST 29EE010 / Winbond 29EE011
 
 ?ITYPE	.BYTE 0
-
-MBASEWR	= ?BASEWR
 
 ; common initialization stuff
 ?FINIT	JMP FADRZERO	; just clear flash address
@@ -228,8 +215,7 @@ MBASEWR	= ?BASEWR
 	STA FLASHTMP+1
 	JSR FSETTMP
 	LDA FBANKTMP
-	CBANKWR
-	ORA MBASEWR
+	CBANK
 	TAX
 	SBANKX
 	LDX #0
@@ -264,7 +250,7 @@ MBASEWR	= ?BASEWR
 	FPOKE 0, $F0
 
 ; set bank for reading data
-?XRBANK	LDX ?BASERD
+?XRBANK	LDX ?BASEBNK
 	SBANKX
 	RTS
 
@@ -284,7 +270,7 @@ MBASEWR	= ?BASEWR
 	FPOKE $555,$90
 
 ; set bank for reading ID
-?XRBASE	LDX ?BASERD
+?XRBASE	LDX ?BASEBNK
 	SBANKX
 	RTS
 
@@ -328,7 +314,7 @@ MBASEWR	= ?BASEWR
 ; put flash into "Block erase" mode (bank must be set correctly!)
 ?SETBERA
 	JSR ?SIGERAS
-	LDX ?BANKWR
+	LDX ?BANKNO
 	SBANKX
 
 ; flashadr = $30
@@ -340,7 +326,7 @@ MBASEWR	= ?BASEWR
 
 ; put flash into "byte program" mode
 ?SETPROG
-	LDX ?BASEWR
+	LDX ?BASEBNK
 
 	LDA ?ITYPE
 	CMP #?ITLO
@@ -358,7 +344,7 @@ MBASEWR	= ?BASEWR
 	STA BANKBAS+$555
 
 ; set current bank number
-	LDX ?BANKWR
+	LDX ?BANKNO
 	SBANKX
 	RTS
 
@@ -399,7 +385,7 @@ MBASEWR	= ?BASEWR
 	STA BANKBAS+$1555
 .ENDIF
 ; set current bank number
-	LDX ?BANKWR
+	LDX ?BANKNO
 	SBANKX
 	RTS
 
@@ -595,8 +581,6 @@ FWBYTE	JSR ?FSETUPB		; setup addresses for byte mode
 	JSR ?SETPROG
 	LDA (DATAVEC),Y
 	STA (FLASHVEC),Y	; program data
-	LDX ?BANKRD
-	SBANKX
 	JSR ?WTDATA		; wait for programming to finish
 	BMI ?FBERR1		; error 1
 	LDA (FLASHVEC),Y	; verify data
@@ -634,8 +618,6 @@ FWPAGE	JSR ?FSETUPP		; setup adresses and check for page mode
 ?FWPAGL JSR ?SETPROG
 	LDA (DATAVEC),Y
 	STA (FLASHVEC),Y	; program data
-	LDX ?BANKRD
-	SBANKX
 	JSR ?WTDATA		; wait for programming to finish
 	BMI ?FPERR1		; error
 	LDA (FLASHVEC),Y
@@ -678,7 +660,7 @@ FWPAGE	JSR ?FSETUPP		; setup adresses and check for page mode
 FRBYTE	JSR ?FSETUPB		; setup addresses for byte mode
 
 ?FRBYTL	JSR ?FSETADR
-	LDX ?BANKRD
+	LDX ?BANKNO
 	SBANKX
 	LDA (FLASHVEC),Y
 	STA (DATAVEC),Y
@@ -701,7 +683,7 @@ FRPAGE	JSR ?FSETUPP
 	JMP ?FPERR
 
 ?FRPAG1	JSR ?FSETADR
-	LDX ?BANKRD
+	LDX ?BANKNO
 	SBANKX
 
 ?FRPAGL	LDA (FLASHVEC),Y
@@ -722,7 +704,7 @@ FRPAGE	JSR ?FSETUPP
 FCBYTE	JSR ?FSETUPB		; setup addresses for byte mode
 	
 ?FCBYT1	JSR ?FSETADR
-	LDX ?BANKRD
+	LDX ?BANKNO
 	SBANKX
 
 	LDA (FLASHVEC),Y
@@ -749,7 +731,7 @@ FCPAGE	JSR ?FSETUPP		; setup adresses and check for page start
 	JMP ?FPERR
 
 ?FCPAG1	JSR ?FSETADR
-	LDX ?BANKRD
+	LDX ?BANKNO
 	SBANKX
 
 ?FCPAGL	LDA (FLASHVEC),Y

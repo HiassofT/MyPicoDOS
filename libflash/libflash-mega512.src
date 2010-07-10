@@ -37,25 +37,14 @@ BANKBAS	= $8000	; base address
 	SBANKX
 	.ENDM
 
-; convert bank number for reading (in: A, out: A)
-	.MACRO CBANKRD
+; calculate bank number (in: A, out: A)
+	.MACRO CBANK
 	AND #$1F
 	.ENDM
 
-; convert bank number for writing (in: A, out: A)
-	.MACRO CBANKWR
-	AND #$1F
-	ORA #$40
-	.ENDM
-
-; convert bank number for reading base (in: A, out: A)
-	.MACRO CBASERD
+; calculate base bank number (in: A, out: A)
+	.MACRO CBASE
 	LDA #0
-	.ENDM
-
-; convert bank number for writing base (in: A, out: A)
-	.MACRO CBASEWR
-	LDA #$40
 	.ENDM
 
 ; init flash library

@@ -2,7 +2,7 @@
 # MyPicoDos V4.05 Makefile (c) 2003-2010 by Matthias Reichl <hias@horus.com>
 #
 
-ATASM=atasm
+ATASM ?= atasm
 
 CXX=g++
 CXXFLAGS=-W -Wall

@@ -65,23 +65,13 @@ FRMODSDX = $D58B
 	STA FRCARDIS
 	.ENDM
 
-; convert bank number for reading (in: A, out: A)
-	.MACRO CBANKRD
+; calculate bank number (in: A, out: A)
+	.MACRO CBANK
 	AND #$3F	; 64 8k banks
 	.ENDM
 
-; convert bank number for writing (in: A, out: A)
-	.MACRO CBANKWR
-	AND #$3F	; 64 8k banks
-	.ENDM
-
-; convert bank number for reading base (in: A, out: A)
-	.MACRO CBASERD
-	AND #0
-	.ENDM
-
-; convert bank number for writing base (in: A, out: A)
-	.MACRO CBASEWR
+; calculate base bank number (in: A, out: A)
+	.MACRO CBASE
 	AND #0
 	.ENDM
 
