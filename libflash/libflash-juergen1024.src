@@ -1,4 +1,4 @@
-;  libflash-atarimax8 - code for 8mbit AtariMax Flashcart
+;  libflash-mega512 - code for Bernd's Mega512 cart
 ;
 ;  Copyright (C) 2004-2010 Matthias Reichl <hias@horus.com>
 ;
@@ -17,8 +17,8 @@
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 BANKREG	= $D500
-BANKSIZ	= 8	; 8k banks
-BANKBAS	= $A000	; base address
+BANKSIZ	= 16	; 16k banks
+BANKBAS	= $8000	; base address
 
 ; set bank number from X
 	.MACRO SBANKX
@@ -38,16 +38,16 @@ BANKBAS	= $A000	; base address
 
 ; calculate bank number (in: A, out: A)
 	.MACRO CBANK
-	AND #$7F	; 128 8k banks
+	AND #$3F	; 64 16k banks
 	.ENDM
 
 ; calculate base bank number (in: A, out: A)
 	.MACRO CBASE
-	AND #$40	; 2 chips, 64 8k banks each
+	AND #$20	; 2 chips, 32 16k banks each
 	.ENDM
 
 ; init flash library
-FINIT   JMP ?FINIT
+FINIT	JMP ?FINIT
 
 ; enable flash access
 FENABLE

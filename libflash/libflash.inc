@@ -28,6 +28,7 @@ TAMD40B	= 2	; AMD 29F040B
 TST10B	= 3	; ST 29F010B
 TST40B	= 4	; ST 29F040B
 TBM40	= 5	; BM 29F040
+TNOFLSH	= $FF	; no flash
 
 ; error codes (in FERROR)
 ; no error - call to libflash is OK

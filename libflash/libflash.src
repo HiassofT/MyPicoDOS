@@ -1,4 +1,4 @@
-;  libflash-common - generic flash programming code
+;  libflash - generic flash programming code
 ;
 ;  Copyright (C) 2004-2010 Matthias Reichl <hias@horus.com>
 ;
@@ -22,6 +22,10 @@
 
 .if .def FREEZER
 	.include "libflash-freezer.src"
+.endif
+
+.if .def JUERGEN1024
+	.include "libflash-juergen1024.src"
 .endif
 
 .if .def MEGA512
@@ -93,7 +97,7 @@ FSETTMP
 	RTS
 
 ; convert internal flash address in FLASHADI to absolute address/bank,
-; sets FLASHVEC (absolute adress) and ?BANKNO/WR, ?BASEBNK/WR
+; sets FLASHVEC (absolute adress) and ?BANKNO, ?BASEBNK
 ?FSETADR
 ; copy address in temporary storage
 	LDA FLASHADI
@@ -202,6 +206,8 @@ FBANKTMP .BYTE 0 ; temporary bank register
 ; common initialization stuff
 ?FINIT	JMP FADRZERO	; just clear flash address
 
+MBASEBK	= ?BASEBNK
+
 ; "poke" values into flash
 	.MACRO FPOKE ; ofs, value
 	.IF %0 <> 2
@@ -216,6 +222,7 @@ FBANKTMP .BYTE 0 ; temporary bank register
 	JSR FSETTMP
 	LDA FBANKTMP
 	CBANK
+	ORA MBASEBK
 	TAX
 	SBANKX
 	LDX #0
@@ -403,6 +410,7 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 ; detect flash chips with "high" signatures
 	LDA #?ITHI
 	STA ?ITYPE
+	JSR ?SETREAD
 	JSR ?SETID
 
 	LDX #253	; start at index -3
@@ -420,8 +428,14 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	BNE ?DET1
 	BEQ ?DET4
 
+?DET2	
 ; detect flash chips with "low" signatures
-?DET2	LDX #253	; start at index -3
+	LDA #?ITLO
+	STA ?ITYPE
+	JSR ?SETREAD
+	JSR ?SETID
+
+	LDX #253	; start at index -3
 ?DET3	INX
 	INX
 	INX
@@ -472,7 +486,7 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	LDA #$FF
 	STA FBLKMSK
 	STA FBLKMSK+1
-	STA FBLKMSK+1
+	STA FBLKMSK+2
 	JMP ?SETREAD	; try to leave ID mode anyways
 
 ?DET512	LDA #0		; flash size 512k
@@ -520,22 +534,18 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	STA FBLKMSK+2
 	JMP ?SETREAD
 
-; detection was OK, setup bank sizes etc.
-?DET5	JSR ?SETREAD
-	RTS
-
 ; ID tables
 ; format: chip-type, manufacturer ID, device ID
 
 ?IDHI	.BYTE TAMD10, $01, $20	; AMD 29F010
 	.BYTE TBM40, $AD, $40	; BM 29F040
-	.BYTE $FF,$FF,$FF	; end of table
+	.BYTE TNOFLSH,$FF,$FF	; end of table
 
 ?IDLO	.BYTE TAMD10B, $01, $20	; AMD 29F010B
 	.BYTE TAMD40B, $01, $A4	; AMD 29F040B
 	.BYTE TST10B, $20, $20	; ST 29F010B
 	.BYTE TST40B, $20, $E2	; ST 29F040B
-	.BYTE $FF,$FF,$FF	; end of table
+	.BYTE TNOFLSH,$FF,$FF	; end of table
 
 ; flash type ($FF means no flash)
 FTYPE	.BYTE 0

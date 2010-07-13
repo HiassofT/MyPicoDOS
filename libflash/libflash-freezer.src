@@ -44,15 +44,15 @@ FRMOD16K = $D589
 FRMODOSS = $D58A
 FRMODSDX = $D58B
 
-; set bank number from memory location
-	.MACRO SBANK ; parameter: address
-	LDX [%1]
+; set bank number from X
+	.MACRO SBANKX
 	STA BANKREG,X
 	.ENDM
 
-; set bank number from X
-	.MACRO SBANKX ; parameter: address
-	STA BANKREG,X
+; set bank number from memory location
+	.MACRO SBANK ; parameter: address
+	LDX [%1]
+	SBANKX
 	.ENDM
 
 ; enable cartemu
@@ -72,7 +72,7 @@ FRMODSDX = $D58B
 
 ; calculate base bank number (in: A, out: A)
 	.MACRO CBASE
-	AND #0
+	AND #0		; only one chip
 	.ENDM
 
 ; init flash library
