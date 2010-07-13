@@ -131,56 +131,59 @@ ODLWR	= * - DLIST
 DLISTL	= * - DLIST
 
 TITLE	.SBYTE "    "
-	.SBYTE "DiskCart V0.6 (c) 2010 HiassofT"
+	.SBYTE "DiskCart V0.7 (c) 2010 HiassofT"
 	.SBYTE "     "
 
 	.SBYTE "          "
 	.SBYTE "images on cartridge:"
 	.SBYTE "          "
 
-TMYPDOS	.SBYTE "       "
+TMYPDOS	.SBYTE "        "
 	.BYTE $42
 	.SBYTE +$80, "SPACE"
 	.BYTE $56
-	.SBYTE " = start MyPicoDos"
+	.SBYTE "= start MyPicoDos"
 	.SBYTE "        "
 
-TSLOT	.SBYTE "       "
+TSLOT	.SBYTE "  "
 	.BYTE $42, $91, $56, 13, $42, $98, $56
-	.SBYTE " = select slot 1-8"
-	.SBYTE "        "
+	.SBYTE "= select image 1-8 and boot"
+	.SBYTE "    "
 
-TTARG	.SBYTE "          "
+TTARG	.SBYTE "   "
 	.BYTE $42
 	.SBYTE +$80, "D"
 	.BYTE $56
-	.SBYTE "slot target: D"
+	.SBYTE "= mount selected image on:"
+	.BYTE $42
+	.SBYTE +$80, "D"
 OTARG	= * - TTARG
-	.SBYTE "1:"
-	.SBYTE "          "
+	.SBYTE +$80, "1:"
+	.BYTE $56
+	.SBYTE "   "
 
-TBASIC	.SBYTE "           "
+TBASIC	.SBYTE "            "
 	.BYTE $42
 	.SBYTE +$80, "B"
 	.BYTE $56
-	.SBYTE " = basic: "
+	.SBYTE "= basic:"
 OBAS	= * - TBASIC
 	.SBYTE "     "
-	.SBYTE "           "
+	.SBYTE "            "
 
 TDISKWR	.SBYTE "         "
 	.BYTE $42
 	.SBYTE +$80, "W"
 	.BYTE $56
-	.SBYTE " = start DiskWriter"
-	.SBYTE "         "
+	.SBYTE "= start DiskWriter"
+	.SBYTE "          "
 
 TEXIT	.SBYTE "              "
 	.BYTE $42
 	.SBYTE +$80, "ESC"
 	.BYTE $56
-	.SBYTE " = exit"
-	.SBYTE "              "
+	.SBYTE "= exit"
+	.SBYTE "               "
 
 TOFF	.BYTE $42
 	.SBYTE +$80, "OFF"
@@ -589,7 +592,7 @@ PBAS1	LDA TOFF,X
 
 ; display target drive number
 PTARG	LDA TARGDRV
-	ORA #$10
+	ORA #$90
 	STA TARGLINE+OTARG
 	RTS
 
@@ -809,7 +812,7 @@ XEND	= *
 
 	* = CARTSIG
 	.BYTE "HiassofT"
-	.BYTE "20100429"
+	.BYTE "20100713"
 
 .if .def ATARIMAX8
 	* = $BFF0

@@ -17,12 +17,12 @@ mkdir -p "${TMPDIR}/src/hisio"
 cp -a \
 	atr2cart.exe \
 	diskcart.atr \
-	diskcart-atarimax8.com diskcart-atarimax8-hi.com \
-	diskcart-mega512.com diskcart-mega512-hi.com \
-	ctest.com \
-"${TMPDIR}"
+	diskcart-atarimax8.atr diskcart-freezer.atr diskcart-mega512.atr \
+	diskcart-atarimax8.com diskcart-freezer.com diskcart-mega512.com \
+	ctesta8.com ctestme.com \
+	"${TMPDIR}"
 
-cp -a Makefile piconame.txt *.inc *.src *.cpp *.c *.h "${TMPDIR}/src"
+cp -a Makefile piconame*.txt *.inc *.src *.cpp *.c *.h "${TMPDIR}/src"
 cp -a cartsio/*.src cartsio/*.inc "${TMPDIR}/src/cartsio"
 cp -a libflash/*.src libflash/*.inc "${TMPDIR}/src/libflash"
 cp -a mypdos/*.src mypdos/*.inc "${TMPDIR}/src/mypdos"

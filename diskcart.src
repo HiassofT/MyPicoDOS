@@ -1136,15 +1136,15 @@ TMPIDX	.BYTE 0
 
 TTITLE
 .if .def ATARIMAX8
-	.BYTE 125, "AtariMax 8MBit DiskWriter V0.6",155
+	.BYTE 125, "AtariMax 8MBit DiskWriter V0.7",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 .endif
 .if .def FREEZER
-	.BYTE 125, "Turbo Freezer DiskWriter V0.6",155
+	.BYTE 125, "Turbo Freezer DiskWriter V0.7",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 .endif
 .if .def MEGA512
-	.BYTE 125, "Mega 512k FlashCart DiskWriter V0.6",155
+	.BYTE 125, "Mega 512k FlashCart DiskWriter V0.7",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 .endif
 TTITLEL	= * - TTITLE

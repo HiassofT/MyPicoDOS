@@ -245,4 +245,4 @@ am8.rom: atr2cart
 
 
 clean:
-	rm -rf atr2cart atr2cart.exe mypdrom.c *.65o *.o *.bin *.com *.atr *.rom disk disk-a8 disk-m512 disk-frz
+	rm -rf atr2cart atr2cart.exe mypdrom.c *.65o *.o *.bin *.com *.atr *.rom mypdos*.c disk disk-a8 disk-m512 disk-frz
