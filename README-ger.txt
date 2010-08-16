@@ -173,8 +173,10 @@ Mit "I" bekommt man eine Liste der Disk-Images in der Flashcart,
 
 3.4 Booten von Images
 
-Diese Funktion ist nur auf XL/XEs verfügbar, da dafür das OS ROM ins
-RAM kopiert und angepasst werden muss.
+Diese Funktion ist nur auf XL/XEs und nur mit bestimmten OS (aktuell
+original OS und QMEG 4.04) verfügbar, da dafür das OS ROM ins RAM
+kopiert und angepasst werden muss. Bei Einsatz eines anderen, nicht
+kompatiblen OS wird die Funktion automatisch deaktiviert.
 
 Mit den Tasten "1" bis "8" kann ein Image ausgewählt und gebootet werden.
 Zuvor kann mit "B" das eingebaute Basic an- bzw. abgeschaltet werden
