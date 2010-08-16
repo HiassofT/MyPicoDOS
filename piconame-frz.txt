@@ -1,2 +1,2 @@
-DiskCart V0.7
+DiskCart V1.0
 FRDISK  COM Turbo Freezer DiskCart

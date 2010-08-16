@@ -131,7 +131,7 @@ ODLWR	= * - DLIST
 DLISTL	= * - DLIST
 
 TITLE	.SBYTE "    "
-	.SBYTE "DiskCart V0.7 (c) 2010 HiassofT"
+	.SBYTE "DiskCart V1.0 (c) 2010 HiassofT"
 	.SBYTE "     "
 
 	.SBYTE "          "
@@ -812,7 +812,7 @@ XEND	= *
 
 	* = CARTSIG
 	.BYTE "HiassofT"
-	.BYTE "20100713"
+	.BYTE "20100816"
 
 .if .def ATARIMAX8
 	* = $BFF0

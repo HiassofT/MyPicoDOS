@@ -1,4 +1,4 @@
-DiskCart / DiskWriter für 512k Flash Megacart V0.7
+DiskCart / DiskWriter für 512k Flash Megacart V1.0
 
 Copyright (C) 2010 by Matthias Reichl <hias@horus.com>
 
@@ -50,7 +50,7 @@ Freaks), per "BREAK" beendet man die Software.
 
 Direkt unter der Titelzeile wird der Typ des Flash-Chips im Modul
 angezeigt. Üblicherweise ist das "AMD 29F040B". Darunter steht die
-Versionsnummer der DiskCart Software in der Flashcart (aktuell 20100713).
+Versionsnummer der DiskCart Software in der Flashcart (aktuell 20100816).
 In der dritten Zeile steht die Info ob die integrierte Highspeed
 SIO Routine eingeschaltet ist ("on") oder nicht ("off").
 
