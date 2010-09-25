@@ -17,9 +17,9 @@ all: MYINIT.COM MYINITR.COM \
 
 #all: MYPDOS.COM mypdos.atr mypdoshs.atr myinit2.atr
 
-#ASMFLAGS= -Ihisio
+ASMFLAGS= -Ihisio
 #ASMFLAGS= -Ihisio -v
-ASMFLAGS = -Ihisio -s
+#ASMFLAGS = -Ihisio -s
 #ASMFLAGS = -Ihisio -v -s
 #ASMFLAGS = -Ihisio -s -dHWDEBUG
 
