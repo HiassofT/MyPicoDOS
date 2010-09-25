@@ -1,6 +1,6 @@
 ;  highsio.inc - definitions for highspeed SIO code
 ;
-;  Copyright (c) by Matthias Reichl <hias@horus.com>
+;  Copyright (c) 2003-2010 by Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 ;
 
 	POKMSK = $10
+
+	RTCLOK = $12
 
 	STATUS = $30
 	CHKSUM = $31
@@ -40,21 +42,21 @@
 
 ; speed used by this SIO command (changed to standard for second retry)
 	MYSPEED = $3A
-	STACKP = $3B
 
-; flag if GETBYTE should return after receiving a single byte
-; 0 means no (we are in read loop), $80 means yes
-	GETFLG = $3C
+; timer in ZP, used by fast VBI code
+	MYTIM1 = $3B ; $3C
+
+	STACKP = $318
+;	STACKP = $3B
 
 ;	CRETRY = $29C
 ;	DRETRY = $2BD
-;	STACKP = $318
 
 	SOUNDR = $41
 	CRITIC = $42
 
 	CDTMV1 = $218
-	
+	VVBLKI = $222
 	CDTMA1 = $226
 	CDEVIC = $23A
 	CCOMND = $23B
@@ -117,14 +119,21 @@
 	ERRDEV = $90	; device error
 
 	PBCTL = $D303
+	WSYNC = $D40A
+	VCOUNT = $D40B
 
 	SETVBV = $E45C
+	XITVBV = $E462
 
+.if .not .def USONLY
 	TURSPD = 6
 	XFSPD = 16
+.endif
 	STDSPD = $28
 
+.if .not .def USONLY
 	TURFLG = $80
 	XFFLG = $40
 	HAPFLG = $41
+.endif
 

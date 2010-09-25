@@ -19,7 +19,6 @@
 	* = SIOADR
 
 	FASTVBI=1
-	FASTVBI_NOCLOCK=1
 	HISIO_MYPICODOS=1
 	.include "hisiocode.src"
 

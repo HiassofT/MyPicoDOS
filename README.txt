@@ -27,7 +27,8 @@ the following features:
 - It supports Bibo-Dos style long directories (128 files per disk).
 - It supports XF551 format detection.
 - Builtin highspeed SIO code: compatible with ultra speed (Happy, Speedy,
-  AtariSIO/SIO2PC/APE/...), Happy 810 Warp Speed, XF551 and Turbo 1050
+  AtariSIO/SIO2PC/APE/...), Happy 810 Warp Speed, XF551 and Turbo 1050,
+  up to 126 kbit/sec (Pokey divisor 0)
 - It supports displaying long filenames and a disk/directory title.
 - On XL/XE-type computers MyPicoDos can automatically switch basic on
   when loading a basic program, and switch basic off when
@@ -395,13 +396,13 @@ too much about that. What is important, is that you know something
 about the memory layout:
 
 $0700-$07FF is used as a sector buffer (except for the BIN loader).
-$0800-$0858 contains the basic disk IO code to read bytes (used by
+$0800-$0854 contains the basic disk IO code to read bytes (used by
             the COM and the BAS loader)
-$0859-$0934 is either used by the COM or the BAS loader. The filetype
+$0855-$0929 is either used by the COM or the BAS loader. The filetype
             is determined by mypdos, and the appropriate loader code
             is then copied there. Actually, the BAS loader only
-            uses memory up to $08AC.
-$0935-$0B61 contains the highspeed SIO code.
+            uses memory up to $08A8.
+$092A-$0BE3 contains the highspeed SIO code.
 
 $1000-$2400 (approx.) is used by mypdos
 
@@ -526,7 +527,7 @@ version 4.04:
 
 version 4.05:
 - Added boot-sector-only version "PicoBoot"
-- Updated highspeed SIO code to latest version (1.20)
+- Updated highspeed SIO code to latest version (1.30)
 - Added option to enable highspeed SIO while booting MyPicoDos
 - Added fallback to OS SIO in case of highspeed SIO errors while
   booting MyPicoDos
