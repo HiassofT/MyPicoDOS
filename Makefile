@@ -126,31 +126,12 @@ mypdos-mega512.rom: mypdrom.src mypdos-code-mega512.bin \
 	cartsio-mega512-pal.bin cartsio-mega512-ntsc.bin
 	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dMEGA512 $<
 
-8kblank.rom:
-	dd if=/dev/zero bs=8k count=1 | tr '\000' '\377' > 8kblank.rom
-
-16kblank.rom:
-	dd if=/dev/zero bs=16k count=1 | tr '\000' '\377' > 16kblank.rom
-
-512kbase.rom: mypdos8.rom 8kblank.rom 16kblank.rom
-	cat 8kblank.rom mypdos8.rom 16kblank.rom 16kblank.rom 16kblank.rom \
-	16kblank.rom 16kblank.rom 16kblank.rom 16kblank.rom \
-	16kblank.rom 16kblank.rom 16kblank.rom 16kblank.rom \
-	16kblank.rom 16kblank.rom 16kblank.rom 16kblank.rom \
-	16kblank.rom 16kblank.rom 16kblank.rom 16kblank.rom \
-	16kblank.rom 16kblank.rom 16kblank.rom 16kblank.rom \
-	16kblank.rom 16kblank.rom 16kblank.rom 16kblank.rom \
-	16kblank.rom 16kblank.rom 16kblank.rom 16kblank.rom \
-	> $@
-
-512k.rom: 512kbase.rom testdisk.raw testdd.atr
-	cp -f 512kbase.rom $@
-	dd if=testdisk.raw of=$@ conv=notrunc bs=16384 seek=1
-	dd if=testdd.atr of=$@ conv=notrunc bs=1 seek=164608 skip=400
-
 testdisk.atr: testdisk testdisk/*
 	dir2atr -b MyPicoDos405N -P 1040 testdisk.atr testdisk
 
+testam8.rom: testdisk.atr atr2cart
+	./atr2cart -a am8 $@ $<
+	
 testdd.atr: testdisk testdisk/*
 	dir2atr -b MyPicoDos405N -P -d 720 testdd.atr testdisk
 
@@ -160,13 +141,39 @@ mydos.rom: atr2cart
 testdisk.raw: testdisk.atr
 	dd if=$< of=$@ bs=16 skip=1
 
+diskwriter-mega512.bin: diskcart-mega512.com
+	ataricom -b 1 -n $< $@
+
+diskwriter-mega512.c: diskwriter-mega512.bin
+	xxd -i $< > $@
+
+diskwriter-atarimax8.bin: diskcart-atarimax8.com
+	ataricom -b 1 -n $< $@
+
+diskwriter-atarimax8.c: diskwriter-atarimax8.bin
+	xxd -i $< > $@
+
+diskwriter-freezer.bin: diskcart-freezer.com
+	ataricom -b 1 -n $< $@
+
+diskwriter-freezer.c: diskwriter-freezer.bin
+	xxd -i $< > $@
+
+hisio.c: hisio.bin
+	xxd -i $< > $@
+
+mypdos-freezer.c: mypdos-freezer.rom
+	xxd -i $< > $@
+
 mypdos-mega512.c: mypdos-mega512.rom
 	xxd -i $< > $@
 
 mypdos-atarimax8.c: mypdos-atarimax8.rom
 	xxd -i $< > $@
 
-atr2cart.o: mypdos-mega512.c mypdos-atarimax8.c
+atr2cart.o: mypdos-mega512.c mypdos-atarimax8.c mypdos-freezer.c \
+	diskwriter-mega512.c diskwriter-atarimax8.c diskwriter-freezer.c \
+	hisio.c
 
 atr2cart: atr2cart.o AtrUtils.o Error.o
 	$(CXX) -o $@ $^
@@ -245,4 +252,5 @@ am8.rom: atr2cart
 
 
 clean:
-	rm -rf atr2cart atr2cart.exe mypdrom.c *.65o *.o *.bin *.com *.atr *.rom mypdos*.c disk disk-a8 disk-m512 disk-frz
+	rm -rf atr2cart atr2cart.exe mypdrom.c *.65o *.o *.bin *.com *.atr *.rom \
+		mypdos*.c diskwriter*.c hisio.c disk disk-a8 disk-m512 disk-frz

@@ -108,11 +108,9 @@ NEXIT	CMP #'1
 
 	BPUT 0, TASKINL, TASKIN
 	JSR YESNO
-	BEQ DOINI1
+	BEQ DOINI0
 	JMP MAINLP
-DOINI1	LDA #155
-	JSR PUTCHAR
-	JMP DOINIT
+DOINI0	JMP DOINIT
 
 NO1	CMP #'2
 	BNE NO2
@@ -390,7 +388,17 @@ PHISIO1	LDA #'n
 	LDA #155
 	JMP PUTCHAR
 
-DOINIT	BPUT 0, TINITL, TINIT
+DOINIT	
+	BPUT 0, TASKAUL, TASKAU
+	LDA #0
+	STA AUTOFLG
+	JSR YESNO
+	BPL DOINI1
+	JMP MAINLP
+DOINI1	BNE DOINI2
+	INC AUTOFLG
+
+DOINI2	BPUT 0, TINITL, TINIT
 
 	BPUT 0, TERASL, TERAS
 
@@ -417,9 +425,13 @@ DOINIT1
 ; clear drive table
 	LDA #$FF
 	LDY #$3F
-CLRDT	STA DATABUF+(CARTTAB-CARTSTRT),Y
+CLRDT	STA DATABUF+[CARTTAB-CARTSTRT],Y
 	DEY
 	BPL CLRDT
+
+; set autostart flag
+	LDA AUTOFLG
+	STA DATABUF+[CAUTOF-CARTSTRT]
 
 ; setup addresses
 	LDA #<OFSCODL
@@ -1136,15 +1148,15 @@ TMPIDX	.BYTE 0
 
 TTITLE
 .if .def ATARIMAX8
-	.BYTE 125, "AtariMax 8MBit DiskWriter V1.0",155
+	.BYTE 125, "AtariMax 8MBit DiskWriter V1.10",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 .endif
 .if .def FREEZER
-	.BYTE 125, "Turbo Freezer DiskWriter V1.0",155
+	.BYTE 125, "Turbo Freezer DiskWriter V1.10",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 .endif
 .if .def MEGA512
-	.BYTE 125, "Mega 512k FlashCart DiskWriter V1.0",155
+	.BYTE 125, "Mega 512k FlashCart DiskWriter V1.10",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 .endif
 TTITLEL	= * - TTITLE
@@ -1169,6 +1181,9 @@ TASKIN	.BYTE 155, 155, "Initialize CartEmu (y/n)? "
 TASKIN	.BYTE 155, 155, "Initialize flash cart (y/n)? "
 .endif
 TASKINL	= * - TASKIN
+
+TASKAU	.BYTE 155, "Autostart MyPicoDos (y/n)? "
+TASKAUL	= * - TASKAU
 
 TASKSC	.BYTE 155, 155, "Start cartridge (y/n)? "
 TASKSCL	= * - TASKSC
@@ -1232,7 +1247,7 @@ TBIGL	= * - TBIG
 TFULL	.BYTE "image table full (max. 8)",155
 TFULLL	= * - TFULL
 
-TINIT	.BYTE 155
+TINIT	.BYTE 155, 155
 	.BYTE "init cart:"
 TINITL	= * - TINIT
 
@@ -1256,6 +1271,8 @@ FTYPE2	.BYTE 0
 TAFERR	.BYTE "Chip mismatch or defect!",155
 TAFERRL	= * - TAFERR
 .endif
+
+AUTOFLG	.BYTE 0
 
 	.include "iohelp.src"
 	.include "diskio.src"

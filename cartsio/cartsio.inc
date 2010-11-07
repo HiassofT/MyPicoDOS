@@ -70,6 +70,10 @@
 	COFNAME	= 16		; 32 bytes image name (terminated with EOL)
 	CLNNAME	= 32		; length of name (32)
 
+; autostart flag: if != 0 start MyPicoDos automatically if images
+; are available (disable this feature with "select")
+	CAUTOF	= $BFDF
+
 ; 16byte signature in ROM (contains "HiassofT" plus 8-byte serial number)
 	CARTSIG	= $BFE0	; drive table base address
 

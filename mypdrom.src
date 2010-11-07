@@ -131,8 +131,8 @@ ODLWR	= * - DLIST
 DLISTL	= * - DLIST
 
 TITLE	.SBYTE "    "
-	.SBYTE "DiskCart V1.0 (c) 2010 HiassofT"
-	.SBYTE "     "
+	.SBYTE "DiskCart V1.10 (c) 2010 HiassofT"
+	.SBYTE "    "
 
 	.SBYTE "          "
 	.SBYTE "images on cartridge:"
@@ -407,6 +407,19 @@ NONAM	INC $301
 	LDA $301
 	CMP #9
 	BNE NAMLP
+
+; check autorun flag
+	LDA CAUTOF
+	BEQ NOAUTOR
+	LDA NUMDRV
+	BEQ NOAUTOR
+	LDA $D01F
+	AND #2
+	BEQ NOAUTOR
+
+	JMP STARTMY
+
+NOAUTOR
 
 ; copy display list to RAM
 	LDY #0
@@ -809,6 +822,9 @@ OSTAB
 OSTABL	= * - OSTAB
 
 XEND	= *
+
+	* = CAUTOF
+	.BYTE 0
 
 	* = CARTSIG
 	.BYTE "HiassofT"

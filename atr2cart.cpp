@@ -29,6 +29,13 @@
 
 #include "mypdos-mega512.c"
 #include "mypdos-atarimax8.c"
+#include "mypdos-freezer.c"
+
+#include "diskwriter-mega512.c"
+#include "diskwriter-atarimax8.c"
+#include "diskwriter-freezer.c"
+
+#include "hisio.c"
 
 #ifdef WINVER
 #define DIR_SEPARATOR '\\'
@@ -41,14 +48,36 @@ using namespace AtrUtils;
 
 #define MAX_IMAGESIZE (1024*1024)
 
-static unsigned long drvtab_offset;
 enum ECartType {
-	eNoCart = 0,
-	eMega512,
-	eAtariMax8
+	eMega512 = 0,
+	eAtariMax8 = 1,
+	eFreezer = 2,
+	eNoCart = 3
 };
 
 static ECartType cartType = eNoCart;
+
+struct CartConfig {
+	unsigned long image_size;	// total size of ROM image
+	unsigned long image_start;	// start of disk images
+	unsigned long image_end;	// end of disk images
+	unsigned long drvtab_offset;
+	unsigned long autorun_offset;
+	unsigned long cartrom_offset;
+	unsigned long diskwriter_offset;
+	unsigned long hisio_offset;
+};
+
+static const struct CartConfig AllCartConfigs[] = {
+// Mega512
+	{ 0x80000, 0x4000, 0x80000, 0x3f00, 0x3fdf, 0x2000, 0, 0x1c00 },
+// AtariMax8
+	{ 0x100000, 0x2000, 0xfe000, 0x1f00, 0x1fdf, 0, 0xfe000, 0xffc00 },
+// Freezer
+	{ 0x70000, 0x4000, 0x70000, 0x1f00, 0x1fdf, 0, 0x2000, 0x2c00 },
+};
+
+static const struct CartConfig* cartconfig;
 
 // sector 0 of each image contains internal information:
 // byte  0 ..  3 is "get status" data
@@ -62,12 +91,8 @@ static ECartType cartType = eNoCart;
 
 static uint8_t rom_image[MAX_IMAGESIZE];
 
-static unsigned int image_offset;
-static unsigned int image_rom_end;	// highest rom address to use
 static unsigned int current_driveno;
-
-static unsigned int image_size;
-
+static unsigned long image_offset;
 
 string& prepare_imagename(string& name)
 {
@@ -91,7 +116,7 @@ void set_drive_table(
 	unsigned int driveno, // 1..8
 	unsigned int density, // 0=sd, 1=dd, other=unused
 	unsigned int sectors, // 1..65535
-	unsigned int starting_offset_bytes)
+	unsigned long starting_offset_bytes)
 {
 	unsigned int ofs;
 
@@ -99,7 +124,7 @@ void set_drive_table(
 		Assert(false);
 		return;
 	}
-	ofs = (driveno - 1) * 8 + drvtab_offset;
+	ofs = (driveno - 1) * 8 + cartconfig->drvtab_offset;
 	memset(rom_image + ofs, 0xff, 8);
 
 	if (density <= 1) {
@@ -112,33 +137,42 @@ void set_drive_table(
 	}
 }
 
-void init_rom_image()
+void init_rom_image(bool autorun)
 {
 	int i;
 	memset(rom_image, 0xff, MAX_IMAGESIZE);
+
 	switch (cartType) {
 	case eMega512:
-		image_size = 512*1024;
-		memcpy(rom_image + 8192, mypdos_mega512_rom, 8192);
-		image_offset = 0x4000;
-		image_rom_end = image_size;
-		drvtab_offset = 0x3f00;
+		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_mega512_rom, 0x2000);
+		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_mega512_bin, sizeof(diskwriter_mega512_bin));
 		break;
 	case eAtariMax8:
-		image_size = 1024*1024;
-		memcpy(rom_image, mypdos_atarimax8_rom, 8192);
-		memcpy(rom_image+image_size-32, mypdos_atarimax8_rom + 8192-32, 32);
-		image_offset = 0x2000;
-		image_rom_end = image_size-8192;
-		drvtab_offset = 0x1f00;
+		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_atarimax8_rom, 0x2000);
+		memcpy(rom_image+cartconfig->image_size-32, mypdos_atarimax8_rom + 0x2000-32, 32);
+		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_atarimax8_bin, sizeof(diskwriter_atarimax8_bin));
 		break;
+	case eFreezer:
+		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer_rom, 0x2000);
+		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_freezer_bin, sizeof(diskwriter_freezer_bin));
+		break;
+
 	default:
 		assert(false);
+	}
+	memcpy(rom_image + cartconfig->hisio_offset, hisio_bin, sizeof(hisio_bin));
+
+	if (autorun) {
+		rom_image[cartconfig->autorun_offset] = 1;
+	} else {
+		rom_image[cartconfig->autorun_offset] = 0;
 	}
 
 	for (i=1; i<=8; i++) {
 		set_drive_table(i, 0xff, 0, 0);
 	}
+
+	image_offset = cartconfig->image_start;
 	current_driveno = 1;
 }
 
@@ -226,7 +260,7 @@ void set_image_infos(bool isDD, unsigned int sectors, string name)
 	rom_image[image_offset + STATUS_OFFSET + 2] = 0xe0; // dummy "format disk timeout"
 	rom_image[image_offset + STATUS_OFFSET + 3] = 0; // dummy "characters in output buffer"
 
-	const uint8_t* percom;
+	const uint8_t* percom = percom_block_other;
 	// set percom block
 	if (isDD) {
 		switch (sectors) {
@@ -298,10 +332,10 @@ bool add_atr_image(const char* filename)
 	// an even number of SD sectors
 	image_size = ( (sectors+1) * sector_size + 0xff) & ~0xff;
 
-	if (image_offset + image_size > image_rom_end) {
+	if (image_offset + image_size > cartconfig->image_end) {
 		cout	<< "not enough space in ROM (need "
 			<< image_size << ", have "
-			<< (image_rom_end - image_offset) << ")" << endl;
+			<< (cartconfig->image_end - image_offset) << ")" << endl;
 		fclose(f);
 		return false;
 	}
@@ -337,11 +371,19 @@ int main(int argc, char** argv)
 {
 	int idx = 1;
 	bool ok = true;
+	bool autorun = false;
 	const char* out_filename;
 
-	cout << "atr2cart V0.4 (c) 2010 by Matthias Reichl <hias@horus.com>" << endl;
+	cout << "atr2cart V1.10 (c) 2010 by Matthias Reichl <hias@horus.com>" << endl;
 	if (argc <= 3) {
 		goto usage;
+	}
+	if (strcmp(argv[idx], "-a") == 0) {
+		autorun = true;
+		idx++;
+		if (idx + 3 > argc) {
+			goto usage;
+		}
 	}
 
 	cartType = eNoCart;
@@ -354,14 +396,19 @@ int main(int argc, char** argv)
 		cartType = eAtariMax8;
 		cout << "output type: AtariMax 8MBit FlashCart" << endl;
 	}
+	if (strcasecmp(argv[idx], "frz") == 0) {
+		cartType = eFreezer;
+		cout << "output type: TurboFreezer CartEmu" << endl;
+	}
 	if (cartType == eNoCart) {
 		goto usage;
 	}
+	cartconfig = AllCartConfigs + cartType;
 	idx++;
 
 	out_filename = argv[idx++];
 
-	init_rom_image();
+	init_rom_image(autorun);
 
 	while (ok && (idx < argc)) {
 		ok = add_atr_image(argv[idx++]);
@@ -372,7 +419,7 @@ int main(int argc, char** argv)
 			cout << "error creating image file \"" << out_filename << "\"" << endl;
 			return 1;
 		}
-		if (fwrite(rom_image, image_size, 1, f) != 1) {
+		if (fwrite(rom_image, cartconfig->image_size, 1, f) != 1) {
 			cout << "error writing image file \"" << out_filename << "\"" << endl;
 			fclose(f);
 			unlink(out_filename);
@@ -380,15 +427,17 @@ int main(int argc, char** argv)
 		}
 		fclose(f);
 		cout	<< "successfully created image file \"" << out_filename << "\"" 
-			<< " (" << (image_rom_end - image_offset) / 1024 << "k free)"
+			<< " (" << (cartconfig->image_end - image_offset) / 1024 << "k free)"
 			<< endl;
 	}
 
 	return 0;
 usage:
-	cout << "usage: atr2catr type outfile.rom file1.atr [file2.atr ...]" << endl;
+	cout << "usage: atr2catr [-a] type outfile.rom file1.atr [file2.atr ...]" << endl;
+	cout << "   -a: enable MyPicoDos autostart" << endl;
 	cout << "supported types:" << endl;
 	cout << " m512: MegaCart 512k" << endl;
 	cout << "  am8: AtariMax 8Mbit FlashCart" << endl;
+	cout << "  frz: TurboFreezer CartEmu" << endl;
 	return 1;
 }
