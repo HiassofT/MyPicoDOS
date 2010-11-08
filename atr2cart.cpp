@@ -35,8 +35,6 @@
 #include "diskwriter-atarimax8.c"
 #include "diskwriter-freezer.c"
 
-#include "hisio.c"
-
 #ifdef WINVER
 #define DIR_SEPARATOR '\\'
 #else
@@ -65,16 +63,15 @@ struct CartConfig {
 	unsigned long autorun_offset;
 	unsigned long cartrom_offset;
 	unsigned long diskwriter_offset;
-	unsigned long hisio_offset;
 };
 
 static const struct CartConfig AllCartConfigs[] = {
 // Mega512
-	{ 0x80000, 0x4000, 0x80000, 0x3f00, 0x3fdf, 0x2000, 0, 0x1c00 },
+	{ 0x80000, 0x4000, 0x80000, 0x3f00, 0x3fdf, 0x2000, 0 },
 // AtariMax8
-	{ 0x100000, 0x2000, 0xfe000, 0x1f00, 0x1fdf, 0, 0xfe000, 0xffc00 },
+	{ 0x100000, 0x2000, 0xfe000, 0x1f00, 0x1fdf, 0, 0xfe000 },
 // Freezer
-	{ 0x70000, 0x4000, 0x70000, 0x1f00, 0x1fdf, 0, 0x2000, 0x2c00 },
+	{ 0x70000, 0x4000, 0x70000, 0x1f00, 0x1fdf, 0, 0x2000 },
 };
 
 static const struct CartConfig* cartconfig;
@@ -160,7 +157,6 @@ void init_rom_image(bool autorun)
 	default:
 		assert(false);
 	}
-	memcpy(rom_image + cartconfig->hisio_offset, hisio_bin, sizeof(hisio_bin));
 
 	if (autorun) {
 		rom_image[cartconfig->autorun_offset] = 1;

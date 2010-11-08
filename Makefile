@@ -159,9 +159,6 @@ diskwriter-freezer.bin: diskcart-freezer.com
 diskwriter-freezer.c: diskwriter-freezer.bin
 	xxd -i $< > $@
 
-hisio.c: hisio.bin
-	xxd -i $< > $@
-
 mypdos-freezer.c: mypdos-freezer.rom
 	xxd -i $< > $@
 
@@ -172,8 +169,7 @@ mypdos-atarimax8.c: mypdos-atarimax8.rom
 	xxd -i $< > $@
 
 atr2cart.o: mypdos-mega512.c mypdos-atarimax8.c mypdos-freezer.c \
-	diskwriter-mega512.c diskwriter-atarimax8.c diskwriter-freezer.c \
-	hisio.c
+	diskwriter-mega512.c diskwriter-atarimax8.c diskwriter-freezer.c
 
 atr2cart: atr2cart.o AtrUtils.o Error.o
 	$(CXX) -o $@ $^
@@ -253,4 +249,4 @@ am8.rom: atr2cart
 
 clean:
 	rm -rf atr2cart atr2cart.exe mypdrom.c *.65o *.o *.bin *.com *.atr *.rom \
-		mypdos*.c diskwriter*.c hisio.c disk disk-a8 disk-m512 disk-frz
+		mypdos*.c diskwriter*.c disk disk-a8 disk-m512 disk-frz
