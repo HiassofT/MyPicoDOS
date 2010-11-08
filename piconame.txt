@@ -1,4 +1,4 @@
-DiskCart V1.0
+DiskCart V1.10
 AMDISK  COM AtariMax 8MBit DiskCart
 FRDISK  COM Turbo Freezer DiskCart
 MEDISK  COM Mega 512k DiskCart
