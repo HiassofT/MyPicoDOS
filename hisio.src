@@ -18,7 +18,7 @@
 ;
 	.include "hisio.inc"
 
-	* = $8C00
+	* = $BB00
 
 	FASTVBI=1
 	FASTVBI_NOCLOCK=1

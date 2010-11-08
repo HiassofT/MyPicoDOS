@@ -16,33 +16,95 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+; set common SIO parameters + address=secbuf + len=disklen
+?SETSIOAL
+	LDX DISKDNS
+	LDA ?DTABL,X
+	STA $308
+	LDA ?DTABH,X
+	STA $309
+
+; set common SIO parameters + address=secbuf
+?SETSIOA
+	LDA #<SECBUF
+	STA $304
+	LDA #>SECBUF
+	STA $305
+	
+; set common SIO parameters
+?SETSIO	LDA #$31
+	STA $300
+	LDA #7
+	STA $306
+	LDA #0
+	STA $307
+	RTS
+
+; set SIO direction from IODIR and perform SIO
+?SIO	LDX IODIR
+; set SIO direction from X and perform SIO
+?SIODX	LDA ?IODIR,X
+; set SIO direction and perform SIO
+	STA $303
+	JMP SIOVEC
+
+; get percom block
+GETPERC	LDX #0
+	.BYTE $2C	; BIT xxxx
+
+; put percom block
+PUTPERC	LDX #1
+
+; do percom SIO (X=0 get, X=1 put)
+	JSR ?SETSIO
+	LDA #<PERCBUF
+	STA $304
+	LDA #>PERCBUF
+	STA $305
+	LDA #12
+	STA $308
+	LDA #0
+	STA $309
+	STA $30A
+	STA $30B
+	LDA ?PERCMD,X
+	STA $302
+	JMP ?SIODX
+
+; check the disk status
+GETSTAT	JSR ?SETSIO
+	LDA #<STATBUF
+	STA $304
+	LDA #>STATBUF
+	STA $305
+
+	LDA #$53
+	STA $302
+	LDA #4
+	STA $308
+	LDX #0
+	STX $309
+	STX $30A
+	STX $30B
+	JMP ?SIODX
+
 ; check a drive and determine size&density
 GETDENS	
 ; read sector 4 with length=0
 ; this is needed by the XF551 to check the disk density
 
-	LDA #$31
-	STA $300
-
-	LDA #<SECBUF
-	STA $304
-	LDA #>SECBUF
-	STA $305
+	JSR ?SETSIOA
 
 	LDA #$52
 	STA $302
+	LDA #4
+	STA $30A
 	LDA #0
 	STA $308
 	STA $309
 	STA $30B
-	LDA #4
-	STA $30A
-	LDA #7
-	STA $306
-	LDA #$00
-	STA $307
-	STA $303
-	JSR SIOVEC
+	LDX #2
+	JSR ?SIODX
 	BPL ?GETDE1
 
 ; no response - return an error
@@ -60,30 +122,24 @@ GETDENS
 ?GETDE2 CMP 20
 	BNE ?GETDE2
 
-; check the disk status
-	LDA #<STATBUF
-	STA $304
-	LDA #>STATBUF
-	STA $305
-
-	LDA #$53
-	STA $302
-	LDA #4
-	STA $308
-
-	LDA #$40
-	STA $303
-	JSR SIOVEC
+	JSR GETSTAT
 	BMI ?GETDERR
 
+; default: SD image
+	LDA #<720
+	STA DISKSEC
+	LDA #>720
+	STA DISKSEC+1
 	LDA #0
-	STA DISKSEC	; flag: 720 sectors
 	STA DISKDNS
 
 ; check bit 7 ($80) of status: 1=ED, 0=SD/DD
 	LDA STATBUF
 	BPL ?GETDE3
-	INC DISKSEC
+	LDA #<1040
+	STA DISKSEC
+	LDA #>1040
+	STA DISKSEC+1
 	BNE ?GETDE4
 
 ; check bit 5 ($20) of status: 1=DD, 0=SD
@@ -92,84 +148,43 @@ GETDENS
 	INC DISKDNS
 
 ; try to read percom block
-?GETDE4	LDA #$4E
-	STA $302
-	LDA #<PERCBUF
-	STA $304
-	LDA #>PERCBUF
-	STA $305
-	LDA #12
-	STA $308
-	LDA #$40
-	STA $303
-	JSR SIOVEC
+?GETDE4	JSR GETPERC
 	BPL ?GETDE5
 
-; create default percom block
-; calculate offset in default table (X=0: ED, X=1: DD, X=2: SD)
-	LDX #0
-	LDA DISKSEC	; 1 if ED
-	BNE ?GETDP1
-	INX
-	LDA DISKDNS
-	BNE ?GETDP1
-	INX
+; find matching percom block (SD or ED only)
+	JSR ?FINDPERC
+	BMI ?GETDERR	; this should never happen
 
-?GETDP1	TXA
-	ASL
-	ASL
-	STA PERCBUF
-	ASL
-	ORA PERCBUF
-	TAX
-	LDY #0
-
-?GETDP2	LDA ?DEFPERC,X
+	LDY #11
+?GETDP1	LDA (TMPVEC),Y
 	STA PERCBUF,Y
-	INX
-	INY
-	CPY #12
-	BNE ?GETDP2
+	DEY
+	BPL ?GETDP1
 
 ; check for 1440 DD sectors
 ?GETDE5	LDA PERCBUF
 	CMP #40
 	BNE ?GETDE6
-	LDA PERCBUF+2
+	LDX #2
+?GETDE51
+	LDA ?PERC360,X
+	CMP PERCBUF,X
 	BNE ?GETDE6
-	LDA PERCBUF+3
-	CMP #18
-	BNE ?GETDE6
-	LDA PERCBUF+4
-	CMP #1
-	BNE ?GETDE6
-	LDA PERCBUF+5
-	CMP #4
-	BNE ?GETDE6
-	LDA PERCBUF+6
-	CMP #1
-	BNE ?GETDE6
-	LDA PERCBUF+7
-	BNE ?GETDE6
+	INX
+	CPX #8
+	BNE ?GETDE51
 
 ; yes, 1440 DD sectors - now check if we can read sector 721
+	JSR ?SETSIOAL
+
 	LDA #$52
 	STA $302
-	LDA #<SECBUF
-	STA $304
-	LDA #>SECBUF
-	STA $305
 	LDA #<721
 	STA $30A
 	LDA #>721
 	STA $30B
-	LDA #0
-	STA $308
-	LDA #1
-	STA $309
-	LDA #$40
-	STA $303
-	JSR SIOVEC
+	LDX #0
+	JSR ?SIODX
 	BPL ?GETDE6
 
 ; reading sector 721 failed, this must be a buggy XF551 so
@@ -210,46 +225,188 @@ GETDENS
 ?DEFPERC
 
 ; ED
+?PERCED
 	.BYTE 40	; tracks
 	.BYTE 0		; step rate
 	.BYTE 0,26	; sectors/track (H/L!)
 	.BYTE 0		; sides-1
 	.BYTE 4		; MFM
-	.WORD 128	; bytes/sector
+	.BYTE 0,128	; bytes/sector (H/L!)
 	.BYTE 1		; drive online
 	.BYTE 0,0,0	; unused
 
 ; DD
+?PERCDD
 	.BYTE 40	; tracks
 	.BYTE 0		; step rate
 	.BYTE 0,18	; sectors/track (H/L!)
 	.BYTE 0		; sides-1
 	.BYTE 4		; MFM
-	.WORD 256	; bytes/sector
+	.BYTE 1,0	; bytes/sector (H/L!)
 	.BYTE 1		; drive online
 	.BYTE 0,0,0	; unused
 
 ; SD
+?PERCSD
 	.BYTE 40	; tracks
 	.BYTE 0		; step rate
 	.BYTE 0,18	; sectors/track (H/L!)
 	.BYTE 0		; sides-1
 	.BYTE 0		; FM
-	.WORD 128	; bytes/sector
+	.BYTE 0,128	; bytes/sector (H/L!)
 	.BYTE 1		; drive online
 	.BYTE 0,0,0	; unused
 
-; buffer for GetStatus command
-STATBUF	.WORD 0,0
+; 360k
+?PERC360
+	.BYTE 40	; tracks
+	.BYTE 0		; step rate
+	.BYTE 0,18	; sectors/track (H/L!)
+	.BYTE 1		; sides-1
+	.BYTE 4		; MFM
+	.BYTE 1,0	; bytes/sector (H/L!)
+	.BYTE 1		; drive online
+	.BYTE 0,0,0	; unused
 
-; buffer for percom block
-PERCBUF	.DC 12 0
 
-; disk density: 0 = SD, 1 = DD
-DISKDNS	.BYTE 0
+; 720k
+?PERC720
+	.BYTE 80	; tracks
+	.BYTE 0		; step rate
+	.BYTE 0,18	; sectors/track (H/L!)
+	.BYTE 1		; sides-1
+	.BYTE 4		; MFM
+	.BYTE 1,0	; bytes/sector (H/L!)
+	.BYTE 1		; drive online
+	.BYTE 0,0,0	; unused
 
-; number of sectors on disk
-DISKSEC	.WORD 0
+; 1440k
+?PERC1440
+	.BYTE 80	; tracks
+	.BYTE 0		; step rate
+	.BYTE 0,36	; sectors/track (H/L!)
+	.BYTE 1		; sides-1
+	.BYTE 4		; MFM
+	.BYTE 1,0	; bytes/sector (H/L!)
+	.BYTE 1		; drive online
+	.BYTE 0,0,0	; unused
+
+; default percom tables: density, sectors, percom-block
+?PERCTAB
+; SD
+	.BYTE 0
+	.WORD 720
+	.WORD ?PERCSD
+; DD
+	.BYTE 1
+	.WORD 720
+	.WORD ?PERCDD
+; 360k
+	.BYTE 1
+	.WORD 1440
+	.WORD ?PERC360
+; 720k
+	.BYTE 1
+	.WORD 2880
+	.WORD ?PERC720
+; 1440k
+	.BYTE 1
+	.WORD 5760
+	.WORD ?PERC1440
+; end
+	.BYTE $FF
+
+; search for a matching percom block
+; returns N=1 if nothing found
+?FINDPERC
+	LDX #0
+?FPERC1	LDA ?PERCTAB,X
+	BMI ?FPERC2
+	CMP DISKDNS
+	BNE ?FPERC3
+	LDA DISKSEC	; check density
+	CMP ?PERCTAB+1,X
+	BNE ?FPERC3
+	LDA DISKSEC+1	; check number of sectors
+	CMP ?PERCTAB+2,X
+	BNE ?FPERC3
+
+; found match, copy pointer to table
+	LDA ?PERCTAB+3,X
+	STA TMPVEC
+	LDA ?PERCTAB+4,X
+	STA TMPVEC+1
+	LDA #0
+?FPERC2	RTS
+
+?FPERC3	TXA
+	CLC
+	ADC #5
+	TAX
+	JMP ?FPERC1
+
+; search for a percom config with >= current sectors
+; returns N=1 if nothing found
+?FINDPG
+	LDX #0
+?FINDPL	LDA ?PERCTAB,X
+	BMI ?FINDP3
+
+	CMP DISKDNS
+	BNE ?FINDP4	; density mismatch, try next one
+
+	LDA DISKSEC+1
+	CMP ?PERCTAB+2,X
+	BCC ?FINDP2	; config with more sectors, great!
+	BEQ ?FINDP1	; equal, check sectors-lo
+	BCS ?FINDP4	; too small
+
+?FINDP1	LDA DISKSEC
+	CMP ?PERCTAB+1,X
+	BCC ?FINDP2	; config with more sectors, great!
+	BEQ ?FINDP2	; equal sectors, great, too!
+	BCS ?FINDP4	; too small
+
+?FINDP2
+; found match, copy pointer to table
+	LDA ?PERCTAB+3,X
+	STA TMPVEC
+	LDA ?PERCTAB+4,X
+	STA TMPVEC+1
+	LDA #0
+?FINDP3	RTS
+
+?FINDP4	TXA
+	CLC
+	ADC #5
+	TAX
+	JMP ?FINDPL
+
+; setup percom block for formatting 
+?SETPERC
+; default use percom block of image if we don't have a generic one
+	LDA #<PERCIMG
+	STA TMPVEC
+	LDA #>PERCIMG
+	STA TMPVEC+1
+	LDA #0
+	STA ?SFFLG
+
+	JSR ?FINDPERC
+	BPL ?MPERC
+	DEC ?SFFLG	; flag: non-standard disk format
+
+; merge percom block of disk with default/image format
+?MPERC	LDY #0
+	LDA (TMPVEC),Y
+	STA PERCBUF	; number of tracks
+	INY		; skip step rate
+?MPERC1	LDA (TMPVEC),Y	; copy bytes 2..7 (sectors, sides, encoding, seclen)
+	STA PERCBUF,Y
+	INY
+	CPY #8
+	BNE ?MPERC1
+	RTS
 
 ; calculate size of disk (including virtual "sector 0"),
 ; rounded up to full pages
@@ -287,23 +444,12 @@ CALCSIZ	STX DISKSIZ+1
 ?CALCSZ2
 	RTS
 
-; size of disk, rounded up to pages
-DISKSIZ	.WORD 0,0
-
-; read up to 8k from disk and store in DATABUF
-; note: sector 0 is automatically skipped, at the end
-; READPAG is set to number of (full) pages
-READ8K	LDA #$20
-	LDX DISKDNS
-	BNE ?RD8K1
-	ASL
-?RD8K1	STA ?RDMAX
-	LDA #0
-	STA READPAG
+; transfer SECCNT sectors from/to disk
+; IODIR sets direction, DISKDNS density data buffer = DATABUF
+; sector number in $30A/B must be set and is automatically incremented
+SECIO	
 	LDA #$31	; setup SIO parameters
 	STA $300
-	LDA #$52
-	STA $302
 	LDA #<DATABUF
 	STA $304
 	LDA #>DATABUF
@@ -313,82 +459,249 @@ READ8K	LDA #$20
 	LDA #0
 	STA $307
 
-; read loop
+?SECLP	
 
-?RD8KLP	LDX DISKDNS
+	LDX DISKDNS
 	LDA ?DTABL,X
 	STA $308
 	LDA ?DTABH,X
 	STA $309
 	LDA $30B
-	BNE ?RD8K2
+	BNE ?SECL1
 	LDA $30A
-	BEQ ?RD8KN	; skip sector 0
+	BEQ ?SECL2	; skip sector 0
 	CMP #4
-	BCS ?RD8K2
+	BCS ?SECL1
 	LDA #128	; sector 1-3 are 128 bytes
 	STA $308
 	LDA #0
 	STA $309
-?RD8K2	LDA #$40
-	STA $303
-	JSR SIOVEC
-	BPL ?RD8KN
+?SECL1	LDX IODIR
+	LDA ?IOCMD,X
+	STA $302
+	JSR ?SIODX
+	BPL ?SECL2
 	RTS		; disk error - return
-?RD8KN	LDA DISKDNS
-	BNE ?RD8K3	; DD - inc address by $100
+
+?SECL2	LDA DISKDNS
+	BNE ?SECL3	; DD - inc address by $100
 	CLC		; SD - inc address by $80
 	LDA $304
 	ADC #$80
 	STA $304
-	BCC ?RD8K4
-?RD8K3	INC $305
-?RD8K4	INC $30A
-	BNE ?RD8K5
+	BCC ?SECL4
+?SECL3	INC $305
+?SECL4	INC $30A
+	BNE ?SECL5
 	INC $30B
-?RD8K5	INC READPAG
-	LDA READPAG
-	CMP ?RDMAX	; more sectors to read?
-	BEQ ?RD8KX	; no, finish
-	LDA $30B	; reached end of disk?
-	CMP DISKSEC+1
-	BCC ?RD8KLP
-	BNE ?RD8KX
-	LDA $30A
-	CMP DISKSEC
-	BCC ?RD8KLP
-	BEQ ?RD8KLP
+?SECL5	DEC SECCNT
+	BNE ?SECLP	; still sectors to go
 
-; end of reading, calculate number of pages
-?RD8KX	LDA DISKDNS
-	BNE ?RD8KXX	; DD - number of sectors read = number of pages
-	LDA READPAG
-	AND #1
-	BEQ ?RD8KX2	; read an even number of sectors, OK
-	INC READPAG	; round up
+	LDA IODIR
+	BNE ?SECL7	; writing sectors to disk - finished
+	LDA $308	; reading sectors:
+	BEQ ?SECL7	; sector ended at page boundary, everything's fine
 
 ; now clear the remaining $80 bytes with $FF
-	LDA $308
 	STA TMPVEC
 	LDA $309
 	STA TMPVEC+1
 	LDY #$7F
 	LDA #$FF
-?RD8KX1	STA (TMPVEC),Y
+?SECL6	STA (TMPVEC),Y
 	DEY
-	BPL ?RD8KX1
+	BPL ?SECL6
+	LDA #0		; signal all OK
+?SECL7	RTS
 
-; divide number of sectors by 2
-?RD8KX2	LSR READPAG
+; check for fitting SD/ED disk format (<= 720 -> SD, <=1040 -> ED)
+; returns A= 0 (SD), 1 (ED), $FF = invalid format (>1040 sectors)
 
-; finished - success!
-?RD8KXX	LDA #0
+?CSTDFMT
+; check for <= 720 sectors
+	LDA DISKSEC+1
+	CMP #>720
+	BCC ?CSTDSD	; < 720 sectors
+	BEQ ?CSTDSD1
+	BCS ?CSTD1	; > 720 sectors
+
+?CSTDSD1
+	LDA DISKSEC
+	CMP #<720
+	BCC ?CSTDSD
+	BEQ ?CSTDSD
+	BCS ?CSTD1
+?CSTDSD	LDA #0		; SD format is OK
 	RTS
 
+?CSTD1	
+; check for <= 1040 sectors
+	LDA DISKSEC+1
+	CMP #>1040
+	BCC ?CSTDED	; < 1040 sectors
+	BEQ ?CSTDED1
+	BCS ?CSTD2	; > 1040 sectors
+
+?CSTDED1
+	LDA DISKSEC
+	CMP #<1040
+	BCC ?CSTDED
+	BEQ ?CSTDED
+	BCS ?CSTD2
+?CSTDED	LDA #1		; ED format is OK
+	RTS
+
+?CSTD2	LDA #$FF	; no fitting standard format
+	RTS
+
+
+; format disk for DISKSEC/DISKDNS
+FMTDISK	LDA #0
+	STA ?PERCFLG	; flag: have percom block
+
+	JSR GETPERC
+	BPL ?FMTPOK
+	DEC ?PERCFLG	; no percom support (flag = FF)
+	LDA DISKDNS
+	BEQ ?FMTPOK	; SD is OK
+
+?FMTERR	LDY #$FF	; we can't format DD disks without percom support
+	RTS
+
+?FMTPOK	LDA DISKDNS
+	BNE ?FMTDD
+
+; check for enhanced density
+	LDA DISKSEC
+	CMP #<1040
+	BNE ?FMTDD
+	LDA DISKSEC+1
+	CMP #>1040
+	BNE ?FMTDD
+
+?FMTED	LDA #$22
+	BNE ?DOFMT
+
+?FMTDD
+	BIT ?PERCFLG
+	BPL ?FMTPERC	; we have percom support - fine
+
+; no percom support: check if either SD or ED fits
+
+	JSR ?CSTDFMT 	; check for compatible SD disk format
+	BPL ?FMTA1	; found a fit
+	RTS		; no fitting format - return error
+?FMTA1	BNE ?FMTED
+	BEQ ?DOFMT1
+
+?FMTPERC
+	JSR ?SETPERC	; setup percom block for formatting
+	JSR PUTPERC
+	BMI ?FMTALT	; error sending percom block - try different config
+
+?DOFMT1	LDA #$21	; now format the disk
+
+?DOFMT	STA $302
+	JSR ?SETSIOAL
+	LDA #250
+	STA $306
+	LDX #0
+	JSR ?SIODX
+	BMI ?FMTALT	; formatting failed - try different config
+	RTS
+
+?FMTALT	BIT ?PERCFLG
+	BMI ?FMTERR	; no percom support, exit with error
+	BIT ?SFFLG
+	BPL ?FMTERR	; this was a standard format - exit with error
+
+	LDA DISKDNS
+	BNE ?FMTADD	; try alternate DD formats
+
+; check for alternate SD formats
+	JSR ?CSTDFMT
+	BMI ?FMTERR	; no alternate SD formats available - exit
+	LDX #$22
+	CMP #1
+	BEQ ?FMT2	; ED format will do
+
+; SD format, setup percom block
+	LDA #<?PERCSD
+	STA TMPVEC
+	LDA #>?PERCSD
+	STA TMPVEC+1
+
+; entry for second formatting: set percom block, format again
+
+?FMTP2	JSR ?MPERC	; merge SD config into current percom block
+	JSR PUTPERC
+	BMI ?FMTERR	; drive doesn't like this config either, so exit
+
+	LDX #$21
+?FMT2	STX $302
+	JSR ?SETSIOAL
+	LDA #250
+	STA $306
+	LDX #0
+	JMP ?SIODX
+
+?FMTADD	JSR ?FINDPG
+	BPL ?FMTP2	; found alternate config - try it
+	RTS		; nothing found - exit with error
+
+
+; buffer for GetStatus command
+STATBUF	.WORD 0,0
+
+; buffer for percom block
+PERCBUF	.DC 12 0
+
+; original percom block of image
+PERCIMG	.DC 12 0
+
+
+; disk density: 0 = SD, 1 = DD
+DISKDNS	.BYTE 0
+
+; number of sectors on disk
+DISKSEC	.WORD 0
+
+; remaining sectors on disk
+DISKREM	.WORD 0
+
+
+; size of disk, rounded up to pages
+DISKSIZ	.WORD 0,0
+
+
+; flag: have percom support (0=yes, FF=no)
+?PERCFLG .BYTE 0
+
+; flag: standard disk format (0=yes, FF=no)
+?SFFLG	.BYTE 0
+
 ; maximum number of sectors to read
-?RDMAX	.BYTE 0
-READPAG	.BYTE 0
+IOMAX	.BYTE 0
+
+; sector count for this round
+SECCNT	.BYTE 0
+
+; number of pages for this round
+PAGECNT	.BYTE 0
+
+; I/O direction for SECIO (0=read sectors, 1=write sectors)
+IODIR	.BYTE 0
 
 ; density table - number of bytes per sector
 ?DTABL	.BYTE 128, 0
 ?DTABH	.BYTE 0, 1
+
+; sector I/O command table (0=read, 1=write)
+?IOCMD	.BYTE $52, $50
+
+; percom I/O command table
+?PERCMD	.BYTE $4E, $4F
+
+; direction table (0=read, 1=write, 2=immediate)
+?IODIR	.BYTE $40, $80, 0
+

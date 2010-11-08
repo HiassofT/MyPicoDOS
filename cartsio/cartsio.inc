@@ -70,6 +70,9 @@
 	COFNAME	= 16		; 32 bytes image name (terminated with EOL)
 	CLNNAME	= 32		; length of name (32)
 
+; address of highspeed SIO code in ROM
+	CHISIO	= $BB00
+
 ; autostart flag: if != 0 start MyPicoDos automatically if images
 ; are available (disable this feature with "select")
 	CAUTOF	= $BFDF

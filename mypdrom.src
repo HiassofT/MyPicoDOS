@@ -309,7 +309,7 @@ STARTDW	JSR SCROFF
 
 DWSETUP	INC $42
 	CARTBNKI CDWBANK
-	LDX #$1C
+	LDX #$20
 	LDY #0
 
 DWSLP1	LDA (SRCADR),Y	; copy DiskWriter code
@@ -823,12 +823,15 @@ OSTABL	= * - OSTAB
 
 XEND	= *
 
+	* = CHISIO
+	.incbin "hisio.bin"
+
 	* = CAUTOF
 	.BYTE 0
 
 	* = CARTSIG
 	.BYTE "HiassofT"
-	.BYTE "20100816"
+	.BYTE "20101108"
 
 .if .def ATARIMAX8
 	* = $BFF0

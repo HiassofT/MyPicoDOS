@@ -34,10 +34,6 @@ OFSSIGL	= CARTSIG-$8000
 OFSDWH  = 0
 OFSDWL  = 0
 
-; highspeed SIO code
-OFSHISH = 0
-OFSHISL = $1C00
-
 ; start of disk image area
 OFSIMSH	= 0
 OFSIMSL	= $4000

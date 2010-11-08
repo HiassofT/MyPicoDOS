@@ -115,15 +115,15 @@ mypdos-code-mega512.bin: mypdos/mypdos.src $(MYPDOSINC) $(CARTSIOINC) \
 	$(ATASM) $(MYPDOSFLAGS) -dMYPDOSROM -dCARTSIO -dMEGA512 -r -o$@ $<
 
 mypdos-atarimax8.rom: mypdrom.src mypdos-code-atarimax8.bin \
-	cartsio-atarimax8-pal.bin cartsio-atarimax8-ntsc.bin
+	cartsio-atarimax8-pal.bin cartsio-atarimax8-ntsc.bin hisio.bin
 	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dATARIMAX8 $<
 
 mypdos-freezer.rom: mypdrom.src mypdos-code-freezer.bin \
-	cartsio-freezer-pal.bin cartsio-freezer-ntsc.bin
+	cartsio-freezer-pal.bin cartsio-freezer-ntsc.bin hisio.bin
 	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dFREEZER $<
 
 mypdos-mega512.rom: mypdrom.src mypdos-code-mega512.bin \
-	cartsio-mega512-pal.bin cartsio-mega512-ntsc.bin
+	cartsio-mega512-pal.bin cartsio-mega512-ntsc.bin hisio.bin
 	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dMEGA512 $<
 
 testdisk.atr: testdisk testdisk/*
@@ -183,15 +183,15 @@ atr2cart.exe: atr2cart.cpp AtrUtils.cpp Error.cpp
 	i586-mingw32msvc-strip $@
 
 diskcart-atarimax8.com: diskcart.src mypdos-atarimax8.rom $(LIBFLASHINC) \
-	iohelp.src arith.inc arith.src diskio.src hisio.bin
+	iohelp.src arith.inc arith.src diskio.src
 	$(ATASM) $(ASMFLAGS) -o$@ -dATARIMAX8 $<
 
 diskcart-freezer.com: diskcart.src mypdos-freezer.rom $(LIBFLASHINC) \
-	iohelp.src arith.inc arith.src diskio.src hisio.bin
+	iohelp.src arith.inc arith.src diskio.src
 	$(ATASM) $(ASMFLAGS) -o$@ -dFREEZER $<
 
 diskcart-mega512.com: diskcart.src mypdos-mega512.rom $(LIBFLASHINC) \
-	iohelp.src arith.inc arith.src diskio.src hisio.bin
+	iohelp.src arith.inc arith.src diskio.src
 	$(ATASM) $(ASMFLAGS) -o$@ -dMEGA512 $<
 
 ctesta8.com: ctest.src $(LIBFLASHINC) \

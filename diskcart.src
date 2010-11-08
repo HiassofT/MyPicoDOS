@@ -38,11 +38,10 @@ TMPVEC	= SRCVEC	; for romram.src
 
 START	= $2000
 
-; address of highspeed code (1k)
-HIADR	= $8C00
-
 ; address of cartridge code (8k)
-CCADR	= $9000
+CCADR	= $A000
+
+HIADR	= CHISIO
 
 	.BANK
 	* = START
@@ -66,7 +65,6 @@ MAINLP	BPUT 0, TTITLEL, TTITLE
 	JSR DETECT
 	LDA FTYPE
 	BPL FOK
-
 
 FERR	JSR GETCHAR
 	CPY #128
@@ -105,6 +103,8 @@ NEXIT	CMP #'1
 	BNE NO1
 
 	JSR PUTCHAR
+	LDA #155
+	JSR PUTCHAR
 
 	BPUT 0, TASKINL, TASKIN
 	JSR YESNO
@@ -120,6 +120,12 @@ NO1	CMP #'2
 
 NO2	CMP #'3
 	BNE NO3
+	JSR PUTCHAR
+
+	JMP WRDISK
+
+NO3	CMP #'4
+	BNE NO4
 
 	LDX #$59
 	LDY #$E4
@@ -134,8 +140,8 @@ HIOFF	STX SIOVEC+1
 	STY SIOVEC+2
 	JMP MAINLP
 
-NO3	CMP #'4
-	BNE NO4
+NO4	CMP #'5
+	BNE NO5
 	JSR PUTCHAR
 	BPUT 0, TASKSCL, TASKSC
 	JSR YESNO
@@ -149,7 +155,7 @@ DOSC1	INC $42
 .endif
 	JMP $E477
 
-NO4	JMP MENULP
+NO5	JMP MENULP
 
 ; check for signature
 CHKSIG	LDA #<OFSSIGL
@@ -281,8 +287,16 @@ PVERS	BPUT 0, TVERSL, TVERS
 	LDX #8
 	JSR FRBYTE
 	JSR FDISABLE
-	BPUT 0, 8, SECBUF
-	LDA #155
+	LDX #0
+PVERLP	STX TMPVEC
+	LDA SECBUF,X
+	ORA #$80
+	JSR PUTCHAR
+	LDX TMPVEC
+	INX
+	CPX #8
+	BNE PVERLP
+	LDA #$19
 	JMP PUTCHAR
 
 ; print image infos
@@ -377,13 +391,14 @@ PHISIO	BPUT 0, THISIOL, THISIO
 	LDA SIOVEC+2
 	CMP #>HIADR
 	BEQ PHISIO1
-	LDA #'f
+	LDA #['f]+$80
 	JSR PUTCHAR
-	LDA #'f
+	LDA #['f]+$80
 	JSR PUTCHAR
-	LDA #155
-	JMP PUTCHAR
-PHISIO1	LDA #'n
+	JMP PHISIO2
+PHISIO1	LDA #['n]+$80
+	JSR PUTCHAR
+PHISIO2	LDA #$19
 	JSR PUTCHAR
 	LDA #155
 	JMP PUTCHAR
@@ -492,45 +507,6 @@ NOCLRDC
 	PLP
 	BMI DOINIE2
 
-; copy highspeed SIO code
-	LDA #<HIADR
-	STA SRCVEC
-	LDA #>HIADR
-	STA SRCVEC+1
-	LDA #<DATABUF
-	STA DSTVEC
-	LDA #>DATABUF
-	STA DSTVEC+1
-	LDX #>(HICODEL+255)
-	JSR COPYPAG
-
-; clear unused part of last page
-	LDY #<HICODEL
-	BEQ NOCLRHI
-	LDA #$FF
-CLRHI	STA DATABUF+(HICODEL&$ff00),Y
-	INY
-	BNE CLRHI
-NOCLRHI
-
-; and flash it
-	LDA #<OFSHISL
-	STA FLASHADR
-	LDA #>OFSHISL
-	STA FLASHADR+1
-	LDA #OFSHISH
-	STA FLASHADR+2
-
-	JSR FENABLE
-	LDX #>(HICODEL+255)
-	JSR FWPAGE
-	PHP
-	JSR FDISABLE
-	PLP
-	BPL HIFLOK
-	JMP DOINIE2
-
-HIFLOK
 
 .if .def ATARIMAX8
 ; also program cartdrige startup code into last bank
@@ -567,22 +543,20 @@ DOCONT	BPUT 0, TCONTL, TCONT
 	JSR GETCHAR
 	JMP MAINLP
 
-ADDDISK	LDA DISKIDX
-	CMP #CTTSIZE
-	BCC ADDOK
 
-	BPUT 0, TFULLL, TFULL
-	JMP DOCONT
+; input drive number
 
-ADDOK	BPUT 0, TDRVNOL, TDRVNO
-ADDLP1	JSR GETCHAR
+GETDRVN	BPUT 0, TDRVNOL, TDRVNO
+GETDR1	JSR GETCHAR
 	CPY #128
-	BNE ADDLP2
+	BNE GETDR2
+	PLA
+	PLA
 	JMP DOCONT
-ADDLP2	CMP #'1
-	BCC ADDLP1
+GETDR2	CMP #'1
+	BCC GETDR1
 	CMP #'9
-	BCS ADDLP1
+	BCS GETDR1
 	PHA
 	JSR PUTCHAR
 	LDA #155
@@ -591,6 +565,143 @@ ADDLP2	CMP #'1
 	SEC
 	SBC #'0
 	STA $301
+	RTS
+
+; X=0: write disk to flash
+; X=1: write flash to disk
+
+DOIO	STX IODIR
+
+	LDA #0		; start at sector 0
+	STA $30A
+	STA $30B
+
+; total number of sectors (including sector 0)
+	CLC
+	LDA DISKSEC
+	ADC #1
+	STA DISKREM
+	LDA DISKSEC+1
+	ADC #0
+	STA DISKREM+1
+
+; number of sectors per run (8k blocks)
+	LDA #$20
+	LDX DISKDNS
+	BNE DOIO1
+	ASL
+DOIO1	STA IOMAX
+
+; setup data address
+	LDA #<DATABUF
+	STA DATAADR
+	LDA #>DATABUF
+	STA DATAADR+1
+
+DOIOLP	LDA DISKREM+1
+	BNE DOIOL1A	; more than 256 sectors to go
+	LDA DISKREM
+	BNE DOIOL1	; still sectors to go
+	RTS		; finished, return with A=0
+DOIOL1	CMP IOMAX
+	BCC DOIOL2
+DOIOL1A	LDA IOMAX	; >= IOMAX sectors to go, do IOMAX in this loop
+
+DOIOL2	STA SECCNT	; save sector count for this loop
+	SEC		; calculate new remaining sectors
+	LDA DISKREM
+	SBC SECCNT
+	STA DISKREM
+	BCS DOIOL3
+	DEC DISKREM+1
+
+DOIOL3
+; calculate number of pages for this block
+	LDA SECCNT
+	LDX DISKDNS
+	BNE DOIOL4	; DD: pages = sectors
+	CLC		; SD: pages = (sectors+1)/2
+	ADC #1
+	LSR
+
+DOIOL4	STA PAGECNT
+	
+	BPUT 0, TRSECL, TRSEC
+	LDX $30A
+	LDY $30B
+	TXA
+	ORA $30B	; sector 0?
+	BNE DOIOL5	; no, everything's fine
+	INX		; output 1 instead
+DOIOL5	JSR TODEC
+	JSR DEC0SP
+	BPUT 0, 4, DECBUF+1
+	LDA #':
+	JSR PUTCHAR
+
+	LDA IODIR
+	BEQ DOIOL6	; skip reading flash
+
+; read data from flash
+	JSR FENABLE
+	LDX PAGECNT
+	JSR FRPAGE
+	JSR FDISABLE
+
+	BPUT 0, TWRDSKL, TWRDSK
+	JMP DOIOL7
+
+DOIOL6	BPUT 0, TRDDSKL, TRDDSK
+
+; read/write sectors from/to disk
+DOIOL7	JSR SECIO
+	BPL DOIOL8
+	BPUT 0, TERRSL, TERRS
+	LDX $30A
+	LDY $30B
+	JSR PRDEC 
+	JMP DOCONT
+
+DOIOL8	LDA IODIR
+	BNE DOIOL9
+
+; write flash
+	JSR PPROGF
+	JSR FENABLE
+	LDX PAGECNT
+	JSR FWPAGE
+	PHP
+	JSR FDISABLE
+	PLP
+	BPL DOIOL9
+	JSR PERRADR
+	JMP DOCONT
+
+DOIOL9	JSR POK
+
+DOIOL10
+
+; increment flash address
+	CLC
+	LDA FLASHADR+1
+	ADC PAGECNT
+	STA FLASHADR+1
+	BCC DOIOL11
+	INC FLASHADR+2
+DOIOL11	JMP DOIOLP
+
+; add a disk
+
+ADDDISK	LDA DISKIDX
+	CMP #CTTSIZE
+	BCC ADDOK
+
+	BPUT 0, TFULLL, TFULL
+	JMP DOCONT
+
+ADDOK	LDA #155
+	JSR PUTCHAR
+	JSR GETDRVN
 
 	JSR GETDENS
 	BPL ADDD1
@@ -713,79 +824,21 @@ ADDD11	LDA NAMBUF,X
 
 ADDD12	JSR POK
 
-	LDA #0		; start at sector 0
-	STA $30A
-	STA $30B
-
 ; setup flash address
 	LDX #2
 ADDD12A	LDA DISKOFS,X
 	STA FLASHADR,X
 	DEX
 	BPL ADDD12A
-; setup data address
-	LDA #<DATABUF
-	STA DATAADR
-	LDA #>DATABUF
-	STA DATAADR+1
 
-ADDDLP	BPUT 0, TRSECL, TRSEC
-	LDX $30A
-	LDY $30B
-	TXA
-	ORA $30B	; sector 0?
-	BNE ADDD13	; no, everything's fine
-	INX		; output 1 instead
-ADDD13	JSR TODEC
-	JSR DEC0SP
-	BPUT 0, 4, DECBUF+1
-	LDA #':
-	JSR PUTCHAR
-
-	BPUT 0, TRDDSKL, TRDDSK
-	JSR READ8K	; read up to 8k
-	BPL ADDD14
-	BPUT 0, TERRSL, TERRS
-	LDX $30A
-	LDY $30B
-	JSR PRDEC 
+	LDX #0		; program flash
+	JSR DOIO
+	BPL ADDD13
 	JMP DOCONT
 
-ADDD14	JSR PPROGF
-	JSR FENABLE
-	LDX READPAG
-	JSR FWPAGE
-	PHP
-	JSR FDISABLE
-	PLP
-	BPL ADDD15
-	JSR PERRADR
-	JMP DOCONT
-
-ADDD15	JSR POK
-
-; increment flash address
-	CLC
-	LDA FLASHADR+1
-	ADC READPAG
-	STA FLASHADR+1
-	BCC ADDD16
-	INC FLASHADR+2
-ADDD16
-
-; check for end of disk
-	LDA $30B
-	CMP DISKSEC+1
-	BCC ADDD20
-	BNE ADDD21
-	LDA $30A
-	CMP DISKSEC
-	BCC ADDD20
-	BNE ADDD21
-ADDD20	JMP ADDDLP
-
+ADDD13
 ; finished, now mark the image as active
-ADDD21	BPUT 0, TPTABFL, TPTABF
+	BPUT 0, TPTABFL, TPTABF
 
 	JSR PPROGF
 	JSR SETTABA
@@ -797,12 +850,112 @@ ADDD21	BPUT 0, TPTABFL, TPTABF
 	PHP
 	JSR FDISABLE
 	PLP
-	BPL ADDD22
+	BPL ADDD14
 	JSR PERRADR
 	JMP DOCONT
 
-ADDD22	JSR POK
+ADDD14	JSR POK
 	JMP DOCONTS	
+
+
+; write image to disk
+WRDISK	BPUT 0, TIMGNOL, TIMGNO
+WRDISKI	JSR GETCHAR
+	CPY #128
+	BNE WRDISK1
+	JMP DOCONT
+
+WRDISK1	CMP #'1
+	BCC WRDISKI
+	CMP #'9
+	BCS WRDISKI
+	PHA
+	JSR PUTCHAR
+	PLA
+	SEC
+	SBC #'1
+	TAX
+
+; multiply image number by CTESIZE
+	LDA #0
+WRDISK2	CPX #0
+	BEQ WRDISK2A
+	CLC
+	ADC #CTESIZE
+	DEX
+	BCC WRDISK2	; always
+
+WRDISK2A
+	STA DISKIDX
+	TAX
+
+	LDA TABBUF+CTODENS,X
+	STA DISKDNS
+	BPL WRDISK3	; OK, active slot
+
+WRDINV	BPUT 0, TINVIMGL, TINVIMG
+	JMP DOCONT
+
+WRDISK3	LDA TABBUF+CTOACTI,X
+	BNE WRDINV	; invalid image
+
+	LDA TABBUF+CTOSECL,X
+	STA DISKSEC
+	LDA TABBUF+CTOSECH,X
+	STA DISKSEC+1
+
+	JSR GETDRVN
+	JSR GETSTAT
+	BPL WRDISK4
+
+	BPUT 0, TNODISKL, TNODISK
+	JMP DOCONT
+
+WRDISK4	BPUT 0, TINSERL, TINSER
+	JSR GETCHAR
+	CPY #128
+	BNE WRDISK5
+	JMP DOCONT
+
+WRDISK5	
+
+; get percom block of image
+	LDX DISKIDX
+	LDA #COFPERC
+	STA FLASHADR
+	LDA TABBUF+CTOSPL,X
+	STA FLASHADR+1
+	LDA TABBUF+CTOSPH,X
+	STA FLASHADR+2
+	LDA #<PERCIMG
+	STA DATAADR
+	LDA #>PERCIMG
+	STA DATAADR+1
+	JSR FENABLE
+	LDY #0
+	LDX #12
+	JSR FRBYTE
+	JSR FDISABLE
+
+	BPUT 0, TFORMTL, TFORMT
+; format the disk
+	JSR FMTDISK
+	PHP
+	JSR PSTAT
+	PLP
+	BPL WRDISK6
+	JMP DOCONT
+
+WRDISK6	LDA #0
+	STA $30A
+	STA $30B
+	STA FLASHADR
+
+	LDX #1
+	JSR DOIO
+	BPL WRDISK7
+	JMP DOCONT
+WRDISK7	JMP DOCONTS
 
 INIT	LDA 106
 	STA M106
@@ -851,20 +1004,6 @@ MOVDATA
 	LDX #$20
 	JSR FRPAGE
 
-; copy highspeed SIO code from ROM
-	LDA #<OFSHISL
-	STA FLASHADR
-	LDA #>OFSHISL
-	STA FLASHADR+1
-	LDA #OFSHISH
-	STA FLASHADR+2
-	LDA #<HICODE
-	STA DATAADR
-	LDA #>HICODE
-	STA DATAADR+1
-	LDX #4
-	JSR FRPAGE
-
 	JSR FDISABLE
 
 NOROMCP
@@ -878,17 +1017,6 @@ NOROMCP
 	LDA #>CCADR
 	STA DSTVEC+1
 	LDX #$20	; $20 pages = 8k
-	JSR COPYPAG
-
-	LDA #<HICODE
-	STA SRCVEC
-	LDA #>HICODE
-	STA SRCVEC+1
-	LDA #<HIADR
-	STA DSTVEC
-	LDA #>HIADR
-	STA DSTVEC+1
-	LDX #4		; 4 pages = 1k
 	JSR COPYPAG
 
 ; enable highspeed SIO
@@ -1044,27 +1172,27 @@ ERASE2
 .endif	; FREEZER
 
 
-TFA10	.BYTE "Detected ", $99
+TFA10	.BYTE "Flash:", $99
 	.BYTE +$80,"AMD 29F010"
 	.BYTE $19,155
 
-TFA10B	.BYTE "Detected ", $99
+TFA10B	.BYTE "Flash:", $99
 	.BYTE +$80,"AMD 29F010B"
 	.BYTE $19,155
 
-TFA40B	.BYTE "Detected ", $99
+TFA40B	.BYTE "Flash:", $99
 	.BYTE +$80,"AMD 29F040B"
 	.BYTE $19,155
 
-TFS10B	.BYTE "Detected ", $99
+TFS10B	.BYTE "Flash:", $99
 	.BYTE +$80,"ST 29F010B"
 	.BYTE $19,155
 
-TFS40B	.BYTE "Detected ", $99
+TFS40B	.BYTE "Flash:", $99
 	.BYTE +$80,"ST 29F040B"
 	.BYTE $19,155
 
-TFB40	.BYTE "Detected ", $99
+TFB40	.BYTE "Flash:", $99
 	.BYTE +$80,"BM 29F040"
 	.BYTE $19,155
 
@@ -1168,19 +1296,23 @@ TMENU	.BYTE 155,155
 .else
 	.BYTE "1) Init flash cartridge",155
 .endif
-	.BYTE "2) Add disk",155
-	.BYTE "3) Toggle HISIO on/off",155
-	.BYTE "4) Start cartridge",155
+	.BYTE "2) Add disk to cart",155
+	.BYTE "3) Write image to disk",155
+	.BYTE "4) Toggle HISIO on/off",155
+	.BYTE "5) Start cartridge",155
 	.BYTE "0) Exit program",155
 	.BYTE "> "
 TMENUL	= * - TMENU
 
+TNOINI	.BYTE 155, 155, "cart uninitialized!"
+TASKIN
 .if .def FREEZER
-TASKIN	.BYTE 155, 155, "Initialize CartEmu (y/n)? "
+	.BYTE 155, "Initialize CartEmu (y/n)? "
 .else
-TASKIN	.BYTE 155, 155, "Initialize flash cart (y/n)? "
+	.BYTE 155, "Initialize flash cart (y/n)? "
 .endif
 TASKINL	= * - TASKIN
+TNOINIL	= * - TNOINI
 
 TASKAU	.BYTE 155, "Autostart MyPicoDos (y/n)? "
 TASKAUL	= * - TASKAU
@@ -1191,6 +1323,12 @@ TASKSCL	= * - TASKSC
 TDNAM	.BYTE "disk name > "
 TDNAML	= * - TDNAM
 
+TINSER	.BYTE "insert disk, press any key "
+TINSERL	= * - TINSER
+
+TFORMT	.BYTE 155, 155, "formatting disk"
+TFORMTL	= * - TFORMT
+
 TERRADR	.BYTE 155, "Error at address $"
 TERRADRL = * - TERRADR
 
@@ -1199,6 +1337,9 @@ TERASL	= * - TERAS
 
 TRDDSK	.BYTE " read"
 TRDDSKL	= * - TRDDSK
+
+TWRDSK	.BYTE " write"
+TWRDSKL	= * - TWRDSK
 
 TPROGF	.BYTE " flash"
 TPROGFL	= * - TPROGF
@@ -1210,13 +1351,11 @@ TCONT	.BYTE 155
 	.BYTE "Press any key to continue > "
 TCONTL	= * - TCONT
 
-TNOINI	.BYTE 155, "cart uninitialized - init now (y/n)? "
-TNOINIL	= * - TNOINI
-
-TVERS	.BYTE "Software version: "
+TVERS	.BYTE "Software:", $99
 TVERSL	= * - TVERS
 
-THISIO	.BYTE "Highspeed SIO: O"
+THISIO	.BYTE " HiSIO:", $99
+	.BYTE +$80, "o"
 THISIOL	= * - THISIO
 
 ; signature in cartridge
@@ -1232,11 +1371,20 @@ TINACT	.BYTE +$80, "incomplete data"
 	.BYTE 155
 TINACTL	= * - TINACT
 
-TDRVNO	.BYTE 155, 155, "enter drive number (1-8) >"
+TDRVNO	.BYTE 155, "enter drive number (1-8) >"
 TDRVNOL	= * - TDRVNO
+
+TIMGNO	.BYTE 155, 155, "enter image number (1-8) >"
+TIMGNOL	= * - TIMGNO
+
+TINVIMG	.BYTE 155, 155, "invalid image number!",155
+TINVIMGL = * - TINVIMG
 
 TDNERR	.BYTE "Error checking disk density",155
 TDNERRL	= * - TDNERR
+
+TNODISK	.BYTE "Drive not responding",155
+TNODISKL = * - TNODISK
 
 TSECT	.BYTE "D sectors",155
 TSECTL	= * - TSECT
@@ -1262,7 +1410,7 @@ TRSEC	.BYTE "sector "
 ;	.BYTE "sector 1234: "
 TRSECL	= * - TRSEC
 
-TERRS	.BYTE 155, "Error reading sector "
+TERRS	.BYTE 155, "Error at sector "
 TERRSL	= * - TERRS
 
 .if .def ATARIMAX8
@@ -1295,14 +1443,6 @@ TABBUF	* = * + $40
 
 SECBUF	* = * + $100
 DATABUF = *
-
-	.bank
-	* = DATABUF
-HICODE	.incbin "hisio.bin"
-HICODEL	= * - HICODE
-        .IF (HICODEL&255)<>0
-        .DC (256-(HICODEL&255)) 255
-        .ENDIF
 
 	.bank
 

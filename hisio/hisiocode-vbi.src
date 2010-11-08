@@ -1,6 +1,6 @@
 ;  highsiocode-vbi.src - highspeed SIO routine, optional fast VBI code
 ;
-;  Copyright (c) 2003-2009 by Matthias Reichl <hias@horus.com>
+;  Copyright (c) 2003-2010 by Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -21,32 +21,49 @@
 
 VBICODE 
 .if .not .def FASTVBI_NOCLOCK
-	INC 20
+	INC RTCLOK+2
 	BNE ?NOC1
-	INC 19
-	BNE ?NOC1
-	INC 18
+	INC RTCLOK+1
+
+; note: RTCLOK is handeled in hisiocode-main by checking RTCLOK+1 wrap-around
+; this saves 7 cycles in worst case
+;	BNE ?NOC1
+;	INC 18
+
+?NOC1
 .endif
 
-?NOC1	LDA CDTMV1	; check lo byte. if its != 0 timer is running and it must be decremented.
-	BNE ?TIDEC	; go decrement, hi byte unchanged because lo != 0
-	LDA CDTMV1+1	; this branch: lo = 0
-	BEQ ?TIEXIT	; timer is zero (disabled, expired), exit from here
-	DEC CDTMV1+1
-?TIDEC	DEC CDTMV1
-	BEQ ?TICHK	; lo reached 0, check if we hi also reached 0
-?TIEXIT	JMP $E462	; timer still running or expired
-?TICHK	LDA CDTMV1+1
-	BEQ ?RUNT1	; hi is also 0, execute timer vector
-	JMP $E462
+; fast implementation of system timer 1:
+; - jumps to ?ERRTO if it reaches 0
+; - no check if timer has already expired (just set MYTIM1+1 to $FF
+;   and it will run long enough before starting the timeout code)
+; - MYTIM1+1 has to be set to HIVAL+1, since timer starts at $0000 (not $FFFF).
 
-?RUNT1
-?ABSF04	JSR ?RUNT11
-	JMP $E462
-?RUNT11	JMP (CDTMA1)
+	DEC MYTIM1
+	BNE ?NOTOUT
+	DEC MYTIM1+1
+
+	BEQ ?RUNTIM	; timer reached 0, start timeout code
+
+?NOTOUT	
+; note: to save 6 additional cycles we don't use "JMP XITVBV" here
+; but implement the OS code directly. This code is identical in all
+; OS versions I know of.
+
+	PLA
+	TAY
+	PLA
+	TAX
+	PLA
+	RTI
+
+; jump to timeout code
+?RUNTIM
+?ABSF07	JMP ?ERRTO
 
 .if .def RELOCTABLE
 ?VBIADR
-?ABSF05	.WORD VBICODE
+?ABSF08 .WORD VBICODE
 .endif
+
 .endif
