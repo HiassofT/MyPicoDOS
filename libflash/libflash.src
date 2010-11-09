@@ -16,7 +16,7 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-.if .def ATARIMAX8
+.if .def ATARIMAX8 .or .def MEGAMAX8
 	.include "libflash-atarimax8.src"
 .endif
 
@@ -24,8 +24,8 @@
 	.include "libflash-freezer.src"
 .endif
 
-.if .def JUERGEN1024
-	.include "libflash-juergen1024.src"
+.if .def MEGAMAX16
+	.include "libflash-megamax16.src"
 .endif
 
 .if .def MEGA512
