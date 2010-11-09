@@ -911,10 +911,20 @@ WRDISK3	LDA TABBUF+CTOACTI,X
 	BPUT 0, TNODISKL, TNODISK
 	JMP DOCONT
 
-WRDISK4	BPUT 0, TINSERL, TINSER
+WRDISK4	LDA #1
+	STA WRFMT	; default: format disk
+	BPUT 0, TFORMDL, TFORMD
+	JSR YESNO
+	BMI WRDISK4X
+	BEQ WRDISK41
+	DEC WRFMT	; no = don't format disk
+WRDISK41
+	BPUT 0, TINSERL, TINSER
 	JSR GETCHAR
 	CPY #128
 	BNE WRDISK5
+
+WRDISK4X
 	JMP DOCONT
 
 WRDISK5	
@@ -937,14 +947,22 @@ WRDISK5
 	JSR FRBYTE
 	JSR FDISABLE
 
+	LDA #155
+	JSR PUTCHAR
+	LDA #155
+	JSR PUTCHAR
+
+	LDA WRFMT	; format disk ?
+	BEQ WRDISK6	; no, skip format
 	BPUT 0, TFORMTL, TFORMT
+	
 ; format the disk
 	JSR FMTDISK
 	PHP
 	JSR PSTAT
 	PLP
 	BPL WRDISK6
-	JMP DOCONT
+WRDISKX	JMP DOCONT
 
 WRDISK6	LDA #0
 	STA $30A
@@ -1274,17 +1292,20 @@ TMP32	.WORD 0,0
 ; temporary index
 TMPIDX	.BYTE 0
 
+; flag: format disk on writing
+WRFMT	.BYTE 0
+
 TTITLE
 .if .def ATARIMAX8
-	.BYTE 125, "AtariMax 8MBit DiskWriter V1.10",155
+	.BYTE 125, "AtariMax 8MBit DiskWriter V1.11",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 .endif
 .if .def FREEZER
-	.BYTE 125, "Turbo Freezer DiskWriter V1.10",155
+	.BYTE 125, "Turbo Freezer DiskWriter V1.11",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 .endif
 .if .def MEGA512
-	.BYTE 125, "Mega 512k FlashCart DiskWriter V1.10",155
+	.BYTE 125, "Mega 512k FlashCart DiskWriter V1.11",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 .endif
 TTITLEL	= * - TTITLE
@@ -1323,10 +1344,10 @@ TASKSCL	= * - TASKSC
 TDNAM	.BYTE "disk name > "
 TDNAML	= * - TDNAM
 
-TINSER	.BYTE "insert disk, press any key "
+TINSER	.BYTE 155, "insert disk, press any key"
 TINSERL	= * - TINSER
 
-TFORMT	.BYTE 155, 155, "formatting disk"
+TFORMT	.BYTE "formatting disk"
 TFORMTL	= * - TFORMT
 
 TERRADR	.BYTE 155, "Error at address $"
@@ -1379,6 +1400,9 @@ TIMGNOL	= * - TIMGNO
 
 TINVIMG	.BYTE 155, 155, "invalid image number!",155
 TINVIMGL = * - TINVIMG
+
+TFORMD	.BYTE "format disk (y/n)? "
+TFORMDL	= * - TFORMD
 
 TDNERR	.BYTE "Error checking disk density",155
 TDNERRL	= * - TDNERR
