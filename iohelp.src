@@ -272,6 +272,31 @@ PRDECI	JSR TODEC
 ; temporary index
 ?PRDECI	.BYTE 0
 
+; write A bytes from X(LO)/Y(HI) to #0
+BPUT0COD
+	STX ICBAL
+	STY ICBAH
+	STA ICBLL
+	LDX #0
+	STX ICBLH
+	LDA #CPBIN
+	STA ICCOM
+	JMP CIOV
+
+
+; print text from X(LO)/Y(HI) to #0
+PRINT0COD
+	STX ICBAL
+	STY ICBAH
+	LDA #127
+	STA ICBLL
+	LDX #0
+	STX ICBLH
+	LDA #CPTXT
+	STA ICCOM
+	JMP CIOV
+
+
 .if 0
 ; print bank number
 PBANK	CLC

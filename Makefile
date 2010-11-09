@@ -179,23 +179,23 @@ atr2cart.exe: atr2cart.cpp AtrUtils.cpp Error.cpp
 	i586-mingw32msvc-strip $@
 
 diskcart-megamax.com: diskcart.src mypdos-megamax.rom $(LIBFLASHINC) \
-	iohelp.src arith.inc arith.src diskio.src
+	iohelp.inc iohelp.src arith.inc arith.src diskio.src
 	$(ATASM) $(ASMFLAGS) -o$@ -dMEGAMAX8 $<
 
 diskcart-freezer.com: diskcart.src mypdos-freezer.rom $(LIBFLASHINC) \
-	iohelp.src arith.inc arith.src diskio.src
+	iohelp.inc iohelp.src arith.inc arith.src diskio.src
 	$(ATASM) $(ASMFLAGS) -o$@ -dFREEZER $<
 
 diskcart-mega512.com: diskcart.src mypdos-mega512.rom $(LIBFLASHINC) \
-	iohelp.src arith.inc arith.src diskio.src
+	iohelp.inc iohelp.src arith.inc arith.src diskio.src
 	$(ATASM) $(ASMFLAGS) -o$@ -dMEGA512 $<
 
 ctestmm.com: ctest.src $(LIBFLASHINC) \
-	iohelp.src arith.inc arith.src
+	iohelp.inc iohelp.src arith.inc arith.src
 	$(ATASM) $(ASMFLAGS) -dMEGAMAX8 -o$@ $<
 
 ctestme.com: ctest.src $(LIBFLASHINC) \
-	iohelp.src arith.inc arith.src
+	iohelp.inc iohelp.src arith.inc arith.src
 	$(ATASM) $(ASMFLAGS) -dMEGA512 -o$@ $<
 
 diskcart.atr: \
