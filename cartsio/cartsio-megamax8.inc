@@ -1,4 +1,4 @@
-;  cartsio-atarimax8.inc - definitions for 8Mbit AtariMax cart
+;  cartsio-megamax8.inc - definitions for Megamax 1024k cart (8k mode)
 ;
 ;  Copyright (c) 2010 by Matthias Reichl <hias@horus.com>
 ;
@@ -60,6 +60,6 @@
 	.ENDM
 
 ; bank and address of diskwriter code
-CDWBANK = $7F
+CDWBANK = $1
 CDWADDR = $A000
 

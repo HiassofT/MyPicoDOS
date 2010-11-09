@@ -1,0 +1,3 @@
+DiskCart V1.11
+MMDISK  COM Megamax 1024k DiskCart
+CTESTMM COM Megamax 1024k FlashCart Tester

@@ -80,8 +80,8 @@
 ; 16byte signature in ROM (contains "HiassofT" plus 8-byte serial number)
 	CARTSIG	= $BFE0	; drive table base address
 
-.if .def ATARIMAX8
-	.include "cartsio-atarimax8.inc"
+.if .def MEGAMAX8
+	.include "cartsio-megamax8.inc"
 .endif
 .if .def FREEZER
 	.include "cartsio-freezer.inc"

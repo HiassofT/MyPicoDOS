@@ -649,8 +649,8 @@ CLR7LP	STA (SRCADR),Y
 	RTS
 
 MYPDOS	= *
-.if .def ATARIMAX8
-	.incbin "mypdos-code-atarimax8.bin"
+.if .def MEGAMAX8
+	.incbin "mypdos-code-megamax.bin"
 .endif
 .if .def FREEZER
 	.incbin "mypdos-code-freezer.bin"
@@ -660,10 +660,10 @@ MYPDOS	= *
 .endif
 MYPDPG	= (*-MYPDOS+255) / 256
 
-.if .def ATARIMAX8
-OSCODP	.incbin "cartsiocode-osram-atarimax8-pal.bin"
+.if .def MEGAMAX8
+OSCODP	.incbin "cartsiocode-osram-megamax-pal.bin"
 OSCODPL	= * - OSCODP
-OSCODN	.incbin "cartsiocode-osram-atarimax8-ntsc.bin"
+OSCODN	.incbin "cartsiocode-osram-megamax-ntsc.bin"
 OSCODNL	= * - OSCODN
 .endif
 .if .def FREEZER
@@ -833,7 +833,7 @@ XEND	= *
 	.BYTE "HiassofT"
 	.BYTE "20101109"
 
-.if .def ATARIMAX8
+.if .def MEGAMAX8
 	* = $BFF0
 AMINIT	CARTBNKI 0
 	JMP INIT
@@ -845,7 +845,7 @@ AMINIT	CARTBNKI 0
 	.BYTE 0
 ;	.BYTE 4		; init & start cart, no disk boot allowed
 	.BYTE 1		; only init cart, allow disk boot
-.if .def ATARIMAX8
+.if .def MEGAMAX8
 	.WORD AMINIT
 .else
 	.WORD INIT

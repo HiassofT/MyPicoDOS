@@ -21,8 +21,8 @@
 	.include "cartsio.inc"
 	.include "arith.inc"
 
-.if .def ATARIMAX8
-	.include "diskcart-atarimax8.inc"
+.if .def MEGAMAX8
+	.include "diskcart-megamax8.inc"
 .endif
 .if .def FREEZER
 	.include "diskcart-freezer.inc"
@@ -508,8 +508,7 @@ NOCLRDC
 	BMI DOINIE2
 
 
-.if .def ATARIMAX8
-; also program cartdrige startup code into last bank
+.if 0
 	LDY #0
 STCLP	LDA CCADR+$1FE0,Y
 	STA DATABUF,Y
@@ -535,6 +534,7 @@ STCLP	LDA CCADR+$1FE0,Y
 	JMP DOINIE2
 DOINIAOK
 .endif
+
 	JSR POK
 
 DOCONTS	BPUT 0, TFINIL, TFINI
@@ -1065,7 +1065,7 @@ COPYPLP	LDA (SRCVEC),Y
 	RTS
 
 DETECT
-.if .def ATARIMAX8
+.if .def MEGAMAX8
 ; detect second flash chip at $080000
 	LDA #8
 	STA FLASHADR+2
@@ -1079,7 +1079,7 @@ DETECT
 	JSR FDETECT
 	JSR FDISABLE
 
-.if .def ATARIMAX8
+.if .def MEGAMAX8
 	LDA FTYPE
 	CMP FTYPE2
 	BEQ AFOK
@@ -1101,7 +1101,7 @@ DETCHK
 
 ; detection OK, now check if chip is compatible with software
 
-.if .def ATARIMAX8 .or .def MEGA512
+.if .def MEGAMAX8 .or .def MEGA512
 ; we are doing chip erase, so just check if the flash size is 512k
 	LDA FSIZE
 	ORA FSIZE+1
@@ -1166,7 +1166,7 @@ ERASELP	JSR FPERAS
 .else
 	JSR FCERAS
 
-.if .def ATARIMAX8
+.if .def MEGAMAX8
 ; also erase second chip, combine status results
 	PHP
 	PLA
@@ -1180,7 +1180,7 @@ ERASELP	JSR FPERAS
 	PHA
 	PLP
 ERASE2
-.endif	; ATARIMAX8
+.endif	; MEGAMAX8
 	PHP
 
 	JSR FDISABLE
@@ -1296,8 +1296,8 @@ TMPIDX	.BYTE 0
 WRFMT	.BYTE 0
 
 TTITLE
-.if .def ATARIMAX8
-	.BYTE 125, "AtariMax 8MBit DiskWriter V1.11",155
+.if .def MEGAMAX8
+	.BYTE 125, "Megamax 1024k DiskWriter V1.11",155
 	.BYTE "(c) 2010 by Matthias Reichl",155,155
 .endif
 .if .def FREEZER
@@ -1437,7 +1437,7 @@ TRSECL	= * - TRSEC
 TERRS	.BYTE 155, "Error at sector "
 TERRSL	= * - TERRS
 
-.if .def ATARIMAX8
+.if .def MEGAMAX8
 FTYPE2	.BYTE 0
 
 TAFERR	.BYTE "Chip mismatch or defect!",155
@@ -1471,8 +1471,8 @@ DATABUF = *
 	.bank
 
 CARTCOD
-.if .def ATARIMAX8
-	.incbin "mypdos-atarimax8.rom"
+.if .def MEGAMAX8
+	.incbin "mypdos-megamax.rom"
 .endif
 .if .def FREEZER
 	.incbin "mypdos-freezer.rom"

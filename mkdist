@@ -6,7 +6,7 @@ if [ $# -ge 1 ] ; then
 	VER=$1
 fi
 
-NAME=mypdcart-$VER
+NAME=diskcart-$VER
 TMPDIR=dist/tmp/"${NAME}"
 
 mkdir -p "${TMPDIR}/src/cartsio"
@@ -17,9 +17,9 @@ mkdir -p "${TMPDIR}/src/hisio"
 cp -a \
 	atr2cart.exe \
 	diskcart.atr \
-	diskcart-atarimax8.atr diskcart-freezer.atr diskcart-mega512.atr \
-	diskcart-atarimax8.com diskcart-freezer.com diskcart-mega512.com \
-	ctesta8.com ctestme.com \
+	diskcart-megamax.atr diskcart-freezer.atr diskcart-mega512.atr \
+	diskcart-megamax.com diskcart-freezer.com diskcart-mega512.com \
+	ctestmm.com ctestme.com \
 	"${TMPDIR}"
 
 cp -a Makefile piconame*.txt *.inc *.src *.cpp *.c *.h "${TMPDIR}/src"

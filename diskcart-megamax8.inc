@@ -1,4 +1,4 @@
-;  diskcart-atarimax8.inc - definitions for 8Mbit AtariMax cart
+;  diskcart-megamax8.inc - definitions for Megamax 1024k cart in 8k mode
 ;
 ;  Copyright (C) 2010 Matthias Reichl <hias@horus.com>
 ;
@@ -16,7 +16,7 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-; offsets in 8Mbit AtariMax flashcart
+; offsets in Megamax 1024k flashcart (8k mode)
 
 ; code starts at offset 0
 OFSCODH = 0
@@ -31,14 +31,14 @@ OFSSIGH	= 0
 OFSSIGL	= CARTSIG-$A000
 
 ; diskwriter code
-OFSDWH  = $F
-OFSDWL  = $E000
+OFSDWH  = $0
+OFSDWL  = $2000
 
 ; start of disk image area
-OFSIMSL	= $2000
 OFSIMSH	= 0
+OFSIMSL	= $4000
 
 ; end of disk image area
-OFSIMEL	= $E000
-OFSIMEH	= $F
+OFSIMEH	= $10
+OFSIMEL	= 0
 

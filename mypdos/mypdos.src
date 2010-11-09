@@ -403,10 +403,10 @@ HIAVAIL	RTS
 	.ELSE
 
 	.IF .DEF CARTSIO
-.if .def ATARIMAX8
-CSIOP	.incbin "cartsio-atarimax8-pal.bin"
+.if .def MEGAMAX8
+CSIOP	.incbin "cartsio-megamax-pal.bin"
 CSIOPL	= * - CSIOP
-CSION	.incbin "cartsio-atarimax8-ntsc.bin"
+CSION	.incbin "cartsio-megamax-ntsc.bin"
 CSIONL	= * - CSION
 .endif
 .if .def FREEZER
