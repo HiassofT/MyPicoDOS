@@ -131,7 +131,7 @@ ODLWR	= * - DLIST
 DLISTL	= * - DLIST
 
 TITLE	.SBYTE "    "
-	.SBYTE "DiskCart V1.11 (c) 2010 HiassofT"
+	.SBYTE "DiskCart V1.14 (c) 2010 HiassofT"
 	.SBYTE "    "
 
 	.SBYTE "          "
@@ -831,7 +831,7 @@ XEND	= *
 
 	* = CARTSIG
 	.BYTE "HiassofT"
-	.BYTE "20101109"
+	.BYTE "20101117"
 
 .if .def MEGAMAX8
 	* = $BFF0

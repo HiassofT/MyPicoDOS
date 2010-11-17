@@ -196,6 +196,9 @@ FBANKTMP .BYTE 0 ; temporary bank register
 ?FBCOUNT	.BYTE 0		; byte counter
 ?FPCOUNT	.BYTE 0		; page counter
 
+; flag ram mode: 0 = RAM, $FF = flash
+?FRAMMOD .BYTE 0
+
 ; internal flash types:
 ?ITHI	= 0	; $5555 addresses: AMD 29F010 / BM 29F040
 ?ITLO	= 1	; $0555 addresses: AMD 29F010B, 29F040B / ST 29F010 / ST 29F040B
@@ -255,16 +258,12 @@ MBASEBK	= ?BASEBNK
 
 ; write $F0 to any memory location
 	FPOKE 0, $F0
-
-; set bank for reading data
-?XRBANK	LDX ?BASEBNK
-	SBANKX
-	RTS
+	JMP ?XRBASE
 
 ?SETREA1
 	JSR ?SIG		; write common signature
 	FPOKE $5555,$F0
-	JMP ?XRBANK
+	JMP ?XRBASE
 
 
 ; put flash into "ID/autoselect" mode
@@ -312,11 +311,11 @@ MBASEBK	= ?BASEBNK
 	BNE ?SETCER1
 
 	FPOKE $555,$10
-	JMP ?XRBANK
+	JMP ?XRBASE
 
 ?SETCER1
 	FPOKE $5555,$10
-	JMP ?XRBANK
+	JMP ?XRBASE
 
 ; put flash into "Block erase" mode (bank must be set correctly!)
 ?SETBERA
@@ -328,8 +327,7 @@ MBASEBK	= ?BASEBNK
 	LDA #$30
 	LDY #0
 	STA (FLASHVEC),Y
-	JMP ?XRBANK
-
+	JMP ?XRBASE
 
 ; put flash into "byte program" mode
 ?SETPROG
@@ -349,10 +347,6 @@ MBASEBK	= ?BASEBNK
 ; $555 = $A0
 	LDA #$A0
 	STA BANKBAS+$555
-
-; set current bank number
-	LDX ?BANKNO
-	SBANKX
 	RTS
 
 ?SETPRO1
@@ -391,9 +385,6 @@ MBASEBK	= ?BASEBNK
 	LDA #$A0
 	STA BANKBAS+$1555
 .ENDIF
-; set current bank number
-	LDX ?BANKNO
-	SBANKX
 	RTS
 
 ; wait for a short time (specified in X)
@@ -451,11 +442,23 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 
 ; setup flash/bank sizes etc.
 ?DET4	
-; zero out unused padding bytes
+; default values
 	LDA #0
+	STA FSIZE
+	STA FSIZE+1
+	STA FSIZE+2
 	STA FSIZE+3
+	STA FBLKSIZ
+	STA FBLKSIZ+1
+	STA FBLKSIZ+2
 	STA FBLKSIZ+3
 	STA FBLKMSK+3
+	STA FNUMBLK
+	LDA #$FF
+	STA FBLKMSK
+	STA FBLKMSK+1
+	STA FBLKMSK+2
+	STA ?FRAMMOD
 
 ; check flash type, first 512k types
 	LDA FTYPE
@@ -465,6 +468,8 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	BEQ ?DET512
 	CMP #TBM40
 	BEQ ?DET512
+	CMP #TRAM512
+	BEQ ?RAM512
 
 ; and now 128k types
 	CMP #TAMD10
@@ -473,54 +478,41 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	BEQ ?DET128
 	CMP #TST10B
 	BEQ ?DET128
+	CMP #TRAM128
+	BEQ ?RAM128
+	CMP #TRAM1024
+	BEQ ?RAM1024
 
-; no flash - set dummy values
-	LDA #0
-	STA FSIZE
-	STA FSIZE+1
-	STA FSIZE+2
-	STA FBLKSIZ
-	STA FBLKSIZ+1
-	STA FBLKSIZ+2
-	STA FNUMBLK
-	LDA #$FF
-	STA FBLKMSK
-	STA FBLKMSK+1
-	STA FBLKMSK+2
+; no flash - just leave with dummy default values
 	JMP ?SETREAD	; try to leave ID mode anyways
 
-?DET512	LDA #0		; flash size 512k
-	STA FSIZE
-	STA FSIZE+1
-	LDA #8
-	STA FSIZE+2
+?RAM512
+	INC ?FRAMMOD
+?DET512	
+	LDA #8		; flash size 512k
+	STA FSIZE+2	
 
-	LDA #0		; block size 64k
-	STA FBLKSIZ
-	STA FBLKSIZ+1
-	LDA #1
+	LDA #1		; block size 64k
 	STA FBLKSIZ+2
 
 	LDA #8		; 8 blocks
 	STA FNUMBLK
 
-	LDA #$FF	; block mask is $00FFFF
-	STA FBLKMSK
-	STA FBLKMSK+1
-	LDA #0
+	LDA #0		; block mask is $00FFFF
 	STA FBLKMSK+2
-	JMP ?SETREAD
 
-?DET128	LDA #0		; flash size 128k
-	STA FSIZE
-	STA FSIZE+1
-	LDA #2
+?DET5	LDA ?FRAMMOD	; are we in RAM mode?
+	BEQ ?DET6	; yes, just return
+	JMP ?SETREAD	; no, set flash back to read mode
+?DET6	RTS		
+
+?RAM128
+	INC ?FRAMMOD
+?DET128
+	LDA #2		; flash size 128k
 	STA FSIZE+2
 
-	LDA #0		; block size 16k
-	STA FBLKSIZ
-	STA FBLKSIZ+2
-	LDA #$40
+	LDA #$40	; block size 16k
 	STA FBLKSIZ+1
 
 	LDA #8		; 8 blocks
@@ -530,9 +522,20 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	STA FBLKMSK
 	LDA #$3F
 	STA FBLKMSK+1
-	LDA #0
-	STA FBLKMSK+2
-	JMP ?SETREAD
+	BNE ?DET5
+
+?RAM1024
+	INC ?FRAMMOD
+	LDA #$10
+	STA FSIZE+2
+	RTS
+
+; set chip type (A=chip type)
+FSETCHP	STA FTYPE
+	CMP #TNOFLSH
+	BEQ ?FSETC1
+	JMP ?DET4	; valid type - setup config
+?FSETC1	RTS
 
 ; ID tables
 ; format: chip-type, manufacturer ID, device ID
@@ -588,23 +591,30 @@ FWBYTE	JSR ?FSETUPB		; setup addresses for byte mode
 
 ?FWBYTL	JSR ?FSETADR
 
+	BIT ?FRAMMOD
+	BPL ?FWBYT1
 	JSR ?SETPROG
+?FWBYT1	
+	LDX ?BANKNO
+	SBANKX
 	LDA (DATAVEC),Y
 	STA (FLASHVEC),Y	; program data
+	BIT ?FRAMMOD
+	BPL ?FWBYT2
 	JSR ?WTDATA		; wait for programming to finish
 	BMI ?FBERR1		; error 1
-	LDA (FLASHVEC),Y	; verify data
-	CMP (DATAVEC),Y
+	LDA (DATAVEC),Y		; verify data
+?FWBYT2	CMP (FLASHVEC),Y
 	BNE ?FBERR2		; error 2
 	INC DATAVEC
-	BNE ?FWBYT1
+	BNE ?FWBYT3
 	INC DATAVEC+1
-?FWBYT1	INC FLASHADI
-	BNE ?FWBYT2
+?FWBYT3	INC FLASHADI
+	BNE ?FWBYT4
 	INC FLASHADI+1
-	BNE ?FWBYT2
+	BNE ?FWBYT4
 	INC FLASHADI+2
-?FWBYT2	DEC ?FBCOUNT		; next byte?
+?FWBYT4	DEC ?FBCOUNT		; next byte?
 	BNE ?FWBYTL
 	LDA #0
 	RTS
@@ -625,7 +635,25 @@ FWPAGE	JSR ?FSETUPP		; setup adresses and check for page mode
 
 ?FWPAG1	JSR ?FSETADR		; setup absolute flash address
 
-?FWPAGL JSR ?SETPROG
+?FWPAGL 
+	BIT ?FRAMMOD
+	BMI ?FWPAGL2
+
+	LDX ?BANKNO
+	SBANKX
+?FWPAGL1
+	LDA (DATAVEC),Y
+	STA (FLASHVEC),Y
+	CMP (FLASHVEC),Y
+	BNE ?FPERR2
+	INY
+	BNE ?FWPAGL1
+	BEQ ?FWPAG2
+
+?FWPAGL2
+	JSR ?SETPROG
+	LDX ?BANKNO
+	SBANKX
 	LDA (DATAVEC),Y
 	STA (FLASHVEC),Y	; program data
 	JSR ?WTDATA		; wait for programming to finish
@@ -634,13 +662,13 @@ FWPAGE	JSR ?FSETUPP		; setup adresses and check for page mode
 	CMP (DATAVEC),Y		; verify data
 	BNE ?FPERR2
 	INY
-	BNE ?FWPAGL
+	BNE ?FWPAGL2
 
-	INC DATAVEC+1
+?FWPAG2	INC DATAVEC+1
 	INC FLASHADI+1
-	BNE ?FWPAG2
+	BNE ?FWPAG3
 	INC FLASHADI+2
-?FWPAG2	DEC ?FPCOUNT
+?FWPAG3	DEC ?FPCOUNT
 	BNE ?FWPAG1
 	LDA #0
 	RTS
@@ -759,19 +787,59 @@ FCPAGE	JSR ?FSETUPP		; setup adresses and check for page start
 
 ; completely erase flash chip
 FCERAS	JSR ?FSETUPA		; setup addresses
-	JSR ?SETCERA
-?FCERA1	LDA #$FF
+
+	BIT ?FRAMMOD
+	BMI ?FCERA1
+
+?FCERA0	LDA #EFLUNS		; erasing RAM not unsupported
+	STA FERROR
+	RTS
+
+?FCERA1	JSR ?SETCERA
+?FCERA2	LDA #$FF
 	LDY #0
 	STY FERROR
 	JSR ?WTDATA
-	BPL ?FCERA2
+	BPL ?FCERA3
 	LDA #EFLFTO
 	STA FERROR
-?FCERA2	LDA FERROR
+?FCERA3	LDA FERROR
 	RTS
 
 ; erase flash bank
 FPERAS	JSR ?FSETUPA		; setup addresses
+	BIT ?FRAMMOD
+	BPL ?FCERA0		; erasing RAM not unsupported
 	JSR ?SETBERA
 	JMP ?FCERA1
+
+; check for presence of flash(cart)
+FPRESENT
+	JSR ?FSETUPA
+	JSR FDISABLE
+	LDA BANKBAS		; save RAM content
+	STA FLASHTMP
+	JSR FENABLE
+	JSR ?XRBASE
+	LDA BANKBAS		; read flash content
+	EOR #$FF		; invert it
+	PHA
+	PHA
+	JSR FDISABLE
+	PLA
+	STA BANKBAS		; store inverted flash in RAM
+	JSR FENABLE
+	JSR ?XRBASE
+	PLA
+	CMP BANKBAS		; compare with flash
+	PHP
+	JSR FDISABLE
+	LDA FLASHTMP		; restore RAM content
+	STA BANKBAS
+	PLP
+	BEQ ?FPRES1		; values are equal - only RAM present
+	LDA #0			; values different - flash
+	RTS
+?FPRES1	LDA #$FF
+	RTS
 

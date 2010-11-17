@@ -69,7 +69,7 @@ static const struct CartConfig AllCartConfigs[] = {
 // Mega512
 	{ 0x80000, 0x4000, 0x80000, 0x3f00, 0x3fdf, 0x2000, 0 },
 // Megamax
-	{ 0x100000, 0x2000, 0xfe000, 0x1f00, 0x1fdf, 0, 0xfe000 },
+	{ 0x100000, 0x4000, 0x100000, 0x1f00, 0x1fdf, 0, 0x2000 },
 // Freezer
 	{ 0x70000, 0x4000, 0x70000, 0x1f00, 0x1fdf, 0, 0x2000 },
 };
@@ -369,7 +369,7 @@ int main(int argc, char** argv)
 	bool autorun = false;
 	const char* out_filename;
 
-	cout << "atr2cart V1.10 (c) 2010 by Matthias Reichl <hias@horus.com>" << endl;
+	cout << "atr2cart V1.14 (c) 2010 by Matthias Reichl <hias@horus.com>" << endl;
 	if (argc <= 3) {
 		goto usage;
 	}
