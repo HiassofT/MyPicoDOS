@@ -18,7 +18,14 @@
 
 	.include "cio.inc"
 
+.if .def MYIDEROM
 	CARTOFF = $D530
+.else
+.if .def MEGAMAXROM
+	CARTOFF = $D580
+.else
+	.error "specify ROM type!"
+.endif
 
 ; MyPicoDos start address
 MYSTART = $1000
@@ -112,7 +119,12 @@ MYSETL	= * - MYSETUP
 XRTS	RTS
 
 MYPDOS	= *
+.if .def MYIDEROM
 	.incbin "mypdos-code-hioff.bin"
+.endif
+.if .def MEGAMAXROM
+	.incbin "mypdos-code-r.bin"
+.endif
 MYPDPG	= (*-MYPDOS+255) / 256
 
 XEND	= *

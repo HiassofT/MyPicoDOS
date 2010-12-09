@@ -158,8 +158,13 @@ MYPDOSRN.COM: mypdos-com.src mypdos-code-r-hioff.bin
 MYPDOSB.COM: mypdos-com.src mypdos-code-b.bin
 	$(ATASM) $(ASMFLAGS) -dBAREBONE=1 -o$@ $<
 
+# myide flashcart
 MYPDIDE.ROM: mypdrom.src mypdos-code-hioff.bin
-	$(ATASM) $(ASMFLAGS) -r -o$@ $<
+	$(ATASM) $(ASMFLAGS) -dMYIDEROM -r -o$@ $<
+
+# Megamax 1MB/8k cart / atarimax 8mbit cart
+MYPDOSM8.ROM: mypdrom.src mypdos-code-r.bin
+	$(ATASM) $(ASMFLAGS) -dMEGAMAXROM -r -o$@ $<
 
 picostd405.c: mypdos.bin
 	dd if=$< bs=1 skip=384 | xxd -i > $@
