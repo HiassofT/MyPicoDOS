@@ -197,7 +197,7 @@ FBANKTMP .BYTE 0 ; temporary bank register
 ?FPCOUNT	.BYTE 0		; page counter
 
 ; flag ram mode: 0 = RAM, $FF = flash
-?FRAMMOD .BYTE 0
+?FRAMMOD .BYTE $FF
 
 ; internal flash types:
 ?ITHI	= 0	; $5555 addresses: AMD 29F010 / BM 29F040
@@ -207,7 +207,9 @@ FBANKTMP .BYTE 0 ; temporary bank register
 ?ITYPE	.BYTE 0
 
 ; common initialization stuff
-?FINIT	JMP FADRZERO	; just clear flash address
+?FINIT	LDA #$FF
+	STA ?FRAMMOD
+	JMP FADRZERO	; just clear flash address
 
 MBASEBK	= ?BASEBNK
 
@@ -811,7 +813,7 @@ FPERAS	JSR ?FSETUPA		; setup addresses
 	BIT ?FRAMMOD
 	BPL ?FCERA0		; erasing RAM not unsupported
 	JSR ?SETBERA
-	JMP ?FCERA1
+	JMP ?FCERA2
 
 ; check for presence of flash(cart)
 FPRESENT
