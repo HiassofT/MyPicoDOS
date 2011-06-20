@@ -31,14 +31,14 @@ OFSSIGH	= 0
 OFSSIGL	= CARTSIG-$A000
 
 ; diskwriter code
-OFSDWH  = $0
-OFSDWL  = $2000
+OFSDWH  = $F
+OFSDWL  = $E000
 
 ; start of disk image area
 OFSIMSH	= 0
-OFSIMSL	= $4000
+OFSIMSL	= $2000
 
 ; end of disk image area
-OFSIMEH	= $10
-OFSIMEL	= 0
+OFSIMEH	= $F
+OFSIMEL	= $E000
 

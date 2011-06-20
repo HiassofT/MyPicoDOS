@@ -1,7 +1,7 @@
 /*
    atr2cart - create flashcart image containing multiple ATRs
 
-   Copyright (C) 2010 Matthias Reichl <hias@horus.com>
+   Copyright (C) 2010-2011 Matthias Reichl <hias@horus.com>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -29,11 +29,11 @@
 
 #include "mypdos-mega512.c"
 #include "mypdos-megamax.c"
-#include "mypdos-freezer.c"
+#include "mypdos-freezer05.c"
 
 #include "diskwriter-mega512.c"
 #include "diskwriter-megamax.c"
-#include "diskwriter-freezer.c"
+#include "diskwriter-freezer05.c"
 
 #ifdef WINVER
 #define DIR_SEPARATOR '\\'
@@ -69,7 +69,7 @@ static const struct CartConfig AllCartConfigs[] = {
 // Mega512
 	{ 0x80000, 0x4000, 0x80000, 0x3f00, 0x3fdf, 0x2000, 0 },
 // Megamax
-	{ 0x100000, 0x4000, 0x100000, 0x1f00, 0x1fdf, 0, 0x2000 },
+	{ 0x100000, 0x2000, 0xfe000, 0x1f00, 0x1fdf, 0, 0xfe000 },
 // Freezer
 	{ 0x70000, 0x4000, 0x70000, 0x1f00, 0x1fdf, 0, 0x2000 },
 };
@@ -146,11 +146,12 @@ void init_rom_image(bool autorun)
 		break;
 	case eMegamax:
 		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_megamax_rom, 0x2000);
+		memcpy(rom_image+cartconfig->image_size-32, mypdos_megamax_rom + 0x2000-32, 32);	// cart init code for Atarimax
 		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_megamax_bin, sizeof(diskwriter_megamax_bin));
 		break;
 	case eFreezer:
-		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer_rom, 0x2000);
-		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_freezer_bin, sizeof(diskwriter_freezer_bin));
+		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer05_rom, 0x2000);
+		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_freezer05_bin, sizeof(diskwriter_freezer05_bin));
 		break;
 
 	default:
@@ -369,7 +370,7 @@ int main(int argc, char** argv)
 	bool autorun = false;
 	const char* out_filename;
 
-	cout << "atr2cart V1.14 (c) 2010 by Matthias Reichl <hias@horus.com>" << endl;
+	cout << "atr2cart V1.15 (c) 2010-2011 by Matthias Reichl <hias@horus.com>" << endl;
 	if (argc <= 3) {
 		goto usage;
 	}
@@ -389,7 +390,7 @@ int main(int argc, char** argv)
 	}
 	if (strcasecmp(argv[idx], "mm") == 0) {
 		cartType = eMegamax;
-		cout << "output type: Megamax 1024k FlashCart" << endl;
+		cout << "output type: Megamax/Atarimax 1024k FlashCart" << endl;
 	}
 	if (strcasecmp(argv[idx], "frz") == 0) {
 		cartType = eFreezer;
@@ -432,7 +433,7 @@ usage:
 	cout << "   -a: enable MyPicoDos autostart" << endl;
 	cout << "supported types:" << endl;
 	cout << " m512: MegaCart 512k" << endl;
-	cout << "   mm: Megamax 1024k FlashCart" << endl;
+	cout << "   mm: Megamax/Atarimax 1024k FlashCart" << endl;
 	cout << "  frz: TurboFreezer CartEmu" << endl;
 	return 1;
 }

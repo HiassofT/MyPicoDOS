@@ -60,6 +60,6 @@
 	.ENDM
 
 ; bank and address of diskwriter code
-CDWBANK = $1
+CDWBANK = $7F
 CDWADDR = $A000
 

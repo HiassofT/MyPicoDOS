@@ -1,0 +1,115 @@
+;  libflash-freezer2005 - code for Turbo Freezer 2005 cartemu
+;
+;  Copyright (C) 2004-2010 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+BANKREG	= $D540
+BANKSIZ	= 8	; 8k banks
+BANKBAS	= $A000	; base address
+
+; address of freezer software version
+VEROFSH = $07
+VEROFSL = $BEE0
+
+; Turbo Freezer CartEmu control registers
+
+; enable/disable CartEmu
+FRCAREN = $D581
+FRCARDIS = $D580
+
+; keep or reset settings on reset
+FRMODKEEP = $D583
+FRMODRES = $D582
+
+; enable/disable write access
+FRWREN	= $D585
+FRWRDIS	= $D584
+
+; mode RAM/ROM
+FRMODROM = $D586
+FRMODRAM = $D587
+
+; cart type 8k/16k/OSS/SDX
+FRMOD8K	= $D588
+FRMOD16K = $D589
+FRMODOSS = $D58A
+FRMODSDX = $D58B
+
+; set bank number from X
+	.MACRO SBANKX
+	STA BANKREG,X
+	.ENDM
+
+; set bank number from memory location
+	.MACRO SBANK ; parameter: address
+	LDX [%1]
+	SBANKX
+	.ENDM
+
+; enable cartemu
+	.MACRO SBANKON
+	STA FRCAREN
+	.ENDM
+
+; disable cartemu
+	.MACRO SBANKOFF
+	STA FRCARDIS
+	.ENDM
+
+; calculate bank number (in: A, out: A)
+	.MACRO CBANK
+	AND #$3F	; 64 8k banks
+	.ENDM
+
+; calculate base bank number (in: A, out: A)
+	.MACRO CBASE
+	AND #0		; only one chip
+	.ENDM
+
+; init flash library
+FINIT   INC $42
+	SBANKOFF
+	STA FRWRDIS
+	STA FRMODROM
+	STA FRMOD8K
+	LDA $D013
+	STA $03FA
+	DEC $42
+	JMP ?FINIT
+
+; enable flash access
+FENABLE	INC $42
+	SBANKON
+	STA FRMODROM
+	BIT ?FRAMMOD
+	BMI ?FENAB1
+	STA FRMODRAM
+?FENAB1	STA FRWREN
+	LDA $D013
+	STA $03FA
+	DEC $42
+	RTS
+
+; disable flash access
+FDISABLE INC $42
+	SBANKOFF
+	STA FRMODROM
+	STA FRWRDIS
+	LDA $D013
+	STA $03FA
+	DEC $42
+	RTS
+

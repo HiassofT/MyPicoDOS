@@ -1,6 +1,6 @@
 ;  diskcart - load disks into flashcart
 ;
-;  Copyright (C) 2010 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 2010-2011 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@
 .if .def MEGAMAX8
 	.include "diskcart-megamax8.inc"
 .endif
-.if .def FREEZER
-	.include "diskcart-freezer.inc"
+.if .def FREEZER2005
+	.include "diskcart-freezer05.inc"
 .endif
 .if .def MEGA512
 	.include "diskcart-mega512.inc"
@@ -179,7 +179,7 @@ NO4	CMP #'5
 
 DOSC1	INC $42
 	CARTBNKI CSROMBK
-.if .def FREEZER
+.if .def FREEZER2005
 	CARTON
 .endif
 	JMP $E477
@@ -539,7 +539,8 @@ NOCLRDC
 	BMI DOINIE2
 
 
-.if 0
+.if .def MEGAMAX8
+; also program cartdrige startup code into last bank
 	LDY #0
 STCLP	LDA CCADR+$1FE0,Y
 	STA DATABUF,Y
@@ -1166,7 +1167,7 @@ DETCHK
 DETXIT	RTS
 .endif
 
-.if .def FREEZER
+.if .def FREEZER2005
 ; we have to do block erase, so check if the flash size is 512k
 ; and the flash consists of 8*64k blocks
 	LDA FSIZE
@@ -1195,7 +1196,7 @@ DETERR	BPUT0 TUNSUP
 ERASE	JSR FADRZERO
 	JSR FENABLE
 
-.if .def FREEZER
+.if .def FREEZER2005
 ; erase 7*64k blocks, combine status resulsts
 	LDA #0
 	STA TMP32
@@ -1241,7 +1242,7 @@ ERASE2
 
 	PLP
 	RTS
-.endif	; FREEZER
+.endif	; FREEZER2005
 
 
 TFA10	.BYTE "Flash:", $99
@@ -1380,22 +1381,22 @@ WRFMT	.BYTE 0
 
 TTITLE
 .if .def MEGAMAX8
-	.BYTE 125, "Megamax 1024k DiskWriter V1.14",155
-	.BYTE "(c) 2010 by Matthias Reichl",155,155
+	.BYTE 125, "Atari/MegaMax 1024k DiskWriter V1.15",155
+	.BYTE "(c) 2011 by Matthias Reichl",155,155
 .endif
-.if .def FREEZER
-	.BYTE 125, "Turbo Freezer DiskWriter V1.14",155
-	.BYTE "(c) 2010 by Matthias Reichl",155,155
+.if .def FREEZER2005
+	.BYTE 125, "Turbo Freezer DiskWriter V1.15",155
+	.BYTE "(c) 2011 by Matthias Reichl",155,155
 .endif
 .if .def MEGA512
-	.BYTE 125, "Mega 512k FlashCart DiskWriter V1.14",155
-	.BYTE "(c) 2010 by Matthias Reichl",155,155
+	.BYTE 125, "Mega 512k FlashCart DiskWriter V1.15",155
+	.BYTE "(c) 2011 by Matthias Reichl",155,155
 .endif
 TTITLEL	= * - TTITLE
 
 
 TMENU	.BYTE 155,155
-.if .def FREEZER
+.if .def FREEZER2005
 	.BYTE "1) Init CartEmu",155
 .else
 	.BYTE "1) Init flash cartridge",155
@@ -1412,7 +1413,7 @@ TNOCAR
 .if .def MEGAMAX8
 	.BYTE "no cart detected - check switch"
 .else
-.if .def FREEZER
+.if .def FREEZER2005
 	.BYTE "no cartemu detected - check switch"
 .else
 	.BYTE "no cart detected!"
@@ -1429,7 +1430,7 @@ TASKRML	= * - TASKRM
 TNOINI	.BYTE 155, "cart uninitialized!"
 TASKIN
 
-.if .def FREEZER
+.if .def FREEZER2005
 	.BYTE 155, "Initialize CartEmu (y/n)? "
 .else
 	.BYTE 155, "Initialize flash cart (y/n)? "
@@ -1576,8 +1577,8 @@ CARTCOD
 .if .def MEGAMAX8
 	.incbin "mypdos-megamax.rom"
 .endif
-.if .def FREEZER
-	.incbin "mypdos-freezer.rom"
+.if .def FREEZER2005
+	.incbin "mypdos-freezer05.rom"
 .endif
 .if .def MEGA512
 	.incbin "mypdos-mega512.rom"

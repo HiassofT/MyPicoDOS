@@ -69,7 +69,7 @@ STDSIO	JMP $1234	; call original OS SIO code
 .endif
 
 	LDY #0
-.if .def FREEZER
+.if .def FREEZER2005
 	CARTBNK CSSRCB	; set source bank number
 ?CPLP	CARTON
 	LDA (CSSRC),Y

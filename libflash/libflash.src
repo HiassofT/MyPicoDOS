@@ -24,8 +24,12 @@
 	.include "libflash-megamax16.src"
 .endif
 
-.if .def FREEZER
-	.include "libflash-freezer.src"
+.if .def FREEZER2005
+	.include "libflash-freezer2005.src"
+.endif
+
+.if .def FREEZER2011
+	.include "libflash-freezer2011.src"
 .endif
 
 .if .def MEGA512
@@ -329,7 +333,8 @@ MBASEBK	= ?BASEBNK
 	LDA #$30
 	LDY #0
 	STA (FLASHVEC),Y
-	JMP ?XRBASE
+	RTS
+;	JMP ?XRBASE	; ????? - no, stay in current bank!
 
 ; put flash into "byte program" mode
 ?SETPROG
@@ -793,7 +798,7 @@ FCERAS	JSR ?FSETUPA		; setup addresses
 	BIT ?FRAMMOD
 	BMI ?FCERA1
 
-?FCERA0	LDA #EFLUNS		; erasing RAM not unsupported
+?FCERA0	LDA #EFLUNS		; erasing RAM not supported
 	STA FERROR
 	RTS
 
@@ -811,7 +816,7 @@ FCERAS	JSR ?FSETUPA		; setup addresses
 ; erase flash bank
 FPERAS	JSR ?FSETUPA		; setup addresses
 	BIT ?FRAMMOD
-	BPL ?FCERA0		; erasing RAM not unsupported
+	BPL ?FCERA0		; erasing RAM not supported
 	JSR ?SETBERA
 	JMP ?FCERA2
 

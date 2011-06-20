@@ -1,6 +1,4 @@
-DiskCart V1.14
+DiskCart V1.15
 MEDISK  COM Mega 512k DiskCart
-MMDISK  COM Megamax 1024k DiskCart
+MMDISK  COM Megamax/Atarimax 1024k DiskCart
 FRDISK  COM Turbo Freezer DiskCart
-CTESTME COM Mega 512k FlashCart Tester
-CTESTMM COM Megamax 1024k FlashCart Tester

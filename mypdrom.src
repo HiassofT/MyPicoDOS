@@ -1,6 +1,6 @@
 ;  mypdrom - DiskCart/MyPicoDos flashcart version
 ;
-;  Copyright (C) 2007-2010 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 2007-2011 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -131,7 +131,7 @@ ODLWR	= * - DLIST
 DLISTL	= * - DLIST
 
 TITLE	.SBYTE "    "
-	.SBYTE "DiskCart V1.14 (c) 2010 HiassofT"
+	.SBYTE "DiskCart V1.15 (c) 2011 HiassofT"
 	.SBYTE "    "
 
 	.SBYTE "          "
@@ -652,8 +652,8 @@ MYPDOS	= *
 .if .def MEGAMAX8
 	.incbin "mypdos-code-megamax.bin"
 .endif
-.if .def FREEZER
-	.incbin "mypdos-code-freezer.bin"
+.if .def FREEZER2005
+	.incbin "mypdos-code-freezer05.bin"
 .endif
 .if .def MEGA512
 	.incbin "mypdos-code-mega512.bin"
@@ -666,10 +666,10 @@ OSCODPL	= * - OSCODP
 OSCODN	.incbin "cartsiocode-osram-megamax-ntsc.bin"
 OSCODNL	= * - OSCODN
 .endif
-.if .def FREEZER
-OSCODP	.incbin "cartsiocode-osram-freezer-pal.bin"
+.if .def FREEZER2005
+OSCODP	.incbin "cartsiocode-osram-freezer05-pal.bin"
 OSCODPL	= * - OSCODP
-OSCODN	.incbin "cartsiocode-osram-freezer-ntsc.bin"
+OSCODN	.incbin "cartsiocode-osram-freezer05-ntsc.bin"
 OSCODNL	= * - OSCODN
 .endif
 .if .def MEGA512
@@ -831,7 +831,7 @@ XEND	= *
 
 	* = CARTSIG
 	.BYTE "HiassofT"
-	.BYTE "20101228"
+	.BYTE "20110504"
 
 .if .def MEGAMAX8
 	* = $BFF0
