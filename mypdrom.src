@@ -131,7 +131,7 @@ ODLWR	= * - DLIST
 DLISTL	= * - DLIST
 
 TITLE	.SBYTE "    "
-	.SBYTE "DiskCart V1.15 (c) 2011 HiassofT"
+	.SBYTE "DiskCart V1.16 (c) 2011 HiassofT"
 	.SBYTE "    "
 
 	.SBYTE "          "
@@ -649,17 +649,26 @@ CLR7LP	STA (SRCADR),Y
 	RTS
 
 MYPDOS	= *
+.if .def MEGA512
+	.incbin "mypdos-code-mega512.bin"
+.endif
 .if .def MEGAMAX8
 	.incbin "mypdos-code-megamax.bin"
 .endif
 .if .def FREEZER2005
 	.incbin "mypdos-code-freezer05.bin"
 .endif
-.if .def MEGA512
-	.incbin "mypdos-code-mega512.bin"
+.if .def FREEZER2011
+	.incbin "mypdos-code-freezer11.bin"
 .endif
 MYPDPG	= (*-MYPDOS+255) / 256
 
+.if .def MEGA512
+OSCODP	.incbin "cartsiocode-osram-mega512-pal.bin"
+OSCODPL	= * - OSCODP
+OSCODN	.incbin "cartsiocode-osram-mega512-ntsc.bin"
+OSCODNL	= * - OSCODN
+.endif
 .if .def MEGAMAX8
 OSCODP	.incbin "cartsiocode-osram-megamax-pal.bin"
 OSCODPL	= * - OSCODP
@@ -672,10 +681,10 @@ OSCODPL	= * - OSCODP
 OSCODN	.incbin "cartsiocode-osram-freezer05-ntsc.bin"
 OSCODNL	= * - OSCODN
 .endif
-.if .def MEGA512
-OSCODP	.incbin "cartsiocode-osram-mega512-pal.bin"
+.if .def FREEZER2011
+OSCODP	.incbin "cartsiocode-osram-freezer11-pal.bin"
 OSCODPL	= * - OSCODP
-OSCODN	.incbin "cartsiocode-osram-mega512-ntsc.bin"
+OSCODN	.incbin "cartsiocode-osram-freezer11-ntsc.bin"
 OSCODNL	= * - OSCODN
 .endif
 
@@ -831,7 +840,7 @@ XEND	= *
 
 	* = CARTSIG
 	.BYTE "HiassofT"
-	.BYTE "20110504"
+	.BYTE "20110803"
 
 .if .def MEGAMAX8
 	* = $BFF0

@@ -30,10 +30,12 @@
 #include "mypdos-mega512.c"
 #include "mypdos-megamax.c"
 #include "mypdos-freezer05.c"
+#include "mypdos-freezer11.c"
 
 #include "diskwriter-mega512.c"
 #include "diskwriter-megamax.c"
 #include "diskwriter-freezer05.c"
+#include "diskwriter-freezer11.c"
 
 #ifdef WINVER
 #define DIR_SEPARATOR '\\'
@@ -49,8 +51,9 @@ using namespace AtrUtils;
 enum ECartType {
 	eMega512 = 0,
 	eMegamax = 1,
-	eFreezer = 2,
-	eNoCart = 3
+	eFreezer2005 = 2,
+	eFreezer2011 = 3,
+	eNoCart = 4
 };
 
 static ECartType cartType = eNoCart;
@@ -70,8 +73,10 @@ static const struct CartConfig AllCartConfigs[] = {
 	{ 0x80000, 0x4000, 0x80000, 0x3f00, 0x3fdf, 0x2000, 0 },
 // Megamax
 	{ 0x100000, 0x2000, 0xfe000, 0x1f00, 0x1fdf, 0, 0xfe000 },
-// Freezer
+// Freezer 2005
 	{ 0x70000, 0x4000, 0x70000, 0x1f00, 0x1fdf, 0, 0x2000 },
+// Freezer 2011
+	{ 0x80000, 0x4000, 0x80000, 0x1f00, 0x1fdf, 0, 0x2000 },
 };
 
 static const struct CartConfig* cartconfig;
@@ -149,9 +154,14 @@ void init_rom_image(bool autorun)
 		memcpy(rom_image+cartconfig->image_size-32, mypdos_megamax_rom + 0x2000-32, 32);	// cart init code for Atarimax
 		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_megamax_bin, sizeof(diskwriter_megamax_bin));
 		break;
-	case eFreezer:
+	case eFreezer2005:
 		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer05_rom, 0x2000);
 		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_freezer05_bin, sizeof(diskwriter_freezer05_bin));
+		break;
+
+	case eFreezer2011:
+		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer11_rom, 0x2000);
+		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_freezer11_bin, sizeof(diskwriter_freezer11_bin));
 		break;
 
 	default:
@@ -392,9 +402,13 @@ int main(int argc, char** argv)
 		cartType = eMegamax;
 		cout << "output type: Megamax/Atarimax 1024k FlashCart" << endl;
 	}
-	if (strcasecmp(argv[idx], "frz") == 0) {
-		cartType = eFreezer;
-		cout << "output type: TurboFreezer CartEmu" << endl;
+	if (strcasecmp(argv[idx], "frz05") == 0) {
+		cartType = eFreezer2005;
+		cout << "output type: TurboFreezer 2005 CartEmu" << endl;
+	}
+	if (strcasecmp(argv[idx], "frz11") == 0) {
+		cartType = eFreezer2011;
+		cout << "output type: TurboFreezer 2011 CartEmu" << endl;
 	}
 	if (cartType == eNoCart) {
 		goto usage;
@@ -434,6 +448,7 @@ usage:
 	cout << "supported types:" << endl;
 	cout << " m512: MegaCart 512k" << endl;
 	cout << "   mm: Megamax/Atarimax 1024k FlashCart" << endl;
-	cout << "  frz: TurboFreezer CartEmu" << endl;
+	cout << "frz05: TurboFreezer 2005 CartEmu" << endl;
+	cout << "frz11: TurboFreezer 2011 CartEmu" << endl;
 	return 1;
 }

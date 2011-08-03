@@ -20,10 +20,6 @@ BANKREG	= $D540
 BANKSIZ	= 8	; 8k banks
 BANKBAS	= $A000	; base address
 
-; address of freezer software version
-VEROFSH = $07
-VEROFSL = $BEE0
-
 ; Turbo Freezer CartEmu control registers
 
 ; enable/disable CartEmu
@@ -80,36 +76,24 @@ FRMODSDX = $D58B
 	.ENDM
 
 ; init flash library
-FINIT   INC $42
-	SBANKOFF
+FINIT   SBANKOFF
 	STA FRWRDIS
 	STA FRMODROM
 	STA FRMOD8K
-	LDA $D013
-	STA $03FA
-	DEC $42
 	JMP ?FINIT
 
 ; enable flash access
-FENABLE	INC $42
-	SBANKON
+FENABLE	SBANKON
 	STA FRMODROM
 	BIT ?FRAMMOD
 	BMI ?FENAB1
 	STA FRMODRAM
 ?FENAB1	STA FRWREN
-	LDA $D013
-	STA $03FA
-	DEC $42
 	RTS
 
 ; disable flash access
-FDISABLE INC $42
-	SBANKOFF
+FDISABLE SBANKOFF
 	STA FRMODROM
 	STA FRWRDIS
-	LDA $D013
-	STA $03FA
-	DEC $42
 	RTS
 

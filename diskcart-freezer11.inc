@@ -1,4 +1,4 @@
-;  diskcart-freezer05.inc - definitions for Turbo Freezer 2005 CartEmu
+;  diskcart-freezer11.inc - definitions for Turbo Freezer 2011 CartEmu
 ;
 ;  Copyright (C) 2011 Matthias Reichl <hias@horus.com>
 ;
@@ -16,7 +16,7 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-; offsets in Turbo Freezer CartEmu
+; offsets in Turbo Freezer CartEmu (using first 512k)
 
 ; code starts at offset 0
 OFSCODH = 0
@@ -38,7 +38,7 @@ OFSDWL	= $2000
 OFSIMSH	= 0
 OFSIMSL	= $4000
 
-; end of disk image area (last 64k reserved for Freezer)
-OFSIMEH	= $7
+; end of disk image area
+OFSIMEH	= $8
 OFSIMEL	= $0000
 

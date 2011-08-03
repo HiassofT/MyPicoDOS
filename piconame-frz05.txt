@@ -1,2 +1,0 @@
-DiskCart V1.14
-FRDISK  COM Turbo Freezer DiskCart

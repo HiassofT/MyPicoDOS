@@ -22,14 +22,17 @@
 	.include "arith.inc"
 	.include "iohelp.inc"
 
+.if .def MEGA512
+	.include "diskcart-mega512.inc"
+.endif
 .if .def MEGAMAX8
 	.include "diskcart-megamax8.inc"
 .endif
 .if .def FREEZER2005
 	.include "diskcart-freezer05.inc"
 .endif
-.if .def MEGA512
-	.include "diskcart-mega512.inc"
+.if .def FREEZER2011
+	.include "diskcart-freezer11.inc"
 .endif
 
 ; temporary ZP vectors
@@ -178,10 +181,7 @@ NO4	CMP #'5
 	JMP MENULP
 
 DOSC1	INC $42
-	CARTBNKI CSROMBK
-.if .def FREEZER2005
-	CARTON
-.endif
+	CARTBASE
 	JMP $E477
 
 NO5	JMP MENULP
@@ -1380,23 +1380,24 @@ TMPIDX	.BYTE 0
 WRFMT	.BYTE 0
 
 TTITLE
+.if .def MEGA512
+	.BYTE 125, "Mega 512k FlashCart DiskWriter V1.16",155
+.endif
 .if .def MEGAMAX8
-	.BYTE 125, "Atari/MegaMax 1024k DiskWriter V1.15",155
-	.BYTE "(c) 2011 by Matthias Reichl",155,155
+	.BYTE 125, "Atari/MegaMax 1024k DiskWriter V1.16",155
 .endif
 .if .def FREEZER2005
-	.BYTE 125, "Turbo Freezer DiskWriter V1.15",155
-	.BYTE "(c) 2011 by Matthias Reichl",155,155
+	.BYTE 125, "Turbo Freezer 2005 DiskWriter V1.16",155
 .endif
-.if .def MEGA512
-	.BYTE 125, "Mega 512k FlashCart DiskWriter V1.15",155
-	.BYTE "(c) 2011 by Matthias Reichl",155,155
+.if .def FREEZER2011
+	.BYTE 125, "Turbo Freezer 2011 DiskWriter V1.16",155
 .endif
+.BYTE "(c) 2011 by Matthias Reichl",155,155
 TTITLEL	= * - TTITLE
 
 
 TMENU	.BYTE 155,155
-.if .def FREEZER2005
+.if .def FREEZER2005 .or .def FREEZER2011
 	.BYTE "1) Init CartEmu",155
 .else
 	.BYTE "1) Init flash cartridge",155
@@ -1413,7 +1414,7 @@ TNOCAR
 .if .def MEGAMAX8
 	.BYTE "no cart detected - check switch"
 .else
-.if .def FREEZER2005
+.if .def FREEZER2005 .or .def FREEZER2011
 	.BYTE "no cartemu detected - check switch"
 .else
 	.BYTE "no cart detected!"
@@ -1430,7 +1431,7 @@ TASKRML	= * - TASKRM
 TNOINI	.BYTE 155, "cart uninitialized!"
 TASKIN
 
-.if .def FREEZER2005
+.if .def FREEZER2005 .or .def FREEZER2011
 	.BYTE 155, "Initialize CartEmu (y/n)? "
 .else
 	.BYTE 155, "Initialize flash cart (y/n)? "
@@ -1574,14 +1575,17 @@ DATABUF = *
 	.bank
 
 CARTCOD
+.if .def MEGA512
+	.incbin "mypdos-mega512.rom"
+.endif
 .if .def MEGAMAX8
 	.incbin "mypdos-megamax.rom"
 .endif
 .if .def FREEZER2005
 	.incbin "mypdos-freezer05.rom"
 .endif
-.if .def MEGA512
-	.incbin "mypdos-mega512.rom"
+.if .def FREEZER2011
+	.incbin "mypdos-freezer11.rom"
 .endif
 CARTCODL = * - CARTCOD
 

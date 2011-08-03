@@ -1,3 +1,0 @@
-DiskCart V1.14
-MEDISK  COM Mega 512k DiskCart
-CTESTME COM Mega 512k FlashCart Tester

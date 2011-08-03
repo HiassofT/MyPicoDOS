@@ -1,4 +1,4 @@
-;  cartsio-freezer05.inc - definitions for Turbo Freezer 2005 CartEmu
+;  cartsio-freezer11.inc - definitions for Turbo Freezer 2011 CartEmu
 ;
 ;  Copyright (c) 2011 by Matthias Reichl <hias@horus.com>
 ;
@@ -18,27 +18,24 @@
 
 ; common macros
 	.MACRO CARTBNKX ; set bank from X register
-	STA $D540,X
+	STX $D590
 	.ENDM
 
-	.MACRO CARTBNKI ; parameter: bank nummer (immediate)
-	STA $D540+%1
+	.MACRO CARTBNKI ; parameter: bank number (immediate)
+	LDX #%1
+	CARTBNKX
 	.ENDM
 
 	.MACRO CARTOFF	; disable cartridge
-	STA $D580
-	.ENDM
-
-	.MACRO CARTON	; enable cartridge
-	STA $D581
+	LDX #0
+	STX $D591
 	.ENDM
 
 	.MACRO CARTBASE	; set base ROM bank for cartsio
 	CARTBNKI CSROMBK
-	CARTON
 	.ENDM
 
-	.MACRO CARTBNK ; parameter: bank nummer (address)
+	.MACRO CARTBNK ; parameter: bank number (address)
 	LDX %1
 	CARTBNKX
 	.ENDM
