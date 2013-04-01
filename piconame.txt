@@ -1,5 +1,6 @@
-DiskCart V1.16
+DiskCart V1.20
 MEDISK  COM Mega 512k DiskCart
+M4DISK  COM 4MB Mega DiskCart
 MMDISK  COM Megamax/Atarimax 1024k DiskCart
 F05DISK COM Turbo Freezer 2005 DiskCart
 F11DISK COM Turbo Freezer 2011 DiskCart

@@ -21,6 +21,8 @@
 #include <string>
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <iostream>
 
 #include "AtrUtils.h"
@@ -28,11 +30,13 @@
 #include "Error.h"
 
 #include "mypdos-mega512.c"
+#include "mypdos-mega4096.c"
 #include "mypdos-megamax.c"
 #include "mypdos-freezer05.c"
 #include "mypdos-freezer11.c"
 
 #include "diskwriter-mega512.c"
+#include "diskwriter-mega4096.c"
 #include "diskwriter-megamax.c"
 #include "diskwriter-freezer05.c"
 #include "diskwriter-freezer11.c"
@@ -46,14 +50,13 @@
 using namespace std;
 using namespace AtrUtils;
 
-#define MAX_IMAGESIZE (1024*1024)
-
 enum ECartType {
 	eMega512 = 0,
 	eMegamax = 1,
 	eFreezer2005 = 2,
 	eFreezer2011 = 3,
-	eNoCart = 4
+	eMega4096 = 4,
+	eNoCart = 5
 };
 
 static ECartType cartType = eNoCart;
@@ -77,6 +80,8 @@ static const struct CartConfig AllCartConfigs[] = {
 	{ 0x70000, 0x4000, 0x70000, 0x1f00, 0x1fdf, 0, 0x2000 },
 // Freezer 2011
 	{ 0x80000, 0x4000, 0x80000, 0x1f00, 0x1fdf, 0, 0x2000 },
+// Mega4096
+	{ 0x3fc000, 0, 0x3f8000, 0x3fbf00, 0x3fbfdf, 0x3fa000, 0x3f8000 },
 };
 
 static const struct CartConfig* cartconfig;
@@ -91,7 +96,7 @@ static const struct CartConfig* cartconfig;
 #define NAME_OFFSET 16
 #define NAME_LENGTH 32
 
-static uint8_t rom_image[MAX_IMAGESIZE];
+static uint8_t *rom_image = NULL;
 
 static unsigned int current_driveno;
 static unsigned long image_offset;
@@ -142,12 +147,17 @@ void set_drive_table(
 void init_rom_image(bool autorun)
 {
 	int i;
-	memset(rom_image, 0xff, MAX_IMAGESIZE);
+	rom_image = (uint8_t*) malloc(cartconfig->image_size);
+	memset(rom_image, 0xff, cartconfig->image_size);
 
 	switch (cartType) {
 	case eMega512:
 		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_mega512_rom, 0x2000);
 		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_mega512_bin, sizeof(diskwriter_mega512_bin));
+		break;
+	case eMega4096:
+		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_mega4096_rom, 0x2000);
+		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_mega4096_bin, sizeof(diskwriter_mega4096_bin));
 		break;
 	case eMegamax:
 		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_megamax_rom, 0x2000);
@@ -380,7 +390,7 @@ int main(int argc, char** argv)
 	bool autorun = false;
 	const char* out_filename;
 
-	cout << "atr2cart V1.15 (c) 2010-2011 by Matthias Reichl <hias@horus.com>" << endl;
+	cout << "atr2cart V1.20 (c) 2010-2013 by Matthias Reichl <hias@horus.com>" << endl;
 	if (argc <= 3) {
 		goto usage;
 	}
@@ -397,6 +407,10 @@ int main(int argc, char** argv)
 	if (strcasecmp(argv[idx], "m512") == 0) {
 		cartType = eMega512;
 		cout << "output type: MegaCart 512k" << endl;
+	}
+	if (strcasecmp(argv[idx], "m4096") == 0) {
+		cartType = eMega4096;
+		cout << "output type: 4MB MegaCart" << endl;
 	}
 	if (strcasecmp(argv[idx], "mm") == 0) {
 		cartType = eMegamax;
@@ -441,12 +455,17 @@ int main(int argc, char** argv)
 			<< endl;
 	}
 
+	if (rom_image != NULL) {
+		free(rom_image);
+		rom_image = NULL;
+	}
 	return 0;
 usage:
 	cout << "usage: atr2catr [-a] type outfile.rom file1.atr [file2.atr ...]" << endl;
 	cout << "   -a: enable MyPicoDos autostart" << endl;
 	cout << "supported types:" << endl;
 	cout << " m512: MegaCart 512k" << endl;
+	cout << "m4096: 4MB MegaCart" << endl;
 	cout << "   mm: Megamax/Atarimax 1024k FlashCart" << endl;
 	cout << "frz05: TurboFreezer 2005 CartEmu" << endl;
 	cout << "frz11: TurboFreezer 2011 CartEmu" << endl;

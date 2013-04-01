@@ -25,6 +25,9 @@
 .if .def MEGA512
 	.include "diskcart-mega512.inc"
 .endif
+.if .def MEGA4096
+	.include "diskcart-mega4096.inc"
+.endif
 .if .def MEGAMAX8
 	.include "diskcart-megamax8.inc"
 .endif
@@ -1167,6 +1170,20 @@ DETCHK
 DETXIT	RTS
 .endif
 
+.if .def MEGA4096
+; in case of RAMMODE just return
+	LDA RAMMODE
+	BEQ DETXIT
+; we are doing chip erase, so just check if the flash size is 4MB
+	LDA FSIZE
+	ORA FSIZE+1
+	BNE DETERR
+	LDA FSIZE+2
+	CMP #64
+	BNE DETERR
+DETXIT	RTS
+.endif
+
 .if .def FREEZER2005
 ; we have to do block erase, so check if the flash size is 512k
 ; and the flash consists of 8*64k blocks
@@ -1257,6 +1274,10 @@ TFA40B	.BYTE "Flash:", $99
 	.BYTE +$80,"AMD 29F040B"
 	.BYTE $19,155
 
+TFA32B	.BYTE "Flash:", $99
+	.BYTE +$80,"AMD 29F032B"
+	.BYTE $19,155
+
 TFS10B	.BYTE "Flash:", $99
 	.BYTE +$80,"ST 29F010B"
 	.BYTE $19,155
@@ -1323,8 +1344,12 @@ PFTYPE8	CMP #TRAM1024
 	BNE PFTYPE9
 	PRINT0 TFR1024
 	RTS
+PFTYPE9	CMP #TAMD32B
+	BNE PFTYPE10
+	PRINT0 TFA32B
+	RTS
 
-PFTYPE9	PRINT0 TUNKFL
+PFTYPE10	PRINT0 TUNKFL
 	RTS
 
 ; print flash address
@@ -1381,18 +1406,21 @@ WRFMT	.BYTE 0
 
 TTITLE
 .if .def MEGA512
-	.BYTE 125, "Mega 512k FlashCart DiskWriter V1.16",155
+	.BYTE 125, "Mega 512k FlashCart DiskWriter V1.20",155
+.endif
+.if .def MEGA4096
+	.BYTE 125, "4MB Mega FlashCart DiskWriter V1.20",155
 .endif
 .if .def MEGAMAX8
-	.BYTE 125, "Atari/MegaMax 1024k DiskWriter V1.16",155
+	.BYTE 125, "Atari/MegaMax 1024k DiskWriter V1.20",155
 .endif
 .if .def FREEZER2005
-	.BYTE 125, "Turbo Freezer 2005 DiskWriter V1.16",155
+	.BYTE 125, "Turbo Freezer 2005 DiskWriter V1.20",155
 .endif
 .if .def FREEZER2011
-	.BYTE 125, "Turbo Freezer 2011 DiskWriter V1.16",155
+	.BYTE 125, "Turbo Freezer 2011 DiskWriter V1.20",155
 .endif
-.BYTE "(c) 2011 by Matthias Reichl",155,155
+.BYTE "(c) 2013 by Matthias Reichl",155,155
 TTITLEL	= * - TTITLE
 
 
@@ -1577,6 +1605,9 @@ DATABUF = *
 CARTCOD
 .if .def MEGA512
 	.incbin "mypdos-mega512.rom"
+.endif
+.if .def MEGA4096
+	.incbin "mypdos-mega4096.rom"
 .endif
 .if .def MEGAMAX8
 	.incbin "mypdos-megamax.rom"

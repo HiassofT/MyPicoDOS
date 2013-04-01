@@ -1,6 +1,6 @@
-;  cartsio-freezer05.inc - definitions for Turbo Freezer 2005 CartEmu
+;  cartsio-mega4096.inc - definitions for 4MB Mega cart
 ;
-;  Copyright (c) 2011 by Matthias Reichl <hias@horus.com>
+;  Copyright (c) 2013 by Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -18,24 +18,20 @@
 
 ; common macros
 	.MACRO CARTBNKX ; set bank from X register
-	STA $D540,X
+	STX $D500
 	.ENDM
 
 	.MACRO CARTBNKI ; parameter: bank nummer (immediate)
-	STA $D540+%1
+	LDX #%1
+	CARTBNKX
 	.ENDM
 
 	.MACRO CARTOFF	; disable cartridge
-	STA $D580
-	.ENDM
-
-	.MACRO CARTON	; enable cartridge
-	STA $D581
+	CARTBNKI $FF
 	.ENDM
 
 	.MACRO CARTBASE	; set base ROM bank for cartsio
 	CARTBNKI CSROMBK
-	CARTON
 	.ENDM
 
 	.MACRO CARTBNK ; parameter: bank nummer (address)
@@ -50,23 +46,22 @@
 	LDA %1+1
 	PHA	; save mid byte
 
-; for 8k banks shift bits 7, 6 and 5 into bank register
-	ASL %1+1
-	ROL %1+2
+; for 16 k banks shift bits 7 and 6 into bank register
 	ASL %1+1
 	ROL %1+2
 	ASL %1+1
 	ROL %1+2
 
 	PLA
-	AND #$1F	; mask out bits 7, 6 and 5
-	ORA #$A0	; set base address $A0
+	AND #$3F	; mask out bits 7 and 6
+	ORA #$80	; set base address $80
 	STA %1+1
 	.ENDM
 
 ; bank and address of diskwriter code
-CDWBANK	= 1
-CDWADDR	= $A000
+CDWBANK = $FE
+CDWADDR = $8000
 
 ; ROM bank number of cartsio entry
-CSROMBK = 0
+CSROMBK = $FE
+

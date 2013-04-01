@@ -62,3 +62,6 @@
 CDWBANK = 0
 CDWADDR = $8000
 
+; ROM bank number of cartsio entry
+CSROMBK = 0
+

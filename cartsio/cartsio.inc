@@ -38,7 +38,6 @@
 
 ; address/bank of CARTSIO code
 	CSIOROM = CARTSTRT	; cartsio entry address
-	CSROMBK = 0	; ROM bank number of cartsio entry
 
 ; alternate cartsio entry, set A to slot number
 	CSIOROMA= $A003
@@ -82,6 +81,9 @@
 
 .if .def MEGA512
 	.include "cartsio-mega512.inc"
+.endif
+.if .def MEGA4096
+	.include "cartsio-mega4096.inc"
 .endif
 .if .def MEGAMAX8
 	.include "cartsio-megamax8.inc"

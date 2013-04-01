@@ -1,0 +1,70 @@
+;  libflash-mega4096 - code for Bernd's 4MB Mega cart
+;
+;  Copyright (C) 2004-2013 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+BANKREG	= $D500
+BANKSIZ	= 16	; 16k banks
+BANKBAS	= $8000	; base address
+
+; set bank number from X
+	.MACRO SBANKX
+	STX BANKREG
+	.ENDM
+
+; set bank number from memory location
+	.MACRO SBANK ; parameter: address
+	LDX [%1]
+	SBANKX
+	.ENDM
+
+; disable cartridge
+	.MACRO SBANKOFF
+	LDX #$FF
+	SBANKX
+	.ENDM
+
+; calculate bank number (in: A, out: A)
+	.MACRO CBANK
+	.ENDM
+
+; calculate base bank number (in: A, out: A)
+	.MACRO CBASE
+	LDA #0		; only one chip
+	.ENDM
+
+; init flash library
+FINIT	JMP ?FINIT
+
+; enable flash access
+FENABLE
+	INC $42
+	LDX #0
+	SBANKX
+	LDA $D013
+	STA $3FA
+	DEC $42
+	RTS
+
+; disable flash access
+FDISABLE
+	INC $42
+	SBANKOFF
+	LDA $D013
+	STA $3FA
+	DEC $42
+	RTS
+

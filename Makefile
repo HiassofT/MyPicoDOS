@@ -1,11 +1,14 @@
 # 
-# DiskCart Makefile (c) 2003-2011 by Matthias Reichl <hias@horus.com>
+# DiskCart Makefile (c) 2003-2013 by Matthias Reichl <hias@horus.com>
 #
 
 ATASM ?= atasm
 
 CXX=g++
-CXXFLAGS=-W -Wall
+#CXXFLAGS=-W -Wall
+CXXFLAGS=-W -Wall -g
+#LDFLAGS=
+LDFLAGS=-g
 
 all: diskcart.atr atr2cart atr2cart.exe
 # m512.rom am8.rom
@@ -28,7 +31,8 @@ MYPDOSFLAGS = $(ASMFLAGS) -Imypdos
 CARTSIOINC = cartsio/cartsio.inc \
 	cartsio/cartsiocode-ram.src cartsio/cartsiocode-rom.src \
 	cartsio/cartsiocode-osram.src \
-	cartsio/cartsio-mega512.inc cartsio/cartsio-megamax8.inc \
+	cartsio/cartsio-mega512.inc cartsio/cartsio-mega4096.inc \
+	cartsio/cartsio-megamax8.inc \
 	cartsio/cartsio-freezer05.inc cartsio/cartsio-freezer11.inc
 
 HISIOINC = hisio/hisio.inc hisio/hisiocode.src hisio/hisiodet.src \
@@ -41,7 +45,8 @@ LIBFLASHINC = libflash/libflash.inc libflash/libflash.src \
 	libflash/libflash-megamax8.src \
 	libflash/libflash-freezer2005.src \
 	libflash/libflash-freezer2011.src \
-	libflash/libflash-mega512.src
+	libflash/libflash-mega512.src \
+	libflash/libflash-mega4096.src
 
 rread.bin: mypdos/rread.src mypdos/rreadcode.src mypdos/common.inc
 	$(ATASM) $(MYPDOSFLAGS) -r -o$@ $<
@@ -76,6 +81,12 @@ cartsio-mega512-pal.bin: mypdos/cartsiobin.src $(CARTSIOINC)
 cartsio-mega512-ntsc.bin: mypdos/cartsiobin.src $(CARTSIOINC)
 	$(ATASM) $(MYPDOSFLAGS) -r -o$@ -dMEGA512 $<
 
+cartsio-mega4096-pal.bin: mypdos/cartsiobin.src $(CARTSIOINC)
+	$(ATASM) $(MYPDOSFLAGS) -r -o$@ -dMEGA4096 -dPAL $<
+
+cartsio-mega4096-ntsc.bin: mypdos/cartsiobin.src $(CARTSIOINC)
+	$(ATASM) $(MYPDOSFLAGS) -r -o$@ -dMEGA4096 $<
+
 cartsiocode-osram-megamax-pal.bin: cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc \
 	$(CARTSIOINC)
 	$(ATASM) $(ASMFLAGS) -r -o$@ -dMEGAMAX8 -dPAL $<
@@ -108,6 +119,14 @@ cartsiocode-osram-mega512-ntsc.bin: cartsio/cartsiocode-osram.src cartsio/cartsi
 	$(CARTSIOINC)
 	$(ATASM) $(ASMFLAGS) -r -o$@ -dMEGA512 $<
 
+cartsiocode-osram-mega4096-pal.bin: cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc \
+	$(CARTSIOINC)
+	$(ATASM) $(ASMFLAGS) -r -o$@ -dMEGA4096 -dPAL $<
+
+cartsiocode-osram-mega4096-ntsc.bin: cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc \
+	$(CARTSIOINC)
+	$(ATASM) $(ASMFLAGS) -r -o$@ -dMEGA4096 $<
+
 hisio.bin: hisio.src $(HISIOINC)
 	$(ATASM) $(ASMFLAGS) -r -o$@ $<
 
@@ -135,6 +154,12 @@ mypdos-code-mega512.bin: mypdos/mypdos.src $(MYPDOSINC) $(CARTSIOINC) \
 	cartsiocode-osram-mega512-pal.bin cartsiocode-osram-mega512-ntsc.bin
 	$(ATASM) $(MYPDOSFLAGS) -dMYPDOSROM -dCARTSIO -dMEGA512 -r -o$@ $<
 
+mypdos-code-mega4096.bin: mypdos/mypdos.src $(MYPDOSINC) $(CARTSIOINC) \
+	mypdos/cartsio.src mypdos/imginfo.src \
+	cartsio-mega4096-pal.bin cartsio-mega4096-ntsc.bin \
+	cartsiocode-osram-mega4096-pal.bin cartsiocode-osram-mega4096-ntsc.bin
+	$(ATASM) $(MYPDOSFLAGS) -dMYPDOSROM -dCARTSIO -dMEGA4096 -r -o$@ $<
+
 mypdos-megamax.rom: mypdrom.src mypdos-code-megamax.bin \
 	cartsio-megamax-pal.bin cartsio-megamax-ntsc.bin hisio.bin
 	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dMEGAMAX8 $<
@@ -150,6 +175,10 @@ mypdos-freezer11.rom: mypdrom.src mypdos-code-freezer11.bin \
 mypdos-mega512.rom: mypdrom.src mypdos-code-mega512.bin \
 	cartsio-mega512-pal.bin cartsio-mega512-ntsc.bin hisio.bin
 	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dMEGA512 $<
+
+mypdos-mega4096.rom: mypdrom.src mypdos-code-mega4096.bin \
+	cartsio-mega4096-pal.bin cartsio-mega4096-ntsc.bin hisio.bin
+	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dMEGA4096 $<
 
 testdisk.atr: testdisk testdisk/*
 	dir2atr -b MyPicoDos405N -P 1040 testdisk.atr testdisk
@@ -170,6 +199,12 @@ diskwriter-mega512.bin: diskcart-mega512.com
 	ataricom -b 1 -n $< $@
 
 diskwriter-mega512.c: diskwriter-mega512.bin
+	xxd -i $< > $@
+
+diskwriter-mega4096.bin: diskcart-mega4096.com
+	ataricom -b 1 -n $< $@
+
+diskwriter-mega4096.c: diskwriter-mega4096.bin
 	xxd -i $< > $@
 
 diskwriter-megamax.bin: diskcart-megamax.com
@@ -199,16 +234,21 @@ mypdos-freezer11.c: mypdos-freezer11.rom
 mypdos-mega512.c: mypdos-mega512.rom
 	xxd -i $< > $@
 
+mypdos-mega4096.c: mypdos-mega4096.rom
+	xxd -i $< > $@
+
 mypdos-megamax.c: mypdos-megamax.rom
 	xxd -i $< > $@
 
-atr2cart.o: mypdos-mega512.c mypdos-megamax.c \
+atr2cart.o: mypdos-mega512.c mypdos-mega4096.c \
+	mypdos-megamax.c \
 	mypdos-freezer05.c mypdos-freezer11.c \
-	diskwriter-mega512.c diskwriter-megamax.c \
+	diskwriter-mega512.c diskwriter-mega4096.c \
+	diskwriter-megamax.c \
 	diskwriter-freezer05.c diskwriter-freezer11.c
 
 atr2cart: atr2cart.o AtrUtils.o Error.o
-	$(CXX) -o $@ $^
+	$(CXX) $(LDFLAGS) -o $@ $^
 
 atr2cart.exe: atr2cart.cpp AtrUtils.cpp Error.cpp
 	i586-mingw32msvc-g++ $(CXXFLAGS) -DWINVER -o $@ $^
@@ -230,6 +270,10 @@ diskcart-mega512.com: diskcart.src mypdos-mega512.rom $(LIBFLASHINC) \
 	iohelp.inc iohelp.src arith.inc arith.src diskio.src
 	$(ATASM) $(ASMFLAGS) -o$@ -dMEGA512 $<
 
+diskcart-mega4096.com: diskcart.src mypdos-mega4096.rom $(LIBFLASHINC) \
+	iohelp.inc iohelp.src arith.inc arith.src diskio.src
+	$(ATASM) $(ASMFLAGS) -o$@ -dMEGA4096 $<
+
 ctestmm.com: ctest.src $(LIBFLASHINC) \
 	iohelp.inc iohelp.src arith.inc arith.src
 	$(ATASM) $(ASMFLAGS) -dMEGAMAX8 -o$@ $<
@@ -238,14 +282,20 @@ ctestme.com: ctest.src $(LIBFLASHINC) \
 	iohelp.inc iohelp.src arith.inc arith.src
 	$(ATASM) $(ASMFLAGS) -dMEGA512 -o$@ $<
 
+ctestm4.com: ctest.src $(LIBFLASHINC) \
+	iohelp.inc iohelp.src arith.inc arith.src
+	$(ATASM) $(ASMFLAGS) -dMEGA4096 -o$@ $<
+
 diskcart.atr: \
 	diskcart-mega512.com \
+	diskcart-mega4096.com \
 	diskcart-megamax.com \
 	diskcart-freezer05.com \
 	diskcart-freezer11.com
 	rm -rf disk
 	mkdir -p disk
 	cp -f diskcart-mega512.com disk/medisk.com
+	cp -f diskcart-mega4096.com disk/m4disk.com
 	cp -f diskcart-megamax.com disk/mmdisk.com
 	cp -f diskcart-freezer05.com disk/f05disk.com
 	cp -f diskcart-freezer11.com disk/f11disk.com
@@ -257,6 +307,9 @@ diskcart.atr: \
 
 m512.rom: atr2cart
 	./atr2cart m512 m512.rom ~/private/xl/boot/turbo.atr ~/private/xl/boot/turbosd.atr ~/private/xl/boot/mydosx1.atr
+
+m4096.rom: atr2cart
+	./atr2cart m4096 m4096.rom ~/private/xl/boot/turbo.atr ~/private/xl/boot/turbosd.atr ~/private/xl/boot/mydosx1.atr
 
 am8.rom: atr2cart
 	./atr2cart am8 am8.rom ~/private/xl/boot/turbo.atr ~/private/xl/boot/turbosd.atr ~/private/xl/boot/mydosx2.atr ~/private/xl/boot/mydosx1.atr

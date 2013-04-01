@@ -64,3 +64,7 @@
 ; bank and address of diskwriter code
 CDWBANK	= 1
 CDWADDR	= $A000
+
+; ROM bank number of cartsio entry
+CSROMBK = 0
+

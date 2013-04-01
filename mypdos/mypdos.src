@@ -409,6 +409,12 @@ CSIOPL	= * - CSIOP
 CSION	.incbin "cartsio-mega512-ntsc.bin"
 CSIONL	= * - CSION
 .endif
+.if .def MEGA4096
+CSIOP	.incbin "cartsio-mega4096-pal.bin"
+CSIOPL	= * - CSIOP
+CSION	.incbin "cartsio-mega4096-ntsc.bin"
+CSIONL	= * - CSION
+.endif
 .if .def MEGAMAX8
 CSIOP	.incbin "cartsio-megamax-pal.bin"
 CSIOPL	= * - CSIOP

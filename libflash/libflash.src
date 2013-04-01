@@ -36,6 +36,10 @@
 	.include "libflash-mega512.src"
 .endif
 
+.if .def MEGA4096
+	.include "libflash-mega4096.src"
+.endif
+
 ; initialize flash address to 0
 FADRZERO
 	LDA #0
@@ -490,6 +494,10 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	CMP #TRAM1024
 	BEQ ?RAM1024
 
+; 4MB
+	CMP #TAMD32B
+	BEQ ?DET4096
+
 ; no flash - just leave with dummy default values
 	JMP ?SETREAD	; try to leave ID mode anyways
 
@@ -537,6 +545,20 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	STA FSIZE+2
 	RTS
 
+?DET4096
+	LDA #64		; flash size 4096k
+	STA FSIZE+2	
+
+	LDA #1		; block size 64k
+	STA FBLKSIZ+2
+
+	LDA #64		; 64 blocks
+	STA FNUMBLK
+
+	LDA #0		; block mask is $00FFFF
+	STA FBLKMSK+2
+	BEQ ?DET5
+
 ; set chip type (A=chip type)
 FSETCHP	STA FTYPE
 	CMP #TNOFLSH
@@ -553,6 +575,7 @@ FSETCHP	STA FTYPE
 
 ?IDLO	.BYTE TAMD10B, $01, $20	; AMD 29F010B
 	.BYTE TAMD40B, $01, $A4	; AMD 29F040B
+	.BYTE TAMD32B, $01, $41	; AMD 29F032B
 	.BYTE TST10B, $20, $20	; ST 29F010B
 	.BYTE TST40B, $20, $E2	; ST 29F040B
 	.BYTE TNOFLSH,$FF,$FF	; end of table

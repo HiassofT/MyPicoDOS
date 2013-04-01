@@ -63,3 +63,6 @@
 CDWBANK = $7F
 CDWADDR = $A000
 
+; ROM bank number of cartsio entry
+CSROMBK = 0
+

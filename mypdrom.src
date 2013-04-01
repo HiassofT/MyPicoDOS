@@ -652,6 +652,9 @@ MYPDOS	= *
 .if .def MEGA512
 	.incbin "mypdos-code-mega512.bin"
 .endif
+.if .def MEGA4096
+	.incbin "mypdos-code-mega4096.bin"
+.endif
 .if .def MEGAMAX8
 	.incbin "mypdos-code-megamax.bin"
 .endif
@@ -667,6 +670,12 @@ MYPDPG	= (*-MYPDOS+255) / 256
 OSCODP	.incbin "cartsiocode-osram-mega512-pal.bin"
 OSCODPL	= * - OSCODP
 OSCODN	.incbin "cartsiocode-osram-mega512-ntsc.bin"
+OSCODNL	= * - OSCODN
+.endif
+.if .def MEGA4096
+OSCODP	.incbin "cartsiocode-osram-mega4096-pal.bin"
+OSCODPL	= * - OSCODP
+OSCODN	.incbin "cartsiocode-osram-mega4096-ntsc.bin"
 OSCODNL	= * - OSCODN
 .endif
 .if .def MEGAMAX8
@@ -840,7 +849,7 @@ XEND	= *
 
 	* = CARTSIG
 	.BYTE "HiassofT"
-	.BYTE "20110803"
+	.BYTE "20130401"
 
 .if .def MEGAMAX8
 	* = $BFF0
