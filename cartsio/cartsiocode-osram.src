@@ -41,8 +41,11 @@ STDSIO	JMP $1234	; call original OS SIO code
 ?WTSCR	CMP $D40B
 	BNE ?WTSCR
 
-	LDA #1
-	STA CRITIC		; set critic
+	SEI
+	LDA #0
+	STA $D40E
+;	LDA #1
+;	STA CRITIC		; set critic
 
 .if .def COLORS
 	LDA #$0F
@@ -84,7 +87,11 @@ STDSIO	JMP $1234	; call original OS SIO code
 	BNE ?CPLP
 
 ?CSEND	CARTOFF		; disable cartridge
-	DEC CRITIC	; re-enable deferred VBI
+;	DEC CRITIC	; re-enable deferred VBI
+
+	CLI
+	LDA #$40
+	STA $D40E
 
 .if .def COLORS
 	LDA #0

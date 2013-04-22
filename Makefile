@@ -160,23 +160,23 @@ mypdos-code-mega4096.bin: mypdos/mypdos.src $(MYPDOSINC) $(CARTSIOINC) \
 	cartsiocode-osram-mega4096-pal.bin cartsiocode-osram-mega4096-ntsc.bin
 	$(ATASM) $(MYPDOSFLAGS) -dMYPDOSROM -dCARTSIO -dMEGA4096 -r -o$@ $<
 
-mypdos-megamax.rom: mypdrom.src mypdos-code-megamax.bin \
+mypdos-megamax.rom: mypdrom.src mypdos-code-megamax.bin version.inc \
 	cartsio-megamax-pal.bin cartsio-megamax-ntsc.bin hisio.bin
 	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dMEGAMAX8 $<
 
-mypdos-freezer05.rom: mypdrom.src mypdos-code-freezer05.bin \
+mypdos-freezer05.rom: mypdrom.src mypdos-code-freezer05.bin version.inc \
 	cartsio-freezer05-pal.bin cartsio-freezer05-ntsc.bin hisio.bin
 	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dFREEZER2005 $<
 
-mypdos-freezer11.rom: mypdrom.src mypdos-code-freezer11.bin \
+mypdos-freezer11.rom: mypdrom.src mypdos-code-freezer11.bin version.inc \
 	cartsio-freezer11-pal.bin cartsio-freezer11-ntsc.bin hisio.bin
 	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dFREEZER2011 $<
 
-mypdos-mega512.rom: mypdrom.src mypdos-code-mega512.bin \
+mypdos-mega512.rom: mypdrom.src mypdos-code-mega512.bin version.inc \
 	cartsio-mega512-pal.bin cartsio-mega512-ntsc.bin hisio.bin
 	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dMEGA512 $<
 
-mypdos-mega4096.rom: mypdrom.src mypdos-code-mega4096.bin \
+mypdos-mega4096.rom: mypdrom.src mypdos-code-mega4096.bin version.inc \
 	cartsio-mega4096-pal.bin cartsio-mega4096-ntsc.bin hisio.bin
 	$(ATASM) $(MYPDOSFLAGS) -r -f255 -o$@ -dMEGA4096 $<
 
@@ -255,23 +255,23 @@ atr2cart.exe: atr2cart.cpp AtrUtils.cpp Error.cpp
 	i586-mingw32msvc-strip $@
 
 diskcart-megamax.com: diskcart.src mypdos-megamax.rom $(LIBFLASHINC) \
-	iohelp.inc iohelp.src arith.inc arith.src diskio.src
+	iohelp.inc iohelp.src arith.inc arith.src diskio.src version.inc
 	$(ATASM) $(ASMFLAGS) -o$@ -dMEGAMAX8 $<
 
 diskcart-freezer05.com: diskcart.src mypdos-freezer05.rom $(LIBFLASHINC) \
-	iohelp.inc iohelp.src arith.inc arith.src diskio.src
+	iohelp.inc iohelp.src arith.inc arith.src diskio.src version.inc
 	$(ATASM) $(ASMFLAGS) -o$@ -dFREEZER2005 $<
 
 diskcart-freezer11.com: diskcart.src mypdos-freezer11.rom $(LIBFLASHINC) \
-	iohelp.inc iohelp.src arith.inc arith.src diskio.src
+	iohelp.inc iohelp.src arith.inc arith.src diskio.src version.inc
 	$(ATASM) $(ASMFLAGS) -o$@ -dFREEZER2011 $<
 
 diskcart-mega512.com: diskcart.src mypdos-mega512.rom $(LIBFLASHINC) \
-	iohelp.inc iohelp.src arith.inc arith.src diskio.src
+	iohelp.inc iohelp.src arith.inc arith.src diskio.src version.inc
 	$(ATASM) $(ASMFLAGS) -o$@ -dMEGA512 $<
 
 diskcart-mega4096.com: diskcart.src mypdos-mega4096.rom $(LIBFLASHINC) \
-	iohelp.inc iohelp.src arith.inc arith.src diskio.src
+	iohelp.inc iohelp.src arith.inc arith.src diskio.src version.inc
 	$(ATASM) $(ASMFLAGS) -o$@ -dMEGA4096 $<
 
 ctestmm.com: ctest.src $(LIBFLASHINC) \
@@ -286,12 +286,16 @@ ctestm4.com: ctest.src $(LIBFLASHINC) \
 	iohelp.inc iohelp.src arith.inc arith.src
 	$(ATASM) $(ASMFLAGS) -dMEGA4096 -o$@ $<
 
+piconame.txt: piconame.src version.inc
+	$(ATASM) -r -o$@ $<
+
 diskcart.atr: \
 	diskcart-mega512.com \
 	diskcart-mega4096.com \
 	diskcart-megamax.com \
 	diskcart-freezer05.com \
-	diskcart-freezer11.com
+	diskcart-freezer11.com \
+	piconame.txt
 	rm -rf disk
 	mkdir -p disk
 	cp -f diskcart-mega512.com disk/medisk.com
@@ -299,7 +303,7 @@ diskcart.atr: \
 	cp -f diskcart-megamax.com disk/mmdisk.com
 	cp -f diskcart-freezer05.com disk/f05disk.com
 	cp -f diskcart-freezer11.com disk/f11disk.com
-	atascii piconame.txt > disk/PICONAME.TXT
+	cp -f piconame.txt disk/PICONAME.TXT
 	dir2atr -b MyPicoDos405 $@ disk
 
 #test.rom: atr2cart testdisk.atr testdd.atr

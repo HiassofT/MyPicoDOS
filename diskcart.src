@@ -1,6 +1,6 @@
 ;  diskcart - load disks into flashcart
 ;
-;  Copyright (C) 2010-2011 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 2010-2013 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 	.include "cartsio.inc"
 	.include "arith.inc"
 	.include "iohelp.inc"
+	.include "version.inc"
 
 .if .def MEGA512
 	.include "diskcart-mega512.inc"
@@ -1405,22 +1406,27 @@ TMPIDX	.BYTE 0
 WRFMT	.BYTE 0
 
 TTITLE
+	.BYTE 125
 .if .def MEGA512
-	.BYTE 125, "Mega 512k FlashCart DiskWriter V1.20",155
+	.BYTE "Mega 512k FlashCart"
 .endif
 .if .def MEGA4096
-	.BYTE 125, "4MB Mega FlashCart DiskWriter V1.20",155
+	.BYTE "Mega 4MB FlashCart"
 .endif
 .if .def MEGAMAX8
-	.BYTE 125, "Atari/MegaMax 1024k DiskWriter V1.20",155
+	.BYTE "Atari/MegaMax 1024k"
 .endif
 .if .def FREEZER2005
-	.BYTE 125, "Turbo Freezer 2005 DiskWriter V1.20",155
+	.BYTE "Turbo Freezer 2005"
 .endif
 .if .def FREEZER2011
-	.BYTE 125, "Turbo Freezer 2011 DiskWriter V1.20",155
+	.BYTE "Turbo Freezer 2011"
 .endif
-.BYTE "(c) 2013 by Matthias Reichl",155,155
+	.BYTE " DiskWriter V"
+	BVERSION
+	.BYTE 155, "(c) "
+	BYEAR
+	.BYTE " by Matthias Reichl",155,155
 TTITLEL	= * - TTITLE
 
 
