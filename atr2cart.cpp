@@ -1,7 +1,7 @@
 /*
    atr2cart - create flashcart image containing multiple ATRs
 
-   Copyright (C) 2010-2011 Matthias Reichl <hias@horus.com>
+   Copyright (C) 2010-2013 Matthias Reichl <hias@horus.com>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -390,7 +390,7 @@ int main(int argc, char** argv)
 	bool autorun = false;
 	const char* out_filename;
 
-	cout << "atr2cart V1.20 (c) 2010-2013 by Matthias Reichl <hias@horus.com>" << endl;
+	cout << "atr2cart V1.21 (c) 2010-2013 by Matthias Reichl <hias@horus.com>" << endl;
 	if (argc <= 3) {
 		goto usage;
 	}
@@ -465,7 +465,7 @@ usage:
 	cout << "   -a: enable MyPicoDos autostart" << endl;
 	cout << "supported types:" << endl;
 	cout << " m512: MegaCart 512k" << endl;
-	cout << "m4096: 4MB MegaCart" << endl;
+	cout << "m4096: MegaCart 4MB" << endl;
 	cout << "   mm: Megamax/Atarimax 1024k FlashCart" << endl;
 	cout << "frz05: TurboFreezer 2005 CartEmu" << endl;
 	cout << "frz11: TurboFreezer 2011 CartEmu" << endl;

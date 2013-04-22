@@ -17,11 +17,11 @@
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 	.macro BVERSION
-	.byte "1.20"
+	.byte "1.21"
 	.endm
 
 	.macro SVERSION
-	.sbyte "1.20"
+	.sbyte "1.21"
 	.endm
 
 	.macro BYEAR
