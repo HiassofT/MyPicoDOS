@@ -1,0 +1,13 @@
+	.include "version.inc"
+
+	* = $A000
+
+	.BYTE "DiskCart V"
+	BVERSION
+	.BYTE 155
+
+	.BYTE "MEDISK  COM Mega 512k DiskCart", 155
+	.BYTE "M4DISK  COM Mega 4MB DiskCart", 155
+	.BYTE "MMDISK  COM Megamax/Atarimax 1024k DiskCart", 155
+	.BYTE "F05DISK COM Turbo Freezer 2005 DiskCart", 155
+	.BYTE "F11DISK COM Turbo Freezer 2011 DiskCart", 155
