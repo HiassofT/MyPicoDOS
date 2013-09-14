@@ -16,29 +16,7 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-.if .def MEGAMAX8
-	.include "libflash-megamax8.src"
-.endif
-
-.if .def MEGAMAX16
-	.include "libflash-megamax16.src"
-.endif
-
-.if .def FREEZER2005
-	.include "libflash-freezer2005.src"
-.endif
-
-.if .def FREEZER2011
-	.include "libflash-freezer2011.src"
-.endif
-
-.if .def MEGA512
-	.include "libflash-mega512.src"
-.endif
-
-.if .def MEGA4096
-	.include "libflash-mega4096.src"
-.endif
+	.include "libflash-inc-target.inc"
 
 ; initialize flash address to 0
 FADRZERO

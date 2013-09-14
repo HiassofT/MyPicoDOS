@@ -29,17 +29,7 @@
 #include "AtariDebug.h"
 #include "Error.h"
 
-#include "mypdos-mega512.c"
-#include "mypdos-mega4096.c"
-#include "mypdos-megamax.c"
-#include "mypdos-freezer05.c"
-#include "mypdos-freezer11.c"
-
-#include "diskwriter-mega512.c"
-#include "diskwriter-mega4096.c"
-#include "diskwriter-megamax.c"
-#include "diskwriter-freezer05.c"
-#include "diskwriter-freezer11.c"
+#include "targets/atr2cart-inc-target.c"
 
 #ifdef WINVER
 #define DIR_SEPARATOR '\\'
@@ -160,18 +150,18 @@ void init_rom_image(bool autorun)
 		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_mega4096_bin, sizeof(diskwriter_mega4096_bin));
 		break;
 	case eMegamax:
-		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_megamax_rom, 0x2000);
-		memcpy(rom_image+cartconfig->image_size-32, mypdos_megamax_rom + 0x2000-32, 32);	// cart init code for Atarimax
-		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_megamax_bin, sizeof(diskwriter_megamax_bin));
+		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_megamax8_rom, 0x2000);
+		memcpy(rom_image+cartconfig->image_size-32, mypdos_megamax8_rom + 0x2000-32, 32);	// cart init code for Atarimax
+		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_megamax8_bin, sizeof(diskwriter_megamax8_bin));
 		break;
 	case eFreezer2005:
-		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer05_rom, 0x2000);
-		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_freezer05_bin, sizeof(diskwriter_freezer05_bin));
+		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer2005_rom, 0x2000);
+		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_freezer2005_bin, sizeof(diskwriter_freezer2005_bin));
 		break;
 
 	case eFreezer2011:
-		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer11_rom, 0x2000);
-		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_freezer11_bin, sizeof(diskwriter_freezer11_bin));
+		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer2011_rom, 0x2000);
+		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_freezer2011_bin, sizeof(diskwriter_freezer2011_bin));
 		break;
 
 	default:

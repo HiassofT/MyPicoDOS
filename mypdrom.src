@@ -654,54 +654,11 @@ CLR7LP	STA (SRCADR),Y
 	RTS
 
 MYPDOS	= *
-.if .def MEGA512
-	.incbin "mypdos-code-mega512.bin"
-.endif
-.if .def MEGA4096
-	.incbin "mypdos-code-mega4096.bin"
-.endif
-.if .def MEGAMAX8
-	.incbin "mypdos-code-megamax.bin"
-.endif
-.if .def FREEZER2005
-	.incbin "mypdos-code-freezer05.bin"
-.endif
-.if .def FREEZER2011
-	.incbin "mypdos-code-freezer11.bin"
-.endif
+	.include "mypdrom-incbin-mypdos.inc"
+
 MYPDPG	= (*-MYPDOS+255) / 256
 
-.if .def MEGA512
-OSCODP	.incbin "cartsiocode-osram-mega512-pal.bin"
-OSCODPL	= * - OSCODP
-OSCODN	.incbin "cartsiocode-osram-mega512-ntsc.bin"
-OSCODNL	= * - OSCODN
-.endif
-.if .def MEGA4096
-OSCODP	.incbin "cartsiocode-osram-mega4096-pal.bin"
-OSCODPL	= * - OSCODP
-OSCODN	.incbin "cartsiocode-osram-mega4096-ntsc.bin"
-OSCODNL	= * - OSCODN
-.endif
-.if .def MEGAMAX8
-OSCODP	.incbin "cartsiocode-osram-megamax-pal.bin"
-OSCODPL	= * - OSCODP
-OSCODN	.incbin "cartsiocode-osram-megamax-ntsc.bin"
-OSCODNL	= * - OSCODN
-.endif
-.if .def FREEZER2005
-OSCODP	.incbin "cartsiocode-osram-freezer05-pal.bin"
-OSCODPL	= * - OSCODP
-OSCODN	.incbin "cartsiocode-osram-freezer05-ntsc.bin"
-OSCODNL	= * - OSCODN
-.endif
-.if .def FREEZER2011
-OSCODP	.incbin "cartsiocode-osram-freezer11-pal.bin"
-OSCODPL	= * - OSCODP
-OSCODN	.incbin "cartsiocode-osram-freezer11-ntsc.bin"
-OSCODNL	= * - OSCODN
-.endif
-
+	.include "mypdrom-incbin-cartsio.inc"
 
 TMPVEC	= DSTADR
 	.include "romram.src"

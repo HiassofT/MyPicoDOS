@@ -403,36 +403,7 @@ HIAVAIL	RTS
 	.ELSE
 
 	.IF .DEF CARTSIO
-.if .def MEGA512
-CSIOP	.incbin "cartsio-mega512-pal.bin"
-CSIOPL	= * - CSIOP
-CSION	.incbin "cartsio-mega512-ntsc.bin"
-CSIONL	= * - CSION
-.endif
-.if .def MEGA4096
-CSIOP	.incbin "cartsio-mega4096-pal.bin"
-CSIOPL	= * - CSIOP
-CSION	.incbin "cartsio-mega4096-ntsc.bin"
-CSIONL	= * - CSION
-.endif
-.if .def MEGAMAX8
-CSIOP	.incbin "cartsio-megamax-pal.bin"
-CSIOPL	= * - CSIOP
-CSION	.incbin "cartsio-megamax-ntsc.bin"
-CSIONL	= * - CSION
-.endif
-.if .def FREEZER2005
-CSIOP	.incbin "cartsio-freezer05-pal.bin"
-CSIOPL	= * - CSIOP
-CSION	.incbin "cartsio-freezer05-ntsc.bin"
-CSIONL	= * - CSION
-.endif
-.if .def FREEZER2011
-CSIOP	.incbin "cartsio-freezer11-pal.bin"
-CSIOPL	= * - CSIOP
-CSION	.incbin "cartsio-freezer11-ntsc.bin"
-CSIONL	= * - CSION
-.endif
+	.include "mypdos-incbin-cartsio.inc"
 
 INSTCS	LDA $D014
 	CMP #$01
