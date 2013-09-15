@@ -42,7 +42,7 @@ using namespace AtrUtils;
 
 enum ECartType {
 	eMega512 = 0,
-	eMegamax = 1,
+	eAtariMax8 = 1,
 	eFreezer2005 = 2,
 	eFreezer2011 = 3,
 	eMega4096 = 4,
@@ -64,7 +64,7 @@ struct CartConfig {
 static const struct CartConfig AllCartConfigs[] = {
 // Mega512
 	{ 0x80000, 0x4000, 0x80000, 0x3f00, 0x3fdf, 0x2000, 0 },
-// Megamax
+// AtariMax 8MBit
 	{ 0x100000, 0x2000, 0xfe000, 0x1f00, 0x1fdf, 0, 0xfe000 },
 // Freezer 2005
 	{ 0x70000, 0x4000, 0x70000, 0x1f00, 0x1fdf, 0, 0x2000 },
@@ -149,10 +149,10 @@ void init_rom_image(bool autorun)
 		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_mega4096_rom, 0x2000);
 		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_mega4096_bin, sizeof(diskwriter_mega4096_bin));
 		break;
-	case eMegamax:
-		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_megamax8_rom, 0x2000);
-		memcpy(rom_image+cartconfig->image_size-32, mypdos_megamax8_rom + 0x2000-32, 32);	// cart init code for Atarimax
-		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_megamax8_bin, sizeof(diskwriter_megamax8_bin));
+	case eAtariMax8:
+		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_atarimax8_rom, 0x2000);
+		memcpy(rom_image+cartconfig->image_size-32, mypdos_atarimax8_rom + 0x2000-32, 32);	// cart init code for Atarimax
+		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_atarimax8_bin, sizeof(diskwriter_atarimax8_bin));
 		break;
 	case eFreezer2005:
 		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer2005_rom, 0x2000);
@@ -402,9 +402,9 @@ int main(int argc, char** argv)
 		cartType = eMega4096;
 		cout << "output type: 4MB MegaCart" << endl;
 	}
-	if (strcasecmp(argv[idx], "mm") == 0) {
-		cartType = eMegamax;
-		cout << "output type: Megamax/Atarimax 1024k FlashCart" << endl;
+	if (strcasecmp(argv[idx], "am8") == 0) {
+		cartType = eAtariMax8;
+		cout << "output type: AtariMax 8MBit FlashCart" << endl;
 	}
 	if (strcasecmp(argv[idx], "frz05") == 0) {
 		cartType = eFreezer2005;
@@ -456,7 +456,7 @@ usage:
 	cout << "supported types:" << endl;
 	cout << " m512: MegaCart 512k" << endl;
 	cout << "m4096: MegaCart 4MB" << endl;
-	cout << "   mm: Megamax/Atarimax 1024k FlashCart" << endl;
+	cout << "  am8: AtariMax 8MBit FlashCart" << endl;
 	cout << "frz05: TurboFreezer 2005 CartEmu" << endl;
 	cout << "frz11: TurboFreezer 2011 CartEmu" << endl;
 	return 1;

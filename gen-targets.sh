@@ -2,7 +2,7 @@
 
 # generate target specific includes and makefile targets
 
-TARGETS="freezer2011 freezer2005 megamax8 mega512 mega4096"
+TARGETS="freezer2011 freezer2005 atarimax8 mega512 mega4096"
 
 # run function with lowercase and uppercase parameters
 doall() {

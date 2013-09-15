@@ -76,7 +76,7 @@ MAINLP1	JSR FENABLE
 	LDA FTYPE
 	BPL FOK
 
-.if .def MEGAMAX8
+.if .def ATARIMAX8
 	BPUT0 TASKRM
 	JSR YESNO
 	BMI MXIT
@@ -529,7 +529,7 @@ NOCLRDC
 	BMI DOINIE2
 
 
-.if .def MEGAMAX8
+.if .def ATARIMAX8
 ; also program cartdrige startup code into last bank
 	LDY #0
 STCLP	LDA CCADR+$1FE0,Y
@@ -1100,7 +1100,7 @@ COPYPLP	LDA (SRCVEC),Y
 	RTS
 
 DETECT	
-.if .def MEGAMAX8
+.if .def ATARIMAX8
 ; support RAM mode
 	LDA RAMMODE
 	BNE DETECT0
@@ -1121,7 +1121,7 @@ DETECT0
 	JSR FDETECT
 	JSR FDISABLE
 
-.if .def MEGAMAX8
+.if .def ATARIMAX8
 	LDA FTYPE
 	CMP FTYPE2
 	BEQ AFOK
@@ -1143,7 +1143,7 @@ DETCHK
 
 ; detection OK, now check if chip is compatible with software
 
-.if .def MEGAMAX8 .or .def MEGA512
+.if .def ATARIMAX8 .or .def MEGA512
 ; in case of RAMMODE just return
 	LDA RAMMODE
 	BEQ DETXIT
@@ -1200,8 +1200,10 @@ DETERR	BPUT0 TUNSUP
 ERASE	JSR FADRZERO
 	JSR FENABLE
 
-.if .def FREEZER2005
-; erase 7*64k blocks, combine status resulsts
+.if .def FREEZER2005 .or .def FREEZER2011
+; freezer2005: erase 7*64k blocks
+; freezer2011: erase 15*64k blocks
+; combine status results
 	LDA #0
 	STA TMP32
 
@@ -1212,7 +1214,11 @@ ERASELP	JSR FPERAS
 	STA TMP32
 	INC FLASHADR+2
 	LDA FLASHADR+2
+.if .def FREEZER2005
 	CMP #7
+.else
+	CMP #15
+.endif
 	BNE ERASELP
 
 	JSR FDISABLE
@@ -1225,7 +1231,7 @@ ERASELP	JSR FPERAS
 .else
 	JSR FCERAS
 
-.if .def MEGAMAX8
+.if .def ATARIMAX8
 ; also erase second chip, combine status results
 	PHP
 	PLA
@@ -1239,14 +1245,14 @@ ERASELP	JSR FPERAS
 	PHA
 	PLP
 ERASE2
-.endif	; MEGAMAX8
+.endif	; ATARIMAX8
 	PHP
 
 	JSR FDISABLE
 
 	PLP
 	RTS
-.endif	; FREEZER2005
+.endif	; FREEZER2005 / FREEZER2011
 
 
 TFA10	.BYTE "Flash:", $99
@@ -1399,8 +1405,8 @@ TTITLE
 .if .def MEGA4096
 	.BYTE "Mega 4MB FlashCart"
 .endif
-.if .def MEGAMAX8
-	.BYTE "Atari/MegaMax 1024k"
+.if .def ATARIMAX8
+	.BYTE "AtariMax 8MBit"
 .endif
 .if .def FREEZER2005
 	.BYTE "Turbo Freezer 2005"
@@ -1431,7 +1437,7 @@ TMENU	.BYTE 155,155
 TMENUL	= * - TMENU
 
 TNOCAR	
-.if .def MEGAMAX8
+.if .def ATARIMAX8
 	.BYTE "no cart detected - check switch"
 .else
 .if .def FREEZER2005 .or .def FREEZER2011
@@ -1442,7 +1448,7 @@ TNOCAR
 .endif
 TNOCARL	= * - TNOCAR
 
-.if .def MEGAMAX8
+.if .def ATARIMAX8
 TASKRM	.BYTE 155, "run in RAM mode (y/n)? "
 TASKRML	= * - TASKRM
 .endif
@@ -1561,7 +1567,7 @@ TRSECL	= * - TRSEC
 TERRS	.BYTE 155, "Error at sector "
 TERRSL	= * - TERRS
 
-.if .def MEGAMAX8
+.if .def ATARIMAX8
 FTYPE2	.BYTE 0
 
 TAFERR	.BYTE "Chip mismatch or defect!",155

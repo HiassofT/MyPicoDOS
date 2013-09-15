@@ -4,8 +4,8 @@
 .if .def FREEZER2005
 	.include "libflash-freezer2005.src"
 .endif
-.if .def MEGAMAX8
-	.include "libflash-megamax8.src"
+.if .def ATARIMAX8
+	.include "libflash-atarimax8.src"
 .endif
 .if .def MEGA512
 	.include "libflash-mega512.src"

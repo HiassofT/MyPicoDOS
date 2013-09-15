@@ -1,4 +1,4 @@
-;  cartsio-freezer11.inc - definitions for Turbo Freezer 2011 CartEmu
+;  cartsio-freezer2011.inc - definitions for Turbo Freezer 2011 CartEmu
 ;
 ;  Copyright (c) 2011 by Matthias Reichl <hias@horus.com>
 ;
@@ -26,6 +26,11 @@
 	CARTBNKX
 	.ENDM
 
+;	.MACRO CARTON	; enable cartridge
+;	LDX #1
+;	STX $D591
+;	.ENDM
+
 	.MACRO CARTOFF	; disable cartridge
 	LDX #0
 	STX $D591
@@ -33,6 +38,7 @@
 
 	.MACRO CARTBASE	; set base ROM bank for cartsio
 	CARTBNKI CSROMBK
+	CARTON
 	.ENDM
 
 	.MACRO CARTBNK ; parameter: bank number (address)

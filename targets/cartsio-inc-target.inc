@@ -4,8 +4,8 @@
 .if .def FREEZER2005
 	.include "cartsio-freezer2005.inc"
 .endif
-.if .def MEGAMAX8
-	.include "cartsio-megamax8.inc"
+.if .def ATARIMAX8
+	.include "cartsio-atarimax8.inc"
 .endif
 .if .def MEGA512
 	.include "cartsio-mega512.inc"

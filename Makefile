@@ -38,12 +38,12 @@ CARTSIOINC = cartsio/cartsio.inc targets/cartsio-inc-target.inc \
 	cartsio/cartsiocode-ram.src cartsio/cartsiocode-rom.src \
 	cartsio/cartsiocode-osram.src \
 	cartsio/cartsio-mega512.inc cartsio/cartsio-mega4096.inc \
-	cartsio/cartsio-megamax8.inc \
+	cartsio/cartsio-atarimax8.inc \
 	cartsio/cartsio-freezer2005.inc cartsio/cartsio-freezer2011.inc
 
 LIBFLASHINC = libflash/libflash.inc libflash/libflash.src \
 	targets/libflash-inc-target.inc \
-	libflash/libflash-megamax8.src \
+	libflash/libflash-atarimax8.src \
 	libflash/libflash-freezer2005.src \
 	libflash/libflash-freezer2011.src \
 	libflash/libflash-mega512.src \
@@ -81,10 +81,10 @@ testdisk.raw: testdisk.atr
 atr2cart.o: atr2cart.cpp\
 	targets/atr2cart-inc-target.c \
 	mypdos-mega512.c mypdos-mega4096.c \
-	mypdos-megamax8.c \
+	mypdos-atarimax8.c \
 	mypdos-freezer2005.c mypdos-freezer2011.c \
 	diskwriter-mega512.c diskwriter-mega4096.c \
-	diskwriter-megamax8.c \
+	diskwriter-atarimax8.c \
 	diskwriter-freezer2005.c diskwriter-freezer2011.c
 
 atr2cart: atr2cart.o AtrUtils.o Error.o
@@ -94,25 +94,13 @@ atr2cart.exe: atr2cart.cpp AtrUtils.cpp Error.cpp
 	i586-mingw32msvc-g++ $(CXXFLAGS) -DWINVER -o $@ $^
 	i586-mingw32msvc-strip $@
 
-ctestmm.com: ctest.src $(LIBFLASHINC) \
-	iohelp.inc iohelp.src arith.inc arith.src
-	$(ATASM) $(ASMFLAGS) -dMEGAMAX8 -o$@ $<
-
-ctestme.com: ctest.src $(LIBFLASHINC) \
-	iohelp.inc iohelp.src arith.inc arith.src
-	$(ATASM) $(ASMFLAGS) -dMEGA512 -o$@ $<
-
-ctestm4.com: ctest.src $(LIBFLASHINC) \
-	iohelp.inc iohelp.src arith.inc arith.src
-	$(ATASM) $(ASMFLAGS) -dMEGA4096 -o$@ $<
-
 piconame.txt: piconame.src version.inc
 	$(ATASM) -r -o$@ $<
 
 diskcart.atr: \
 	diskcart-mega512.com \
 	diskcart-mega4096.com \
-	diskcart-megamax8.com \
+	diskcart-atarimax8.com \
 	diskcart-freezer2005.com \
 	diskcart-freezer2011.com \
 	piconame.txt
@@ -120,7 +108,7 @@ diskcart.atr: \
 	mkdir -p disk
 	cp -f diskcart-mega512.com disk/medisk.com
 	cp -f diskcart-mega4096.com disk/m4disk.com
-	cp -f diskcart-megamax8.com disk/mmdisk.com
+	cp -f diskcart-atarimax8.com disk/am8disk.com
 	cp -f diskcart-freezer2005.com disk/f05disk.com
 	cp -f diskcart-freezer2011.com disk/f11disk.com
 	cp -f piconame.txt disk/PICONAME.TXT

@@ -82,46 +82,46 @@ diskwriter-freezer2005.c: diskwriter-freezer2005.bin
 mypdos-freezer2005.c: mypdos-freezer2005.rom
 	xxd -i $< > $@
 
-cartsio-megamax8-pal.bin: mypdos/cartsiobin.src $(CARTSIOINC)
-	$(ATASM) $(MYPDOSFLAGS) -dMEGAMAX8 -dPAL -r -o$@ $<
+cartsio-atarimax8-pal.bin: mypdos/cartsiobin.src $(CARTSIOINC)
+	$(ATASM) $(MYPDOSFLAGS) -dATARIMAX8 -dPAL -r -o$@ $<
 
-cartsio-megamax8-ntsc.bin: mypdos/cartsiobin.src $(CARTSIOINC)
-	$(ATASM) $(MYPDOSFLAGS) -dMEGAMAX8 -r -o$@ $<
+cartsio-atarimax8-ntsc.bin: mypdos/cartsiobin.src $(CARTSIOINC)
+	$(ATASM) $(MYPDOSFLAGS) -dATARIMAX8 -r -o$@ $<
 
-cartsiocode-osram-megamax8-pal.bin: \
+cartsiocode-osram-atarimax8-pal.bin: \
 	cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc $(CARTSIOINC)
-	$(ATASM) $(ASMFLAGS) -dMEGAMAX8 -dPAL -r -o$@ $<
+	$(ATASM) $(ASMFLAGS) -dATARIMAX8 -dPAL -r -o$@ $<
 
-cartsiocode-osram-megamax8-ntsc.bin: \
+cartsiocode-osram-atarimax8-ntsc.bin: \
 	cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc $(CARTSIOINC)
-	$(ATASM) $(ASMFLAGS) -dMEGAMAX8 -r -o$@ $<
+	$(ATASM) $(ASMFLAGS) -dATARIMAX8 -r -o$@ $<
 
-mypdos-code-megamax8.bin: mypdos/mypdos.src $(MYPDOSINC) $(CARTSIOINC) \
+mypdos-code-atarimax8.bin: mypdos/mypdos.src $(MYPDOSINC) $(CARTSIOINC) \
 	mypdos/cartsio.src mypdos/imginfo.src \
 	targets/mypdos-incbin-cartsio.inc \
-	cartsio-megamax8-pal.bin cartsio-megamax8-ntsc.bin \
-	cartsiocode-osram-megamax8-pal.bin cartsiocode-osram-megamax8-ntsc.bin
-	$(ATASM) $(MYPDOSFLAGS) -dMYPDOSROM -dCARTSIO -dMEGAMAX8 -r -o$@ $<
+	cartsio-atarimax8-pal.bin cartsio-atarimax8-ntsc.bin \
+	cartsiocode-osram-atarimax8-pal.bin cartsiocode-osram-atarimax8-ntsc.bin
+	$(ATASM) $(MYPDOSFLAGS) -dMYPDOSROM -dCARTSIO -dATARIMAX8 -r -o$@ $<
 
-mypdos-megamax8.rom: mypdrom.src mypdos-code-megamax8.bin version.inc \
+mypdos-atarimax8.rom: mypdrom.src mypdos-code-atarimax8.bin version.inc \
 	targets/mypdrom-incbin-cartsio.inc \
 	targets/mypdrom-incbin-mypdos.inc \
-	cartsio-megamax8-pal.bin cartsio-megamax8-ntsc.bin hisio.bin
-	$(ATASM) $(MYPDOSFLAGS) -dMEGAMAX8 -r -f255 -o$@ $<
+	cartsio-atarimax8-pal.bin cartsio-atarimax8-ntsc.bin hisio.bin
+	$(ATASM) $(MYPDOSFLAGS) -dATARIMAX8 -r -f255 -o$@ $<
 
-diskcart-megamax8.com: diskcart.src mypdos-megamax8.rom $(LIBFLASHINC) \
+diskcart-atarimax8.com: diskcart.src mypdos-atarimax8.rom $(LIBFLASHINC) \
 	targets/diskcart-inc-target.inc \
 	targets/diskcart-incbin-mypdos.inc \
 	iohelp.inc iohelp.src arith.inc arith.src diskio.src version.inc
-	$(ATASM) $(ASMFLAGS) -Ilibflash -dMEGAMAX8 -o$@ $<
+	$(ATASM) $(ASMFLAGS) -Ilibflash -dATARIMAX8 -o$@ $<
 
-diskwriter-megamax8.bin: diskcart-megamax8.com
+diskwriter-atarimax8.bin: diskcart-atarimax8.com
 	ataricom -b 1 -n $< $@
 
-diskwriter-megamax8.c: diskwriter-megamax8.bin
+diskwriter-atarimax8.c: diskwriter-atarimax8.bin
 	xxd -i $< > $@
 
-mypdos-megamax8.c: mypdos-megamax8.rom
+mypdos-atarimax8.c: mypdos-atarimax8.rom
 	xxd -i $< > $@
 
 cartsio-mega512-pal.bin: mypdos/cartsiobin.src $(CARTSIOINC)

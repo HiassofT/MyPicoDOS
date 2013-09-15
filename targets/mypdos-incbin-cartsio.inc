@@ -10,10 +10,10 @@ CSIOPL	= * - CSIOP
 CSION	.incbin "cartsio-freezer2005-ntsc.bin"
 CSIONL	= * - CSION
 .endif
-.if .def MEGAMAX8
-CSIOP	.incbin "cartsio-megamax8-pal.bin"
+.if .def ATARIMAX8
+CSIOP	.incbin "cartsio-atarimax8-pal.bin"
 CSIOPL	= * - CSIOP
-CSION	.incbin "cartsio-megamax8-ntsc.bin"
+CSION	.incbin "cartsio-atarimax8-ntsc.bin"
 CSIONL	= * - CSION
 .endif
 .if .def MEGA512

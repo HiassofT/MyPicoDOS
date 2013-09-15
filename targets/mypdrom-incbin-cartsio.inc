@@ -10,10 +10,10 @@ OSCODPL	= * - OSCODP
 OSCODN	.incbin "cartsiocode-osram-freezer2005-ntsc.bin"
 OSCODNL	= * - OSCODN
 .endif
-.if .def MEGAMAX8
-OSCODP	.incbin "cartsiocode-osram-megamax8-pal.bin"
+.if .def ATARIMAX8
+OSCODP	.incbin "cartsiocode-osram-atarimax8-pal.bin"
 OSCODPL	= * - OSCODP
-OSCODN	.incbin "cartsiocode-osram-megamax8-ntsc.bin"
+OSCODN	.incbin "cartsiocode-osram-atarimax8-ntsc.bin"
 OSCODNL	= * - OSCODN
 .endif
 .if .def MEGA512

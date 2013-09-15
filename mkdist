@@ -13,13 +13,14 @@ mkdir -p "${TMPDIR}/src/cartsio"
 mkdir -p "${TMPDIR}/src/libflash"
 mkdir -p "${TMPDIR}/src/mypdos"
 mkdir -p "${TMPDIR}/src/hisio"
+mkdir -p "${TMPDIR}/src/targets"
 
 cp -a \
 	atr2cart.exe \
 	diskcart.atr \
-	diskcart-megamax.atr diskcart-freezer.atr diskcart-mega512.atr \
-	diskcart-megamax.com diskcart-freezer.com diskcart-mega512.com \
-	ctestmm.com ctestme.com \
+	diskcart-atarimax8.com \
+	diskcart-freezer2005.com diskcart-freezer2011.com \
+	diskcart-mega512.com diskcart-mega4096.com \
 	"${TMPDIR}"
 
 cp -a Makefile piconame*.txt *.inc *.src *.cpp *.c *.h "${TMPDIR}/src"
@@ -27,6 +28,7 @@ cp -a cartsio/*.src cartsio/*.inc "${TMPDIR}/src/cartsio"
 cp -a libflash/*.src libflash/*.inc "${TMPDIR}/src/libflash"
 cp -a mypdos/*.src mypdos/*.inc "${TMPDIR}/src/mypdos"
 cp -a hisio/*.src hisio/*.inc "${TMPDIR}/src/hisio"
+cp -a targets/*.c targets/*.inc targets/*.mk "${TMPDIR}/src/targets"
 
 rm -f "dist/${NAME}".zip
 cd dist/tmp

@@ -4,8 +4,8 @@
 .if .def FREEZER2005
 	.incbin "mypdos-code-freezer2005.bin"
 .endif
-.if .def MEGAMAX8
-	.incbin "mypdos-code-megamax8.bin"
+.if .def ATARIMAX8
+	.incbin "mypdos-code-atarimax8.bin"
 .endif
 .if .def MEGA512
 	.incbin "mypdos-code-mega512.bin"

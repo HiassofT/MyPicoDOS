@@ -4,8 +4,8 @@
 .if .def FREEZER2005
 	.incbin "mypdos-freezer2005.rom"
 .endif
-.if .def MEGAMAX8
-	.incbin "mypdos-megamax8.rom"
+.if .def ATARIMAX8
+	.incbin "mypdos-atarimax8.rom"
 .endif
 .if .def MEGA512
 	.incbin "mypdos-mega512.rom"

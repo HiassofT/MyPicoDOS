@@ -1,4 +1,4 @@
-;  cartsio-freezer05.inc - definitions for Turbo Freezer 2005 CartEmu
+;  cartsio-freezer2005.inc - definitions for Turbo Freezer 2005 CartEmu
 ;
 ;  Copyright (c) 2011 by Matthias Reichl <hias@horus.com>
 ;

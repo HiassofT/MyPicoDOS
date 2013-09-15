@@ -813,7 +813,7 @@ XEND	= *
 	.BYTE "HiassofT"
 	TIMESTAMP
 
-.if .def MEGAMAX8
+.if .def ATARIMAX8
 	* = $BFF0
 AMINIT	CARTBNKI 0
 	JMP INIT
@@ -825,7 +825,7 @@ AMINIT	CARTBNKI 0
 	.BYTE 0
 ;	.BYTE 4		; init & start cart, no disk boot allowed
 	.BYTE 1		; only init cart, allow disk boot
-.if .def MEGAMAX8
+.if .def ATARIMAX8
 	.WORD AMINIT
 .else
 	.WORD INIT

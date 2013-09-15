@@ -1,4 +1,4 @@
-;  cartsio-megamax8.inc - definitions for Megamax 1024k cart (8k mode)
+;  cartsio-atarimax8.inc - definitions for AtariMax 8MBit cart
 ;
 ;  Copyright (c) 2010 by Matthias Reichl <hias@horus.com>
 ;
