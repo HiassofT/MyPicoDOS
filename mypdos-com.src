@@ -58,21 +58,29 @@ MYLP	LDA (SRCADR),Y
 MYPDOS  = *
 
 	.IF .DEF BAREBONE
-	.incbin mypdos-code-b.bin
+	  .incbin mypdos-code-b.bin
 	.ELSE
-	.IF HIDEF=0
-	.IF .DEF REMOTE
-        .incbin mypdos-code-r-hioff.bin
-	.ELSE
-        .incbin mypdos-code-hioff.bin
-	.ENDIF
-	.ELSE
-	.IF .DEF REMOTE
-        .incbin mypdos-code-r.bin
-	.ELSE
-        .incbin mypdos-code.bin
-	.ENDIF
-	.ENDIF
+	  .IF HIDEF=0
+	    .if .def THECART
+              .incbin mypdos-code-t-hioff.bin
+	    .else
+	      .IF .DEF REMOTE
+                .incbin mypdos-code-r-hioff.bin
+	      .ELSE
+                .incbin mypdos-code-hioff.bin
+	      .ENDIF
+	    .endif
+	  .ELSE
+	    .if .def THECART
+              .incbin mypdos-code-t.bin
+	    .else
+	      .IF .DEF REMOTE
+                .incbin mypdos-code-r.bin
+	      .ELSE
+                .incbin mypdos-code.bin
+	      .ENDIF
+	    .endif
+	  .ENDIF
 	.ENDIF
 
 MYPDPG  = (*-MYPDOS+255) / 256

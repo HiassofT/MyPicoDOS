@@ -848,6 +848,9 @@ TITEL	.BYTE 125
 	.IF .DEF BAREBONE
 	.BYTE "          MyPicoDos Init V4.05B",155
 	.ELSE
+	.IF .DEF THECART
+	.BYTE "          MyPicoDos Init V4.05T",155
+	.ELSE
 	.IF .DEF REMOTE
 	.BYTE "          MyPicoDos Init V4.05R",155
 	.ELSE
@@ -858,9 +861,14 @@ TITEL	.BYTE 125
 	.ENDIF
 	.ENDIF
 	.ENDIF
+	.ENDIF
 	.BYTE "         (c) HiassofT 1992-2010",155
 	.BYTE 155
+	.IF .DEF THECART
+	.BYTE "   COM / EXE / BIN / BAS / CAR loader",155
+	.ELSE
 	.BYTE "      COM / EXE / BIN / BAS loader",155
+	.ENDIF
 	.BYTE "  for SD & DD disks, 720-65535 sectors",155
 	.BYTE "  in Dos 2.x / MyDos / BiboDos format", 155
 	.BYTE "long filenames and subdirectory support",155

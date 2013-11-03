@@ -1,0 +1,385 @@
+;  carloadcode - load .car file into The!Cart RAM
+;
+;  Copyright (C) 2013 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+	.LOCAL
+
+	.include "thecart.inc"
+
+; print EOL terminated text
+	.macro PRT0 ; arg: label
+	LDX #<%1
+	LDY #>%1
+	JSR PRTCOD
+	.endm
+
+CARBUF	= BASE
+
+; print text on screen / channel 0
+; in: X=adr lo, Y=adr hi
+PRTCOD	STX $344
+	STY $345
+	LDA #9
+	STA $342
+	LDA #127
+	STA $348
+	LDX #0
+	STX $349
+	JMP $E456
+
+LOADCAR
+; set memtop to $A000, init graphics 0 screen
+	LDA #$A0
+	STA 106
+	JSR GR0
+
+; detect cart (returns only if thecart found)
+	JSR TCDETECT
+
+; setup INIADR to catch premature EOF
+	LDA #<TCEOF
+	STA 738
+	LDA #>TCEOF
+	STA 739
+
+	LDX XREG
+; skip over 'R', 'T' and first 3 mode bytes
+	LDY #5
+	JSR TCSKIP
+; read mode
+	JSR GETBYT
+
+; check for valid mode (returns only if mode found)
+	STX XREG
+	JSR TCCKMOD
+	LDX XREG
+
+; skip over checksum and 4 unused bytes
+	LDY #8
+	JSR TCSKIP
+	
+; load loop
+?LDCARLP
+	JSR LDCAR8K
+	DEC TCBLK
+	BNE ?LDCARLP
+
+; now start the cartridge
+	INC $42
+; use write protected RAM
+	LDA #TC_CFG_SRC
+	STA TC_CFG
+; bank 0
+	LDA #0
+	STA TC_BANKLO
+	STA TC_BANKHI
+	LDA TCMOD
+	STA TC_MODE
+
+; check for mode specific init stuff
+	CMP #TC_MODE_OSS
+	BNE RUNC1
+	STA OSSBANK1
+RUNC1	CMP #TC_MODE_SDX64
+	BNE RUNC2
+	STA SDX64_BANKCTL
+RUNC2	CMP #TC_MODE_DIAMOND64
+	BNE RUNC3
+	STA DIAMOND64_BANKCTL
+RUNC3	CMP #TC_MODE_EXPRESS64
+	BNE RUNC4
+	STA EXPRESS64_BANKCTL
+RUNC4	CMP #TC_MODE_SIC
+	BNE RUNC5
+	LDX #0
+	STX SIC_BANKCTL
+RUNC5
+
+	JMP $E477
+
+; check if thecart is present
+TCDETECT
+	INC $42
+	LDA #TC_MODE_8K
+	STA TC_MODE
+	LDA #TC_CFG_WE
+	STA TC_CFG
+	LDA #0
+	STA TC_BANKLO
+	STA TC_BANKHI
+
+; enable autoselect mode
+	LDA #$AA
+	STA $AAAA
+	LDA #$55
+	STA $A555
+	LDA #$90
+	STA $AAAA
+
+; check manufacturer id
+	LDA $A000
+	CMP #$01
+	BNE ?TCDETNO
+
+; check device id
+	LDA $A002
+	CMP #$7E
+	BNE ?TCDETNO
+
+	LDA $A01E
+	CMP #$01
+	BNE ?TCDETNO
+
+	LDA $A01C
+	CMP #$28	; 01
+	BEQ ?TCDETOK
+	CMP #$23
+	BEQ ?TCDETOK
+	CMP #$22
+	BEQ ?TCDETOK
+	CMP #$21
+	BNE ?TCDETNO
+
+?TCDETOK
+; OK, found the!cart
+; disable autoselect mode and set RAM mode
+	LDA #$F0
+	STA $A000
+	LDA #TC_CFG_WE+TC_CFG_SRC
+	STA TC_CFG
+	LDA #0
+	STA TC_ENABLE
+	DEC $42
+	RTS
+
+; no cart detected
+?TCDETNO
+	LDA #$F0
+	STA $A000
+	LDA #TC_MODE_OFF
+	STA TC_MODE
+	LDA #0
+	STA TC_CFG
+	STA TC_ENABLE
+	DEC $42
+	PRT0 TNOTCDET
+?TCELP	JMP ?TCELP
+
+TCEOF	PRT0 TEOF
+	JMP ?TCELP
+
+; skip over Y bytes
+TCSKIP	JSR GETBYT
+	DEY
+	BNE TCSKIP
+	RTS
+
+; check for valid mode in A
+TCCKMOD	STA TCMOD
+	LDX #0
+?TCCKLP	LDA TCMODTAB,X
+	BEQ ?TCCKNO	; end of table
+	CMP TCMOD
+	BEQ ?TCCK1
+	INX
+	INX
+	INX
+	BNE ?TCCKLP	; always
+
+?TCCKNO	PRT0 TINVMOD
+	JMP ?TCELP
+
+?TCCK1	LDA TCMODTAB+1,X
+	STA TCMOD
+	LDA TCMODTAB+2,X
+	STA TCBLK
+	PRT0 TLOADCAR
+	LDA TCMOD
+	CMP #TC_MODE_ATARIMAX8
+	BNE ?TCCK2
+	PRT0 TAMWARN
+?TCCK2	RTS
+
+; load 8k block into thecart
+LDCAR8K
+; setup address and len for loading
+	LDA #<CARBUF
+	STA ADR
+	LDA #>CARBUF
+	STA ADR+1
+
+	LDA #0
+	STA BLEN
+	LDA #$20
+	STA BLEN+1
+
+	LDY #0
+
+?MLOOP	CPX BYTES
+	BNE ?NRRD
+
+?DORD	JSR RREAD
+
+	LDA BLEN+1
+	CMP #2
+	BCC ?NRRD
+	LDA BYTES
+	CMP SECBYTE
+	BNE ?NRRD
+
+; use fast copy routine in case of a full (125/253 bytes) sector
+
+	TYA
+	CLC
+	ADC ADR
+	STA ADR
+	BCC ?NI01
+	INC ADR+1
+?NI01	LDY SECBYTE
+	DEY
+?COP4	LDA BUF,Y
+	STA (ADR),Y
+	DEY
+	LDA BUF,Y
+	STA (ADR),Y
+	DEY
+	LDA BUF,Y
+	STA (ADR),Y
+	DEY
+	LDA BUF,Y
+	STA (ADR),Y
+	DEY
+	BNE ?COP4
+	LDA BUF,Y
+	STA (ADR),Y
+	CLC
+	LDA ADR
+	ADC SECBYTE
+	STA ADR
+	BCC ?NI02
+	INC ADR+1
+?NI02	SEC
+	LDA BLEN
+	BNE ?NEN1
+	INC BLEN+1
+?NEN1	SBC SECBYTE
+	STA BLEN
+	BNE ?NEN2
+	DEC BLEN+1
+?NEN2	BCS ?ND01
+	DEC BLEN+1
+?ND01	JMP ?DORD
+
+?NRRD	LDA BUF,X
+	INX
+	STA (ADR),Y
+
+	DEC BLEN
+	BNE ?ADPLUS
+	DEC BLEN+1
+	BEQ ?ENDBLK
+
+?ADPLUS	INY
+	BNE ?MLOOP
+	INC ADR+1
+	BNE ?MLOOP
+
+?ENDBLK
+
+; now copy 8k block into thecart ram
+	STX XREG
+	INC $42
+	LDA #1
+	STA TC_ENABLE
+	LDA #>CARBUF
+	STA ?CCSRC+2
+	LDA #$A0
+	STA ?CCDST+2
+	LDY #0
+	LDX #$20
+?CCLP
+?CCSRC	LDA CARBUF,Y
+?CCDST	STA $A000,Y
+	INY
+	BNE ?CCLP
+	INC ?CCSRC+2
+	INC ?CCDST+2
+	DEX
+	BNE ?CCLP
+
+; next bank
+	INC TC_BANKLO
+	LDA #0
+	STA TC_ENABLE
+	DEC $42
+	LDX XREG
+	RTS
+
+TNOTCDET
+	.BYTE "The!Cart not present", 155
+
+TINVMOD
+	.BYTE "Unsupported cartridge mode", 155
+
+TLOADCAR
+	.BYTE "Loading CAR into The!Cart RAM",155
+
+TAMWARN
+	.BYTE "Only first 512k will be loaded!",155
+
+TEOF
+	.BYTE "premature end of file!",155
+
+; car mode to thecart mode mapping:
+; car mode, thecart mode, number of 8k blocks
+TCMODTAB
+	.BYTE 1, TC_MODE_8K, 1
+	.BYTE 2, TC_MODE_16K, 2
+	.BYTE 3, TC_MODE_OSS, 2
+	.BYTE 8, TC_MODE_WILLIAMS64, 8
+	.BYTE 9, TC_MODE_EXPRESS64, 8
+	.BYTE 10, TC_MODE_DIAMOND64, 8
+	.BYTE 11, TC_MODE_SDX64, 8
+	.BYTE 12, TC_MODE_XEGS_32, 4
+	.BYTE 13, TC_MODE_XEGS_64, 8
+	.BYTE 14, TC_MODE_XEGS_128, 16
+	.BYTE 17, TC_MODE_ATRAX128, 16
+	.BYTE 23, TC_MODE_XEGS_256, 32
+	.BYTE 24, TC_MODE_XEGS_512, 64
+	.BYTE 26, TC_MODE_MEGA_16, 2
+	.BYTE 27, TC_MODE_MEGA_32, 4
+	.BYTE 28, TC_MODE_MEGA_64, 8
+	.BYTE 29, TC_MODE_MEGA_128, 16 
+	.BYTE 30, TC_MODE_MEGA_256, 32
+	.BYTE 31, TC_MODE_MEGA_512, 64
+	.BYTE 33, TC_MODE_SXEGS_32, 4
+	.BYTE 34, TC_MODE_SXEGS_64, 8
+	.BYTE 35, TC_MODE_SXEGS_128, 16
+	.BYTE 36, TC_MODE_SXEGS_256, 32
+	.BYTE 37, TC_MODE_SXEGS_512, 64
+	.BYTE 40, TC_MODE_BLIZZARD, 2
+	.BYTE 41, TC_MODE_ATARIMAX1, 16
+	.BYTE 42, TC_MODE_ATARIMAX8, 64		; only first 512k loaded!
+	.BYTE 56, TC_MODE_SIC, 64
+	
+	.BYTE 0,0,0
+
+; thecart mode
+TCMOD	.BYTE 0
+
+; number of 8k blocks to load
+TCBLK	.BYTE 0

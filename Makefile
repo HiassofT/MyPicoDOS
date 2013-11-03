@@ -7,10 +7,12 @@ ATASM ?= atasm
 all: MYINIT.COM MYINITR.COM \
 	MYPDOS.COM MYPDOSN.COM \
 	MYPDOSR.COM MYPDOSRN.COM \
+	MYPDOST.COM MYPDOSTN.COM \
 	MYPDOSB.COM PICOBOOT.COM \
 	MYPDOSS.COM \
 	mypdos.atr mypdosn.atr \
 	mypdosr.atr mypdosrn.atr \
+	mypdost.atr mypdostn.atr \
 	mypdoss0.atr mypdoss1.atr \
 	mypdosb.atr \
 	myinit.atr
@@ -89,6 +91,16 @@ mypdosrn.atr: mypdos.src $(MYPDOSINC) \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -dREMOTE=1 -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -dHIDEF=0 -r -o$@ $<
 
+mypdost.atr: mypdos.src $(MYPDOSINC) \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
+	carloadcode.src thecart.inc
+	$(ATASM) $(ASMFLAGS) -dTHECART=1 -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -r -o$@ $<
+
+mypdostn.atr: mypdos.src $(MYPDOSINC) \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
+	carloadcode.src thecart.inc
+	$(ATASM) $(ASMFLAGS) -dTHECART=1 -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -dHIDEF=0 -r -o$@ $<
+
 mypdosb.atr: mypdos.src $(MYPDOSINC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dBAREBONE=1 -r -o$@ $<
@@ -106,15 +118,25 @@ mypdos-code-r.bin: mypdos.src $(MYPDOSINC) \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dREMOTE=1 -r -o$@ $<
 
-mypdos-code-s.bin: mypdos.src $(MYPDOSINC) \
-	highspeedcode.src $(HISIOINC) highspeed.bin \
-	remote.src
-	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dSDRIVE=1 -r -o$@ $<
-
 mypdos-code-r-hioff.bin: mypdos.src $(MYPDOSINC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dREMOTE=1 -dHIDEF=0 -r -o$@ $<
+
+mypdos-code-t.bin: mypdos.src $(MYPDOSINC) \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
+	carloadcode.src thecart.inc
+	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dTHECART=1 -r -o$@ $<
+
+mypdos-code-t-hioff.bin: mypdos.src $(MYPDOSINC) \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
+	carloadcode.src thecart.inc
+	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dTHECART=1 -dHIDEF=0 -r -o$@ $<
+
+mypdos-code-s.bin: mypdos.src $(MYPDOSINC) \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
+	remote.src
+	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dSDRIVE=1 -r -o$@ $<
 
 mypdos-code-b.bin: mypdos.src $(MYPDOSINC)
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dBAREBONE=1 -r -o$@ $<
@@ -131,6 +153,10 @@ MYINIT.COM: myinit.src getdens.src longname.src qsort.src cio.inc \
 MYINITR.COM: myinit.src getdens.src longname.src qsort.src cio.inc \
 	mypdosr.bin
 	$(ATASM) $(ASMFLAGS) -dREMOTE=1 -o$@ $<
+
+MYINITT.COM: myinit.src getdens.src longname.src qsort.src cio.inc \
+	mypdost.bin
+	$(ATASM) $(ASMFLAGS) -dTHECART=1 -o$@ $<
 
 MYINITS.COM: myinit.src getdens.src longname.src qsort.src cio.inc \
 	mypdoss.bin
@@ -149,14 +175,21 @@ MYPDOSN.COM: mypdos-com.src mypdos-code-hioff.bin
 MYPDOSR.COM: mypdos-com.src mypdos-code-r.bin
 	$(ATASM) $(ASMFLAGS) -dHIDEF=1 -dREMOTE=1 -o$@ $<
 
-MYPDOSS.COM: mypdos-com.src mypdos-code-s.bin
-	$(ATASM) $(ASMFLAGS) -dHIDEF=1 -dREMOTE=1 -o$@ $<
-
 MYPDOSRN.COM: mypdos-com.src mypdos-code-r-hioff.bin
 	$(ATASM) $(ASMFLAGS) -dHIDEF=0 -dREMOTE=1 -o$@ $<
 
+MYPDOSS.COM: mypdos-com.src mypdos-code-s.bin
+	$(ATASM) $(ASMFLAGS) -dHIDEF=1 -dREMOTE=1 -o$@ $<
+
 MYPDOSB.COM: mypdos-com.src mypdos-code-b.bin
 	$(ATASM) $(ASMFLAGS) -dBAREBONE=1 -o$@ $<
+
+MYPDOST.COM: mypdos-com.src mypdos-code-t.bin
+	$(ATASM) $(ASMFLAGS) -dHIDEF=1 -dTHECART=1 -o$@ $<
+
+MYPDOSTN.COM: mypdos-com.src mypdos-code-t-hioff.bin
+	$(ATASM) $(ASMFLAGS) -dHIDEF=0 -dTHECART=1 -o$@ $<
+
 
 # myide flashcart
 MYPDIDE.ROM: mypdrom.src mypdos-code-hioff.bin
@@ -212,6 +245,7 @@ atarisio: atarisio-mypdos.bin \
 MYINIT_COMS=MYINIT.COM MYINITR.COM MYINITB.COM \
 	MYPDOS.COM MYPDOSN.COM \
 	MYPDOSR.COM MYPDOSRN.COM \
+	MYPDOST.COM MYPDOSTN.COM \
 	MYPDOSB.COM PICOBOOT.COM \
 	MYINITS.COM
 
@@ -220,7 +254,7 @@ initdisk/AUTOEXEC.BAT: autoexec.bat
 
 myinit.atr: $(MYINIT_COMS) initdisk initdisk/AUTOEXEC.BAT
 	cp -f $(MYINIT_COMS) initdisk
-	dir2atr -b MyDos4534 720 myinit.atr initdisk
+	dir2atr -b MyDos4534 1040 myinit.atr initdisk
 
 
 myinit3:

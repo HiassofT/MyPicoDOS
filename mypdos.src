@@ -444,6 +444,10 @@ TITLE	= *
 	.SBYTE " MyPicoDos 4.05B (c)"
 	.SBYTE " HiassofT 1992-2010 "
 	.ELSE
+	.IF .DEF THECART
+	.SBYTE " MyPicoDos 4.05T (c)"
+	.SBYTE " HiassofT 1992-2013 "
+	.ELSE
 	.IF .DEF REMOTE
 	.SBYTE " MyPicoDos 4.05R (c)"
 	.SBYTE " HiassofT 1992-2010 "
@@ -454,6 +458,7 @@ TITLE	= *
 	.ELSE
 	.SBYTE " MyPicoDos 4.05 (c) "
 	.SBYTE "HiassofT 1992-2010  "
+	.ENDIF
 	.ENDIF
 	.ENDIF
 	.ENDIF
@@ -1997,7 +2002,18 @@ LOAD2	LDA TEMPV
 
 	JMP LOADBAS
 
-BINOK	JSR BASOFF
+BINOK	
+.if .def THECART
+	LDA TEMPV
+	CMP #'C
+	BNE BINOK1
+	LDA TEMPV+1
+	CMP #'A
+	BNE BINOK1
+	JMP LOADCAR
+BINOK1
+.endif
+	JSR BASOFF
 	LDX XREG
 	JSR GETBYT
 	STA DBUF	; start adr. LO
@@ -2225,6 +2241,10 @@ DEMPTLEN	= *-DSKEMPT
 	BUFFER = SCREEN
 	.include "remote.src"
 	.ENDIF
+
+	.if .def THECART
+	.include "carloadcode.src"
+	.endif
 
 	.if .def HWDEBUG
 	.include "hwdebsup.src"
