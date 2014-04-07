@@ -4,7 +4,7 @@
 
 ATASM ?= atasm
 
-all: MYINIT.COM MYINITR.COM \
+all: MYINIT.COM MYINITR.COM MYINITT.COM MYINITB.COM \
 	MYPDOS.COM MYPDOSN.COM \
 	MYPDOSR.COM MYPDOSRN.COM \
 	MYPDOST.COM MYPDOSTN.COM \
@@ -56,6 +56,11 @@ mypdosr.bin: mypdos.src $(MYPDOSINC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -dHIGHSPEED=1 -dREMOTE=1 -r -o$@ $<
+
+mypdost.bin: mypdos.src $(MYPDOSINC) \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
+	carloadcode.src thecart.inc
+	$(ATASM) $(ASMFLAGS) -dHIGHSPEED=1 -dTHECART=1 -r -o$@ $<
 
 mypdoss.bin: mypdos.src $(MYPDOSINC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
@@ -247,7 +252,7 @@ MYINIT_COMS=MYINIT.COM MYINITR.COM MYINITB.COM \
 	MYPDOSR.COM MYPDOSRN.COM \
 	MYPDOST.COM MYPDOSTN.COM \
 	MYPDOSB.COM PICOBOOT.COM \
-	MYINITS.COM
+	MYINITS.COM MYINITT.COM
 
 initdisk/AUTOEXEC.BAT: autoexec.bat
 	tr '\012' '\233' < $< > $@

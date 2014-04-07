@@ -964,6 +964,9 @@ WRITNL	= * - WRITNAM
 HEXTAB	.BYTE "0123456789ABCDEF"
 
 MYHS	= *
+.if .def THECART
+	.incbin "mypdost.bin"
+.else
 .IF .DEF BAREBONE
 	.incbin "mypdosb.bin"
 .ELSE
@@ -977,6 +980,7 @@ MYHS	= *
 .ENDIF
 .ENDIF
 .ENDIF
+.endif
 MYHSLEN	= * - MYHS
 
 MERK82	* = * + 1

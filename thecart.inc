@@ -89,6 +89,8 @@ TC_SPI_CLK		= 1		; SPI clock (write)
 
 TC_SPI_MSK		= $7C		; mask of unused bits (must read 0)
 
+TC_LOCKCFG		= $D5AF		; lock current configuration
+
 ; OSS banking registers
 OSSBANK1		= $D500
 OSSBANK2		= $D509
