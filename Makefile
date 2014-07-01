@@ -18,7 +18,7 @@ all: MYINIT.COM MYINITR.COM MYINITT.COM MYINITB.COM \
 	myinit.atr
 
 # version string for naming atarisio include files
-CFILE_VERSION=406-dev
+CFILE_VERSION=4dev
 
 #all: MYPDOS.COM mypdos.atr mypdoshs.atr myinit2.atr
 
