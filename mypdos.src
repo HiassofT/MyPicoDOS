@@ -441,46 +441,31 @@ SLMS	.WORD SCREEN
 ; MyPicoDos screen
 
 TITLE	= *
-	.IF .DEF BAREBONE
 	.SBYTE " MyPicoDos "
 	SVERSION
-	.SBYTE "B (c)"
-	.SBYTE " HiassofT 1992-"
-	SCOPYYEAR
-	.SBYTE " "
+
+	.IF .DEF BAREBONE
+	.SBYTE "B"
 	.ELSE
 	.IF .DEF THECART
-	.SBYTE " MyPicoDos "
-	SVERSION
-	.SBYTE "T (c)"
-	.SBYTE " HiassofT 1992-2013 "
+	.SBYTE "T"
 	.ELSE
 	.IF .DEF REMOTE
-	.SBYTE " MyPicoDos "
-	SVERSION
-	.SBYTE "R (c)"
-	.SBYTE " HiassofT 1992-"
-	SCOPYYEAR
-	.SBYTE " "
+	.SBYTE "R"
 	.ELSE
 	.IF .DEF SDRIVE
-	.SBYTE " MyPicoDos "
-	SVERSION
-	.SBYTE "S (c)"
+	.SBYTE "S"
+	.ELSE
+	.SBYTE " "
+	.ENDIF
+	.ENDIF
+	.ENDIF
+	.ENDIF
+
+	.SBYTE " (c)"
 	.SBYTE " HiassofT 1992-"
 	SCOPYYEAR
 	.SBYTE " "
-	.ELSE
-	.SBYTE " MyPicoDos "
-	SVERSION
-	.SBYTE " (c) "
-	.SBYTE "HiassofT 1992-"
-	SCOPYYEAR
-	.SBYTE "  "
-	.ENDIF
-	.ENDIF
-	.ENDIF
-	.ENDIF
 
 ;	        12345678901234567890
 TSELECT	.SBYTE "    "
