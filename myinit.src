@@ -59,6 +59,7 @@ DSEC	= $30A
 SIOVEC	= $E459
 
 	.include "cio.inc"
+	.include "version.inc"
 
 	.MACRO WSEC128 ;DRIVENO,SECTOR,ADR
 	LDA #$31
@@ -845,25 +846,27 @@ PNAMNAM	.BYTE "PICONAMETXT"
 ;              0987654321098765432112345678901234567890
 TITEL	.BYTE 125
 
+	.BYTE "          MyPicoDos Init V"
+	VERSION
 	.IF .DEF BAREBONE
-	.BYTE "          MyPicoDos Init V4.05B",155
+	.BYTE "B"
 	.ELSE
 	.IF .DEF THECART
-	.BYTE "          MyPicoDos Init V4.05T",155
+	.BYTE "T"
 	.ELSE
 	.IF .DEF REMOTE
-	.BYTE "          MyPicoDos Init V4.05R",155
+	.BYTE "R"
 	.ELSE
 	.IF .DEF SDRIVE
-	.BYTE "          MyPicoDos Init V4.05S",155
-	.ELSE
-	.BYTE "          MyPicoDos Init V4.05",155
+	.BYTE "S"
 	.ENDIF
 	.ENDIF
 	.ENDIF
 	.ENDIF
-	.BYTE "         (c) HiassofT 1992-2010",155
 	.BYTE 155
+	.BYTE "         (c) HiassofT 1992-"
+	COPYYEAR
+	.BYTE 155, 155
 	.IF .DEF THECART
 	.BYTE "   COM / EXE / BIN / BAS / CAR loader",155
 	.ELSE

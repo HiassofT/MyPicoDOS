@@ -1,4 +1,4 @@
-;  PicoBoot V4.05 - initializer program
+;  PicoBoot - initializer program
 ;
 ;  Copyright (C) 2008-2010 Matthias Reichl <hias@horus.com>
 ;
@@ -29,6 +29,7 @@ DSEC	= $30A
 SIOVEC	= $E459
 
 	.include "cio.inc"
+	.include "version.inc"
 
 	.MACRO WSEC128 ;DRIVENO,SECTOR,ADR
 	LDA #$31
@@ -179,9 +180,12 @@ DRIVENO	.BYTE 1
 ;              0987654321098765432112345678901234567890
 TITEL	.BYTE 125
 
-	.BYTE "          PicoBoot Init V4.05",155
-	.BYTE "         (c) HiassofT 1992-2010",155
+	.BYTE "          PicoBoot Init V"
+	VERSION
 	.BYTE 155
+	.BYTE "         (c) HiassofT 1992-"
+	COPYYEAR
+	.BYTE 155,155
 	.BYTE "         single COM file loader",155
 	.BYTE "  for SD & DD disks, 720-65535 sectors",155
 	.BYTE "  in Dos 2.x / MyDos / BiboDos format", 155

@@ -1,4 +1,4 @@
-;  MyPicoDos 4.05 - main menu and loader routine
+;  MyPicoDos - main menu and loader routine
 ;
 ;  Copyright (C) 1992-2010 Matthias Reichl <hias@horus.com>
 ;
@@ -18,6 +18,7 @@
 
 	.include "common.inc"
 	.include "cio.inc"
+	.include "version.inc"
 
 	.if .def HWDEBUG
 	.include "hwdebug.src"
@@ -441,23 +442,41 @@ SLMS	.WORD SCREEN
 
 TITLE	= *
 	.IF .DEF BAREBONE
-	.SBYTE " MyPicoDos 4.05B (c)"
-	.SBYTE " HiassofT 1992-2010 "
+	.SBYTE " MyPicoDos "
+	SVERSION
+	.SBYTE "B (c)"
+	.SBYTE " HiassofT 1992-"
+	SCOPYYEAR
+	.SBYTE " "
 	.ELSE
 	.IF .DEF THECART
-	.SBYTE " MyPicoDos 4.05T (c)"
+	.SBYTE " MyPicoDos "
+	SVERSION
+	.SBYTE "T (c)"
 	.SBYTE " HiassofT 1992-2013 "
 	.ELSE
 	.IF .DEF REMOTE
-	.SBYTE " MyPicoDos 4.05R (c)"
-	.SBYTE " HiassofT 1992-2010 "
+	.SBYTE " MyPicoDos "
+	SVERSION
+	.SBYTE "R (c)"
+	.SBYTE " HiassofT 1992-"
+	SCOPYYEAR
+	.SBYTE " "
 	.ELSE
 	.IF .DEF SDRIVE
-	.SBYTE " MyPicoDos 4.05S (c)"
-	.SBYTE " HiassofT 1992-2010 "
+	.SBYTE " MyPicoDos "
+	SVERSION
+	.SBYTE "S (c)"
+	.SBYTE " HiassofT 1992-"
+	SCOPYYEAR
+	.SBYTE " "
 	.ELSE
-	.SBYTE " MyPicoDos 4.05 (c) "
-	.SBYTE "HiassofT 1992-2010  "
+	.SBYTE " MyPicoDos "
+	SVERSION
+	.SBYTE " (c) "
+	.SBYTE "HiassofT 1992-"
+	SCOPYYEAR
+	.SBYTE "  "
 	.ENDIF
 	.ENDIF
 	.ENDIF

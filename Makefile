@@ -17,6 +17,9 @@ all: MYINIT.COM MYINITR.COM MYINITT.COM MYINITB.COM \
 	mypdosb.atr \
 	myinit.atr
 
+# version string for naming atarisio include files
+CFILE_VERSION=406-dev
+
 #all: MYPDOS.COM mypdos.atr mypdoshs.atr myinit2.atr
 
 ASMFLAGS= -Ihisio
@@ -25,9 +28,11 @@ ASMFLAGS= -Ihisio
 #ASMFLAGS = -Ihisio -v -s
 #ASMFLAGS = -Ihisio -s -dHWDEBUG
 
-MYPDOSINC = common.inc getdens.src longname.src \
+MYPDOSSRC = mypdos.src common.inc version.inc getdens.src longname.src \
 	rreadcode.src comloadcode.src basloadcode.src \
 	rread.bin comload.bin basload.bin
+
+MYINITSRC = myinit.src getdens.src longname.src qsort.src cio.inc version.inc
 
 HISIOINC = hisio/hisio.inc hisio/hisiocode.src hisio/hisiodet.src \
 	hisio/hisiocode-break.src hisio/hisiocode-cleanup.src \
@@ -48,126 +53,126 @@ highspeed.bin: highspeed.src highspeedcode.src $(HISIOINC) \
 	common.inc rreadcode.src comloadcode.src
 	$(ATASM) $(ASMFLAGS) -r -o$@ $<
 
-mypdos.bin: mypdos.src $(MYPDOSINC) \
+mypdos.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -dHIGHSPEED=1 -r -o$@ $<
 
-mypdosr.bin: mypdos.src $(MYPDOSINC) \
+mypdosr.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -dHIGHSPEED=1 -dREMOTE=1 -r -o$@ $<
 
-mypdost.bin: mypdos.src $(MYPDOSINC) \
+mypdost.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	carloadcode.src thecart.inc
 	$(ATASM) $(ASMFLAGS) -dHIGHSPEED=1 -dTHECART=1 -r -o$@ $<
 
-mypdoss.bin: mypdos.src $(MYPDOSINC) \
+mypdoss.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -dHIGHSPEED=1 -dSDRIVE=1 -r -o$@ $<
 
-mypdosb.bin: mypdos.src $(MYPDOSINC)
+mypdosb.bin: $(MYPDOSSRC)
 	$(ATASM) $(ASMFLAGS) -dBAREBONE=1 -r -o$@ $<
 
-mypdos.atr: mypdos.src $(MYPDOSINC) \
+mypdos.atr: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -r -o$@ $<
 
-mypdosn.atr: mypdos.src $(MYPDOSINC) \
+mypdosn.atr: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -dHIDEF=0 -r -o$@ $<
 
-mypdoss0.atr: mypdos.src $(MYPDOSINC) \
+mypdoss0.atr: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -dSDRIVE=1 -dSDDEF=0 -r -o$@ $<
 
-mypdoss1.atr: mypdos.src $(MYPDOSINC) \
+mypdoss1.atr: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -dSDRIVE=1 -dSDDEF=1 -r -o$@ $<
 
-mypdosr.atr: mypdos.src $(MYPDOSINC) \
+mypdosr.atr: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -dREMOTE=1 -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -r -o$@ $<
 
-mypdosrn.atr: mypdos.src $(MYPDOSINC) \
+mypdosrn.atr: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -dREMOTE=1 -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -dHIDEF=0 -r -o$@ $<
 
-mypdost.atr: mypdos.src $(MYPDOSINC) \
+mypdost.atr: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	carloadcode.src thecart.inc
 	$(ATASM) $(ASMFLAGS) -dTHECART=1 -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -r -o$@ $<
 
-mypdostn.atr: mypdos.src $(MYPDOSINC) \
+mypdostn.atr: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	carloadcode.src thecart.inc
 	$(ATASM) $(ASMFLAGS) -dTHECART=1 -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -dHIDEF=0 -r -o$@ $<
 
-mypdosb.atr: mypdos.src $(MYPDOSINC) \
+mypdosb.atr: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dBAREBONE=1 -r -o$@ $<
 
-mypdos-code.bin: mypdos.src $(MYPDOSINC) \
+mypdos-code.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -r -o$@ $<
 
-mypdos-code-hioff.bin: mypdos.src $(MYPDOSINC) \
+mypdos-code-hioff.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dHIDEF=0 -r -o$@ $<
 
-mypdos-code-r.bin: mypdos.src $(MYPDOSINC) \
+mypdos-code-r.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dREMOTE=1 -r -o$@ $<
 
-mypdos-code-r-hioff.bin: mypdos.src $(MYPDOSINC) \
+mypdos-code-r-hioff.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dREMOTE=1 -dHIDEF=0 -r -o$@ $<
 
-mypdos-code-t.bin: mypdos.src $(MYPDOSINC) \
+mypdos-code-t.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	carloadcode.src thecart.inc
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dTHECART=1 -r -o$@ $<
 
-mypdos-code-t-hioff.bin: mypdos.src $(MYPDOSINC) \
+mypdos-code-t-hioff.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	carloadcode.src thecart.inc
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dTHECART=1 -dHIDEF=0 -r -o$@ $<
 
-mypdos-code-s.bin: mypdos.src $(MYPDOSINC) \
+mypdos-code-s.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dSDRIVE=1 -r -o$@ $<
 
-mypdos-code-b.bin: mypdos.src $(MYPDOSINC)
+mypdos-code-b.bin: $(MYPDOSSRC)
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dBAREBONE=1 -r -o$@ $<
 
-atarisio-mypdos.bin: mypdos.src $(MYPDOSINC) \
+atarisio-mypdos.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
 	$(ATASM) $(ASMFLAGS) -dMYPDOSBIN=1 -dHIGHSPEED=1 -dREMOTE=1 -r -o$@ $<
 
-MYINIT.COM: myinit.src getdens.src longname.src qsort.src cio.inc \
+MYINIT.COM: $(MYINITSRC) \
 	mypdos.bin
 	$(ATASM) $(ASMFLAGS) -o$@ $<
 
-MYINITR.COM: myinit.src getdens.src longname.src qsort.src cio.inc \
+MYINITR.COM: $(MYINITSRC) \
 	mypdosr.bin
 	$(ATASM) $(ASMFLAGS) -dREMOTE=1 -o$@ $<
 
-MYINITT.COM: myinit.src getdens.src longname.src qsort.src cio.inc \
+MYINITT.COM: $(MYINITSRC) \
 	mypdost.bin
 	$(ATASM) $(ASMFLAGS) -dTHECART=1 -o$@ $<
 
-MYINITS.COM: myinit.src getdens.src longname.src qsort.src cio.inc \
+MYINITS.COM: $(MYINITSRC) \
 	mypdoss.bin
 	$(ATASM) $(ASMFLAGS) -dSDRIVE=1 -o$@ $<
 
-MYINITB.COM: myinit.src getdens.src longname.src qsort.src cio.inc \
+MYINITB.COM: $(MYINITSRC) \
 	mypdosb.bin
 	$(ATASM) $(ASMFLAGS) -dBAREBONE=1 -o$@ $<
 
@@ -204,28 +209,28 @@ MYPDIDE.ROM: mypdrom.src mypdos-code-hioff.bin
 MYPDOSM8.ROM: mypdrom.src mypdos-code-r.bin
 	$(ATASM) $(ASMFLAGS) -dMEGAMAXROM -r -o$@ $<
 
-picostd405.c: mypdos.bin
+picostd$(CFILE_VERSION).c: mypdos.bin
 	dd if=$< bs=1 skip=384 | xxd -i > $@
 
-picosd405.c: mypdoss.bin
+picosd$(CFILE_VERSION).c: mypdoss.bin
 	dd if=$< bs=1 skip=384 | xxd -i > $@
 
-picorem405.c: mypdosr.bin
+picorem$(CFILE_VERSION).c: mypdosr.bin
 	dd if=$< bs=1 skip=384 | xxd -i > $@
 
-picobare405.c: mypdosb.bin
+picobare$(CFILE_VERSION).c: mypdosb.bin
 	dd if=$< bs=1 skip=384 | xxd -i > $@
 
-bootstd405.c: mypdos.bin
+bootstd$(CFILE_VERSION).c: mypdos.bin
 	dd if=$< bs=1 count=384 | xxd -i > $@
 
-bootsd405.c: mypdoss.bin
+bootsd$(CFILE_VERSION).c: mypdoss.bin
 	dd if=$< bs=1 count=384 | xxd -i > $@
 
-bootrem405.c: mypdosr.bin
+bootrem$(CFILE_VERSION).c: mypdosr.bin
 	dd if=$< bs=1 count=384 | xxd -i > $@
 
-bootbare405.c: mypdosb.bin
+bootbare$(CFILE_VERSION).c: mypdosb.bin
 	dd if=$< bs=1 count=384 | xxd -i > $@
 
 # picoboot mini COM loader
@@ -233,19 +238,19 @@ bootbare405.c: mypdosb.bin
 picobootcode.bin: picobootcode.src common.inc rreadcode.src comloadcode.src
 	$(ATASM) $(ASMFLAGS) -r -o$@ $<
 
-PICOBOOT.COM: picobootinit.src picobootcode.bin getdens.src
+PICOBOOT.COM: picobootinit.src picobootcode.bin getdens.src version.inc cio.inc
 	$(ATASM) $(ASMFLAGS) -o$@ $<
 
 
-picoboot405.c: picobootcode.bin
+picoboot$(CFILE_VERSION).c: picobootcode.bin
 	dd if=$< bs=1 count=384 | xxd -i > $@
 
 atarisio: atarisio-mypdos.bin \
-	bootstd405.c picostd405.c \
-	bootrem405.c picorem405.c \
-	bootbare405.c picobare405.c \
-	bootsd405.c picosd405.c \
-	picoboot405.c
+	bootstd$(CFILE_VERSION).c picostd$(CFILE_VERSION).c \
+	bootrem$(CFILE_VERSION).c picorem$(CFILE_VERSION).c \
+	bootbare$(CFILE_VERSION).c picobare$(CFILE_VERSION).c \
+	bootsd$(CFILE_VERSION).c picosd$(CFILE_VERSION).c \
+	picoboot$(CFILE_VERSION).c
 
 MYINIT_COMS=MYINIT.COM MYINITR.COM MYINITB.COM \
 	MYPDOS.COM MYPDOSN.COM \
