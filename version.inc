@@ -30,11 +30,11 @@
 
 ; copyright year string
 	.MACRO COPYYEAR
-	.BYTE "2014"
+	.BYTE "2015"
 	.ENDM
 
 ; copyright year string
 	.MACRO SCOPYYEAR
-	.SBYTE "2014"
+	.SBYTE "2015"
 	.ENDM
 
