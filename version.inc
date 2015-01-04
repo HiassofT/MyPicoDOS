@@ -1,6 +1,6 @@
 ;  version - MyPicoDos common version strings
 ;
-;  Copyright (C) 2014 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 2014-2015 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -18,23 +18,25 @@
 
 ; version string in ATASCII format
 	.MACRO VERSION
-;	.BYTE "4.05"
-	.BYTE "4dev"
+	.BYTE "4.05"
+;	.BYTE "4dev"
 	.ENDM
 
 ; version string in screen format
 	.MACRO SVERSION
-;	.SBYTE "4.05"
-	.SBYTE "4dev"
+	.SBYTE "4.05"
+;	.SBYTE "4dev"
 	.ENDM
 
 ; copyright year string
 	.MACRO COPYYEAR
-	.BYTE "2015"
+	.BYTE "2010"
+;	.BYTE "2015"
 	.ENDM
 
 ; copyright year string
 	.MACRO SCOPYYEAR
-	.SBYTE "2015"
+	.SBYTE "2010"
+;	.SBYTE "2015"
 	.ENDM
 
