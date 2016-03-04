@@ -1,16 +1,15 @@
 @ECHO OFF
 ECHO
-ECHO           MyPicoDos 4.05
-ECHO      (c) 1992-2010 by HiassofT
+ECHO           MyPicoDos 4.06
+ECHO      (c) 1992-2016 by HiassofT
 ECHO
 ECHO  1  Initializer (standard)
 ECHO  2  Initializer (SDrive highspeed)
 ECHO  3  Initializer (remote console)
 ECHO  4  Initializer (barebone)
-ECHO  5  Initializer (The!Cart CAR loader)
-ECHO  6  PicoBoot Initializer
-ECHO  7  COM version (highspeed auto)
-ECHO  8  COM version (highspeed off)
+ECHO  5  PicoBoot Initializer
+ECHO  6  COM version (highspeed auto)
+ECHO  7  COM version (highspeed off)
 ECHO
 ECHO  0  exit to basic/DOS
 ECHO
@@ -28,15 +27,12 @@ IF ANSWER = 4
   LOAD D1:MYINITB.COM QUIT
 ENDIF
 IF ANSWER = 5
-  LOAD D1:MYINITT.COM QUIT
-ENDIF
-IF ANSWER = 6
   LOAD D1:PICOBOOT.COM QUIT
 ENDIF
-IF ANSWER = 7
+IF ANSWER = 6
   LOAD D1:MYPDOSR.COM QUIT
 ENDIF
-IF ANSWER = 8
+IF ANSWER = 7
   LOAD D1:MYPDOSRN.COM QUIT
 ENDIF
 EXIT

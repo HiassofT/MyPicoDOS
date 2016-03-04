@@ -4,7 +4,7 @@
 
 ATASM ?= atasm
 
-all: MYINIT.COM MYINITR.COM MYINITT.COM MYINITB.COM \
+all: MYINIT.COM MYINITR.COM MYINITB.COM \
 	MYPDOS.COM MYPDOSN.COM \
 	MYPDOSR.COM MYPDOSRN.COM \
 	MYPDOST.COM MYPDOSTN.COM \
@@ -12,7 +12,6 @@ all: MYINIT.COM MYINITR.COM MYINITT.COM MYINITB.COM \
 	MYPDOSS.COM \
 	mypdos.atr mypdosn.atr \
 	mypdosr.atr mypdosrn.atr \
-	mypdost.atr mypdostn.atr \
 	mypdoss0.atr mypdoss1.atr \
 	mypdosb.atr \
 	myinit.atr
@@ -257,7 +256,7 @@ MYINIT_COMS=MYINIT.COM MYINITR.COM MYINITB.COM \
 	MYPDOSR.COM MYPDOSRN.COM \
 	MYPDOST.COM MYPDOSTN.COM \
 	MYPDOSB.COM PICOBOOT.COM \
-	MYINITS.COM MYINITT.COM
+	MYINITS.COM
 
 initdisk/AUTOEXEC.BAT: autoexec.bat
 	tr '\012' '\233' < $< > $@
