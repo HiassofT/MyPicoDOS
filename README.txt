@@ -1,6 +1,6 @@
-MyPicoDos 4.05
+MyPicoDos 4.06
 
-Copyright (C) 1992-2010 by Matthias Reichl <hias@horus.com>
+Copyright (C) 1992-2016 by Matthias Reichl <hias@horus.com>
 
 This program is proteced under the terms of the GNU General Public
 License, version 2. Please read LICENSE for further details.
@@ -34,7 +34,7 @@ the following features:
   when loading a basic program, and switch basic off when
   loading a COM/EXE/BIN file.
 - Joystick support: either use arrow keys or a joystick to select
-  the file.
+  the file, switch directories or drives.
 - Optional builtin atariserver (AtariSIO) remote console.
 - Separate "barebone" version without highspeed SIO support and
   remote console support (for those who want to save space)
@@ -119,9 +119,6 @@ At the MyPicoDos main screen just use the cursor keys (with or
 without control) to select the file you want and press "Return" to
 load it.
 
-You can also use a joystick (either plugged into port 1 or 2)
-to move the cursor and press fire to select a file or directory.
-
 When you load a file, MyPicoDos will automatically try to
 enable/disable the built-in Basic on XL/XE computers, depending on
 the filetype. You may disable this feature by loading a file with
@@ -132,6 +129,12 @@ Use the keys "1" to "8" to switch to drive D1: to D8:.
 MyDOS subdirectories are marked with a ">" in front of it. Just
 press enter to open a selected directory. To leave a directory
 (and return to the parent directory) press "Escape".
+
+You can also use a joystick (either plugged into port 1 or 2)
+to move the cursor and press fire to select a file or directory.
+To go up to the parent directory press and hold fire, then push
+up and release fire. Fire+down switches to the root directory,
+fire+left/right decreases/increases the drive number.
 
 MyPicoDos is also compatible with the APE PC Mirror function.
 Subdirectories are prefixed with a "\", to go back to the parent
@@ -532,3 +535,9 @@ version 4.05:
 - Added fallback to OS SIO in case of highspeed SIO errors while
   booting MyPicoDos
 - Added SDrive version
+
+version 4.06:
+- Added .CAR file loader for The!Cart version of MyPicoDos
+- Disable atract mode when using joystick navigation
+- Added directory and drive switching using joystick
+- Bugfix: don't disable highspeed SIO if reading a directory fails

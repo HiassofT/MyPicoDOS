@@ -1,5 +1,5 @@
 # 
-# MyPicoDos V4.05 Makefile (c) 2003-2010 by Matthias Reichl <hias@horus.com>
+# MyPicoDos Makefile (c) 2003-2016 by Matthias Reichl <hias@horus.com>
 #
 
 ATASM ?= atasm
