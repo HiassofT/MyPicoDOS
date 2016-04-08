@@ -64,21 +64,29 @@ MYPDOS  = *
 	    .if .def THECART
               .incbin mypdos-code-t-hioff.bin
 	    .else
-	      .IF .DEF REMOTE
-                .incbin mypdos-code-r-hioff.bin
-	      .ELSE
-                .incbin mypdos-code-hioff.bin
-	      .ENDIF
+	      .if .def FREEZER
+                .incbin mypdos-code-f-hioff.bin
+	      .else
+	        .IF .DEF REMOTE
+                  .incbin mypdos-code-r-hioff.bin
+	        .ELSE
+                  .incbin mypdos-code-hioff.bin
+	        .ENDIF
+              .endif
 	    .endif
 	  .ELSE
 	    .if .def THECART
               .incbin mypdos-code-t.bin
 	    .else
-	      .IF .DEF REMOTE
-                .incbin mypdos-code-r.bin
-	      .ELSE
-                .incbin mypdos-code.bin
-	      .ENDIF
+	      .if .def FREEZER
+                .incbin mypdos-code-f.bin
+	      .else
+	        .IF .DEF REMOTE
+                  .incbin mypdos-code-r.bin
+	        .ELSE
+                  .incbin mypdos-code.bin
+	        .ENDIF
+	      .endif
 	    .endif
 	  .ENDIF
 	.ENDIF

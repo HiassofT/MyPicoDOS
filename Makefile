@@ -20,6 +20,18 @@ all: $(MYINIT_COMS) \
 	mypdosb.atr \
 	myinit.atr
 
+.PHONY: thecart
+thecart: \
+	mypdost.atr mypdostn.atr \
+	MYPDOST.COM MYPDOSTN.COM \
+	MYINITT.COM
+	
+.PHONY: freezer
+freezer: \
+	mypdosf.atr mypdosfn.atr \
+	MYPDOSF.COM MYPDOSFN.COM \
+	MYINITF.COM
+	
 # version string for naming atarisio include files
 CFILE_VERSION=406
 
@@ -70,6 +82,11 @@ mypdost.bin: $(MYPDOSSRC) \
 	carloadcode.src thecart.inc
 	$(ATASM) $(ASMFLAGS) -dHIGHSPEED=1 -dTHECART=1 -r -o$@ $<
 
+mypdosf.bin: $(MYPDOSSRC) \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
+	carloadcode.src freezer.inc
+	$(ATASM) $(ASMFLAGS) -dHIGHSPEED=1 -dFREEZER=1 -dREMOTE=1 -r -o$@ $<
+
 mypdoss.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
@@ -114,6 +131,16 @@ mypdostn.atr: $(MYPDOSSRC) \
 	carloadcode.src thecart.inc
 	$(ATASM) $(ASMFLAGS) -dTHECART=1 -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -dHIDEF=0 -r -o$@ $<
 
+mypdosf.atr: $(MYPDOSSRC) \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
+	carloadcode.src freezer.inc
+	$(ATASM) $(ASMFLAGS) -dFREEZER=1 -dREMOTE=1 -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -r -o$@ $<
+
+mypdosfn.atr: $(MYPDOSSRC) \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
+	carloadcode.src freezer.inc
+	$(ATASM) $(ASMFLAGS) -dFREEZER=1 -dREMOTE=1 -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dHIGHSPEED=1 -dHIDEF=0 -r -o$@ $<
+
 mypdosb.atr: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin
 	$(ATASM) $(ASMFLAGS) -dMYPDOSATR=1 -dMYPDOSBIN=1 -dDEFDRIVE=2 -dBAREBONE=1 -r -o$@ $<
@@ -146,6 +173,16 @@ mypdos-code-t-hioff.bin: $(MYPDOSSRC) \
 	carloadcode.src thecart.inc
 	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dTHECART=1 -dHIDEF=0 -r -o$@ $<
 
+mypdos-code-f.bin: $(MYPDOSSRC) \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
+	carloadcode.src freezer.inc
+	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dFREEZER=1 -dREMOTE=1 -r -o$@ $<
+
+mypdos-code-f-hioff.bin: $(MYPDOSSRC) \
+	highspeedcode.src $(HISIOINC) highspeed.bin \
+	carloadcode.src freezer.inc
+	$(ATASM) $(ASMFLAGS) -dMYPDOSROM=1 -dHIGHSPEED=1 -dFREEZER=1 -dREMOTE=1 -dHIDEF=0 -r -o$@ $<
+
 mypdos-code-s.bin: $(MYPDOSSRC) \
 	highspeedcode.src $(HISIOINC) highspeed.bin \
 	remote.src
@@ -170,6 +207,10 @@ MYINITR.COM: $(MYINITSRC) \
 MYINITT.COM: $(MYINITSRC) \
 	mypdost.bin
 	$(ATASM) $(ASMFLAGS) -dTHECART=1 -o$@ $<
+
+MYINITF.COM: $(MYINITSRC) \
+	mypdosf.bin
+	$(ATASM) $(ASMFLAGS) -dFREEZER=1 -o$@ $<
 
 MYINITS.COM: $(MYINITSRC) \
 	mypdoss.bin
@@ -202,6 +243,12 @@ MYPDOST.COM: mypdos-com.src mypdos-code-t.bin
 
 MYPDOSTN.COM: mypdos-com.src mypdos-code-t-hioff.bin
 	$(ATASM) $(ASMFLAGS) -dHIDEF=0 -dTHECART=1 -o$@ $<
+
+MYPDOSF.COM: mypdos-com.src mypdos-code-f.bin
+	$(ATASM) $(ASMFLAGS) -dHIDEF=1 -dFREEZER=1 -o$@ $<
+
+MYPDOSFN.COM: mypdos-com.src mypdos-code-f-hioff.bin
+	$(ATASM) $(ASMFLAGS) -dHIDEF=0 -dFREEZER=1 -o$@ $<
 
 
 # myide flashcart

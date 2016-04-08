@@ -458,6 +458,9 @@ TITLE	= *
 	.IF .DEF THECART
 	.SBYTE "T"
 	.ELSE
+	.IF .DEF FREEZER
+	.SBYTE "F"
+	.ELSE
 	.IF .DEF REMOTE
 	.SBYTE "R"
 	.ELSE
@@ -465,6 +468,7 @@ TITLE	= *
 	.SBYTE "S"
 	.ELSE
 	.SBYTE " "
+	.ENDIF
 	.ENDIF
 	.ENDIF
 	.ENDIF
@@ -2105,7 +2109,7 @@ LOAD2	LDA TEMPV
 	JMP LOADBAS
 
 BINOK	
-.if .def THECART
+.if .def THECART .or .def FREEZER
 	LDA TEMPV
 	CMP #'C
 	BNE BINOK1
@@ -2344,7 +2348,7 @@ DEMPTLEN	= *-DSKEMPT
 	.include "remote.src"
 	.ENDIF
 
-	.if .def THECART
+	.if .def THECART .or .def FREEZER
 	.include "carloadcode.src"
 	.endif
 

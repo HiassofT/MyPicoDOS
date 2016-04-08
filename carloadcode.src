@@ -1,6 +1,6 @@
-;  carloadcode - load .car file into The!Cart RAM
+;  carloadcode - load .car file into The!Cart/Freezer2011 RAM
 ;
-;  Copyright (C) 2013 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 2013-2016 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -18,7 +18,15 @@
 
 	.LOCAL
 
+.if .def THECART
 	.include "thecart.inc"
+.else
+.if .def FREEZER
+	.include "freezer.inc"
+.else
+	.error "either THECART or FREEZER must be set!"
+.endif
+.endif
 
 ; print EOL terminated text
 	.macro PRT0 ; arg: label
@@ -48,7 +56,12 @@ LOADCAR
 	JSR GR0
 
 ; detect cart (returns only if thecart found)
+.if .def THECART
 	JSR TCDETECT
+.endif
+.if .def FREEZER
+	JSR FDETECT
+.endif
 
 ; setup INIADR to catch premature EOF
 	LDA #<TCEOF
@@ -81,6 +94,7 @@ LOADCAR
 ; now start the cartridge
 	INC $42
 ; use write protected RAM
+.if .def THECART
 	LDA #TC_CFG_SRC
 	STA TC_CFG
 ; bank 0
@@ -89,7 +103,6 @@ LOADCAR
 	STA TC_BANKHI
 	LDA TCMOD
 	STA TC_MODE
-
 ; check for mode specific init stuff
 	CMP #TC_MODE_OSS
 	BNE RUNC1
@@ -110,7 +123,23 @@ RUNC4	CMP #TC_MODE_SIC
 RUNC5
 	STA TC_LOCKCFG
 	JMP $E477
+.endif
+.if .def FREEZER
+	LDA #CE_CFG_SRC
+	STA CE_CFG
+	LDA #CE_TEMP_RAM_BANK
+	STA CE_BANK
+	LDA TCMOD
+	STA CE_MODE
+; check for mode specific init stuff
+	CMP #CE_MODE_OSS
+	BNE RUNC1
+	STA OSSBANK1
+RUNC1
+	JMP $E477
+.endif
 
+.if .def THECART
 ; check if thecart is present
 TCDETECT
 	INC $42
@@ -177,10 +206,55 @@ TCDETECT
 	STA TC_ENABLE
 	DEC $42
 	PRT0 TNOTCDET
-?TCELP	JMP ?TCELP
+?CELP	JMP ?CELP
+.endif
+.if .def FREEZER
+FDETECT
+; check if freezer is present
+	INC $42
+; set 8k writable RAM mode
+	LDA #CE_CFG_WE+CE_CFG_SRC
+	STA CE_CFG
+	LDA #CE_MODE_8K
+	STA CE_MODE
+	LDA #CE_TEMP_RAM_BANK
+	STA CE_BANK
+	LDA #CE_SDX_OFF
+	STA CE_SDX
+
+	LDX #0
+	LDY #1
+	STX CE_ENABLE
+
+; check if we have the RAM bank present
+	LDA $A000
+	STY CE_ENABLE
+	EOR #$FF
+	STA $A000
+	CMP $A000
+	BNE ?FDETNO
+	STX CE_ENABLE
+	CMP $A000
+	BEQ ?FDETNO
+
+; everything's fine!
+	DEC $42
+	RTS
+
+?FDETNO
+	STX CE_ENABLE
+	STX CE_CFG
+	LDA #CE_MODE_OFF
+	STA CE_MODE
+	DEC $42
+
+	PRT0 TNOFDET
+?CELP	JMP ?CELP
+
+.endif
 
 TCEOF	PRT0 TEOF
-	JMP ?TCELP
+	JMP ?CELP
 
 ; skip over Y bytes
 TCSKIP	JSR GETBYT
@@ -191,7 +265,7 @@ TCSKIP	JSR GETBYT
 ; check for valid mode in A
 TCCKMOD	STA TCMOD
 	LDX #0
-?TCCKLP	LDA TCMODTAB,X
+?TCCKLP	LDA CMODTAB,X
 	BEQ ?TCCKNO	; end of table
 	CMP TCMOD
 	BEQ ?TCCK1
@@ -201,17 +275,19 @@ TCCKMOD	STA TCMOD
 	BNE ?TCCKLP	; always
 
 ?TCCKNO	PRT0 TINVMOD
-	JMP ?TCELP
+	JMP ?CELP
 
-?TCCK1	LDA TCMODTAB+1,X
+?TCCK1	LDA CMODTAB+1,X
 	STA TCMOD
-	LDA TCMODTAB+2,X
+	LDA CMODTAB+2,X
 	STA TCBLK
 	PRT0 TLOADCAR
+.if .def THECART
 	LDA TCMOD
 	CMP #TC_MODE_ATARIMAX8
 	BNE ?TCCK2
 	PRT0 TAMWARN
+.endif
 ?TCCK2	RTS
 
 ; load 8k block into thecart
@@ -303,8 +379,14 @@ LDCAR8K
 ; now copy 8k block into thecart ram
 	STX XREG
 	INC $42
+.if .def THECART
 	LDA #1
 	STA TC_ENABLE
+.endif
+.if .def FREEZER
+	LDA #1
+	STA CE_ENABLE
+.endif
 	LDA #>CARBUF
 	STA ?CCSRC+2
 	LDA #$A0
@@ -322,21 +404,39 @@ LDCAR8K
 	BNE ?CCLP
 
 ; next bank
+.if .def THECART
 	INC TC_BANKLO
 	LDA #0
 	STA TC_ENABLE
+.endif
+.if .def FREEZER
+	INC CE_BANK
+	LDA #0
+	STA CE_ENABLE
+.endif
 	DEC $42
 	LDX XREG
 	RTS
 
+.if .def THECART
 TNOTCDET
 	.BYTE "The!Cart not present", 155
+.endif
+.if .def FREEZER
+TNOFDET
+	.BYTE "Turbo Freezer 2011 not present", 155
+.endif
 
 TINVMOD
 	.BYTE "Unsupported cartridge mode", 155
 
 TLOADCAR
+.if .def THECART
 	.BYTE "Loading CAR into The!Cart RAM",155
+.endif
+.if .def FREEZER
+	.BYTE "Loading CAR into Freezer RAM",155
+.endif
 
 TAMWARN
 	.BYTE "Only first 512k will be loaded!",155
@@ -344,9 +444,10 @@ TAMWARN
 TEOF
 	.BYTE "premature end of file!",155
 
+.if .def THECART
 ; car mode to thecart mode mapping:
 ; car mode, thecart mode, number of 8k blocks
-TCMODTAB
+CMODTAB
 	.BYTE 1, TC_MODE_8K, 1
 	.BYTE 2, TC_MODE_16K, 2
 	.BYTE 8, TC_MODE_WILLIAMS64, 8
@@ -377,6 +478,17 @@ TCMODTAB
 	.BYTE 56, TC_MODE_SIC, 64
 	
 	.BYTE 0,0,0
+.endif
+
+.if .def FREEZER
+; car mode to thecart mode mapping:
+; car mode, freezer mode, number of 8k blocks
+CMODTAB
+	.BYTE 1, CE_MODE_8K, 1
+	.BYTE 2, CE_MODE_16K, 2
+	.BYTE 15, CE_MODE_OSS, 2
+	.BYTE 0,0,0
+.endif
 
 ; thecart mode
 TCMOD	.BYTE 0
