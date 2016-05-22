@@ -132,9 +132,16 @@ press enter to open a selected directory. To leave a directory
 
 You can also use a joystick (either plugged into port 1 or 2)
 to move the cursor and press fire to select a file or directory.
+
 To go up to the parent directory press and hold fire, then push
 up and release fire. Fire+down switches to the root directory,
 fire+left/right decreases/increases the drive number.
+
+To change up multiple directory levels or through multiple drive
+numbers hold the fire button, push the stick into the desired
+direction, then move the stick to the center position, then push it
+again into the desired direction etc. When you are done release the
+fire button and you're back in cursor movement mode.
 
 MyPicoDos is also compatible with the APE PC Mirror function.
 Subdirectories are prefixed with a "\", to go back to the parent
@@ -537,7 +544,8 @@ version 4.05:
 - Added SDrive version
 
 version 4.06:
-- Added .CAR file loader for The!Cart version of MyPicoDos
+- Added .CAR file loader for The!Cart and Freezer 2011 versions
+  of MyPicoDos
 - Disable atract mode when using joystick navigation
 - Added directory and drive switching using joystick
 - Bugfix: don't disable highspeed SIO if reading a directory fails
