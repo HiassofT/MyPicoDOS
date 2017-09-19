@@ -1,0 +1,5 @@
+**/*.COM
+**/*.bin
+**/*.atr
+boot*.c
+pico*.c
