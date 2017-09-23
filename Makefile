@@ -305,7 +305,12 @@ atarisio: atarisio-mypdos.bin \
 initdisk/AUTOEXEC.BAT: autoexec.bat
 	tr '\012' '\233' < $< > $@
 
-myinit.atr: $(MYINIT_COMS) initdisk initdisk/AUTOEXEC.BAT
+myinit.atr: $(MYINIT_COMS)
+	mkdir -p initdisk
+	tr '\012' '\233' < autoexec.bat > initdisk/AUTOEXEC.BAT
+	cp -f mydos-dos.sys initdisk/DOS.SYS
+	cp -f mydos-dup.sys initdisk/DUP.SYS
+	cp -f mydos-bfe.ar0 initdisk/BFE.AR0
 	cp -f $(MYINIT_COMS) initdisk
 	dir2atr -b MyDos4534 1040 myinit.atr initdisk
 
@@ -332,6 +337,7 @@ clean:
 	bootstd*.c bootrem*.c bootbare*.c bootsd*.c \
 	picostd*.c picorem*.c picobare*.c picosd*.c \
 	picoboot*.c
+	rm -rf initdisk
 
 backup:
 	tar zcf bak/mypdos-`date '+%y%m%d-%H%M'`.tgz *.src *.inc \

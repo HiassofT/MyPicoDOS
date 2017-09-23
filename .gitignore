@@ -3,3 +3,5 @@
 **/*.atr
 boot*.c
 pico*.c
+
+initdisk
