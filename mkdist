@@ -1,16 +1,17 @@
 #!/bin/sh
 
-VER=-`date '+%y%m%d'`
+set -e
+
+VER=`date '+%y%m%d'`
 
 if [ $# -ge 1 ] ; then
 	VER=$1
 fi
 
-NAME=mypdos$VER
-TMPDIR=dist/tmp/"${NAME}"
+NAME=mypdos-$VER
+TMPDIR=../dist/tmp/"${NAME}"
 
 mkdir -p "${TMPDIR}/src/hisio"
-mkdir -p "${TMPDIR}/src/initdisk"
 
 cp -a README.txt LICENSE \
 MYINIT.COM MYINITR.COM MYINITB.COM MYINITS.COM \
@@ -21,12 +22,11 @@ mypdos.atr mypdosn.atr \
 mypdosr.atr mypdosrn.atr mypdosb.atr \
 mypdoss0.atr mypdoss1.atr \
 "${TMPDIR}"
-cp -a Makefile *.inc *.src autoexec.bat "${TMPDIR}/src"
+cp -a Makefile *.inc *.src mydos-* autoexec.bat "${TMPDIR}/src"
 cp -a hisio/*.src hisio/*.inc "${TMPDIR}/src/hisio"
-cp -a initdisk/DOS.SYS initdisk/DUP.SYS initdisk/BFE.AR0 initdisk/AUTOEXEC.BAT "${TMPDIR}/src/initdisk"
 
-rm -f "dist/${NAME}".zip
-cd dist/tmp
+rm -f "../dist/${NAME}".zip
+cd ../dist/tmp
 zip -r "../${NAME}.zip" ${NAME}
 cd ..
 rm -rf tmp
