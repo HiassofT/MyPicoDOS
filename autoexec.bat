@@ -1,7 +1,7 @@
 @ECHO OFF
 ECHO
 ECHO           MyPicoDos 4.06
-ECHO      (c) 1992-2016 by HiassofT
+ECHO      (c) 1992-2017 by HiassofT
 ECHO
 ECHO  1  Initializer (standard)
 ECHO  2  Initializer (SDrive highspeed)

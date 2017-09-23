@@ -1,6 +1,6 @@
 MyPicoDos 4.06
 
-Copyright (C) 1992-2016 by Matthias Reichl <hias@horus.com>
+Copyright (C) 1992-2017 by Matthias Reichl <hias@horus.com>
 
 This program is proteced under the terms of the GNU General Public
 License, version 2. Please read LICENSE for further details.
