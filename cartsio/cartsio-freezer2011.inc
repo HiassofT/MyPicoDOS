@@ -26,14 +26,26 @@
 	CARTBNKX
 	.ENDM
 
-;	.MACRO CARTON	; enable cartridge
-;	LDX #1
-;	STX $D591
-;	.ENDM
+	.MACRO CARTONOFFX	; enable (X=1) / disable (X=0) cartridge
+	STX $D591
+	.ENDM
+
+	.MACRO CARTON	; enable cartridge
+	LDX #1
+	CARTONOFFX
+	.ENDM
 
 	.MACRO CARTOFF	; disable cartridge
 	LDX #0
-	STX $D591
+	CARTONOFFX
+	.ENDM
+
+	.MACRO CARTON2	; enable cartridge, if previously disabled
+	INC $D591
+	.ENDM
+
+	.MACRO CARTOFF2	; disable cartridge, if previously enabled
+	DEC $D591
 	.ENDM
 
 	.MACRO CARTBASE	; set base ROM bank for cartsio
