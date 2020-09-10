@@ -1807,6 +1807,9 @@ GETSTK	CPX #15
 
 GKFIR	LDA #12
 DOGETK	STA 764
+; disable atract mode
+	LDA #0
+	STA 77
 	LDA $E425
 	PHA
 	LDA $E424
