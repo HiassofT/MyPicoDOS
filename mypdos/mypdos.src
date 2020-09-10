@@ -106,6 +106,14 @@ NAMV	= $E6 ; ,E7
 
 TEMP	= $E8
 
+; states for joystick input
+JOYSTATE_IDLE		= 0	; idle position
+JOYSTATE_MOVE		= 1	; stick just moved
+JOYSTATE_TRIGGER	= 2	; trigger pressed, wait for release
+JOYSTATE_WAIT_IDLE	= 3	; trigger just released, wait for idle
+
+JOY_DELAY_INITIAL	= 25	; delay before starting key repeat
+JOY_DELAY_REPEAT	= 4	; delay in repeating mode
 
 	.MACRO PUSH
 	LDX STACKPTR
@@ -651,6 +659,9 @@ MENU 	= *
 	STA 10
 	LDA #$E4
 	STA 11
+
+	LDA #JOYSTATE_WAIT_IDLE
+	STA JOYSTAT
 
 	COP768 $0800, RREADB, RREADL
 
@@ -1744,6 +1755,7 @@ CLSLP2	STA (TEMP),Y
 	STA SCRY
 	JMP SETSCR
 
+; read stick 1+2 into X and trig 1+2 into Y
 GETJOY	LDA 632
 	AND 633
 	TAX
@@ -1752,60 +1764,23 @@ GETJOY	LDA 632
 	TAY
 	RTS
 
-GETKEY	LDA 20
-	STA OLD20
-	JSR GETJOY
-	STX OLDJOY
-	STY OLDTRIG
-	CPX #15
-	BNE JOYP1
-	CPY #1
-	BNE JOYP1
-	
-	LDA #0
-	STA JOYSTAT
-	BEQ GETKEY0
+; joystick direction table:
+; 0 (idle), 1 (up), 2 (down), 3 (left), 4 (right), $80 (invalid)
+JDIRTAB
+	.BYTE $80, $80, $80, $80
+	.BYTE $80, $80, $80, 4
+	.BYTE $80, $80, $80, 3
+	.BYTE $80, 2, 1, 0
 
-JOYP1	LDA JOYSTAT
-	CMP #2
-	BEQ GETKEY0
-	INC JOYSTAT
+; keys for up/down/left/right
+JKEYTAB	.BYTE 14, 15, 6, 7
 
-GETKEY0	LDX JOYSTAT
-	LDA JOYWAIT,X
-	STA WTJOY
-
-GETKEY1	LDA 764
+GETKEY	LDA 764
 	CMP #255
-	BNE DOGETK
-	
-	JSR GETJOY
-	CPX OLDJOY
-	BNE JOYCH1
-	CPY OLDTRIG
-	BEQ JOYCHK
+	BEQ GETKJ
+	LDX #JOYSTATE_WAIT_IDLE	; just in case
+	STX JOYSTAT
 
-JOYCH1	STX OLDJOY
-	STY OLDTRIG
-	LDA #0
-	STA JOYSTAT
-	STA WTJOY
-
-JOYCHK	LDA WTJOY
-	BEQ GETSTK
-	LDA 20
-	CMP OLD20
-	BEQ GETKEY1
-	STA OLD20
-	DEC WTJOY
-	BNE GETKEY1
-
-GETSTK	CPX #15
-	BNE GKST
-	CPY #1
-	BEQ GETKEY1
-
-GKFIR	LDA #12
 DOGETK	STA 764
 ; disable atract mode
 	LDA #0
@@ -1816,27 +1791,144 @@ DOGETK	STA 764
 	PHA
 	RTS
 
-GKST	TXA
-	CMP #14
-	BEQ DOGETK ; up
-	CMP #13
-	BNE GKST1
-	LDA #15	   ; down
-	BNE DOGETK
-GKST1	CMP #11
-	BNE GKST2
-	LDA #6     ; left
-	BNE DOGETK
-GKST2	CMP #7     ; right
-	BEQ DOGETK
-	BNE GETKEY1
+; handle joystick input
+GETKJ
+.if .def HWDEBUG
+	LDA JOYSTAT
+	LDX #4
+	DBGA
+	JSR GETJOY
+	TYA
+	LSR
+	TXA
+	BCC DBGT0
+	ORA #$10
+DBGT0	LDX #6
+	DBGA
+.endif
+	JSR GETJOY
+	LDA JOYSTAT
+	CMP #JOYSTATE_WAIT_IDLE
+	BNE GETKJS1
+
+; handle wait idle:
+; trigger down switches to trigger state
+; otherwise wait for joystick idle to enter idle state
+
+	CPY #0
+	BEQ JS_GO_TRIGGER
+; wait idle: only leave this state if stick and trig are released
+	CPX #15
+	BNE GETKEY
+
+JS_GO_IDLE
+	LDA #JOYSTATE_IDLE
+	STA JOYSTAT
+	JMP GETKEY
+
+GETKJS1	CMP #JOYSTATE_IDLE
+	BNE GETKJS2
+
+; handle idle state
+	CPY #0
+	BNE GETKJ11	; branch if trigger released
+
+; trigger pressed, enter TRIGGER state
+JS_GO_TRIGGER
+	LDA #JOYSTATE_TRIGGER
+	STA JOYSTAT
+	JMP GETKEY
+
+GETKJ11	LDY JDIRTAB,X
+	BEQ GETKEY	; nothing to do if idle
+	BMI GETKEY	; nothing to do if invalid
+
+	STX OLDJOY	; save joystick direction
+	LDA #JOYSTATE_MOVE
+	STA JOYSTAT
+	LDA #JOY_DELAY_INITIAL
+
+JS_SEND_KEY
+	STA WTJOY
+	LDA 20
+	STA OLD20
+	LDA JKEYTAB-1,Y	; translate direction into key
+	JMP DOGETK
+
+GETKJS2	CMP #JOYSTATE_MOVE
+	BNE GETKJS3
+
+; handle move state
+	CPY #0
+	BEQ JS_GO_TRIGGER
+	CPX OLDJOY
+	BNE JS_GO_IDLE	; stick position changed, go to idle mode
+
+	LDA 20
+	CMP OLD20
+	BNE GETKJ21
+GETKJ20
+	JMP GETKEY
+GETKJ21
+	STA OLD20
+
+	DEC WTJOY
+	BNE GETKJ20	; countdown not reached yet
+
+	LDY JDIRTAB,X
+	LDA #JOY_DELAY_REPEAT
+	JMP JS_SEND_KEY
+
+GETKJS3	CMP #JOYSTATE_TRIGGER
+	BNE GETKJS4
+
+; handle trigger pressed state
+	CPY #1
+	BEQ GETKJ31	; branch if trigger released
+GETKJ30
+	JMP GETKEY	; otherwise wait
+
+; trigger released, check what to do
+GETKJ31	LDA #JOYSTATE_WAIT_IDLE
+	STA JOYSTAT	; in all situations, transition to wait idle
+	LDY JDIRTAB,X
+	BMI GETKJ30	; invalid position, do nothing
+	BNE GETKJ32	; branch if not idle
+; idle position: send return
+	LDA #12
+	JMP DOGETK
+GETKJ32	DEY
+	BNE GETKJ33
+; up means parent directory, send "ESC"
+	LDA #28
+	JMP DOGETK
+GETKJ33
+; adjust driveno: down = same, left = -1 , right = +1
+	TAX
+	CLC
+	LDA DRIVENO
+	ADC DRVADJ,Y
+	AND #7
+	TAX
+	LDA DRVKEY,X
+	JMP DOGETK
+
+; drive number adjust for up/down/left/right
+DRVADJ .BYTE 0, 0, $FF,1
+
+; keys to send for drive number 8, 1-7
+DRVKEY	.BYTE 53, 31, 30, 26, 24, 29, 27, 51
+
+GETKJS4
+; invalid state, switch to wait idle
+	LDA #JOYSTATE_WAIT_IDLE
+	STA JOYSTAT
+	JMP GETKEY
 
 OLD20	.BYTE 0
 OLDJOY	.BYTE 0
-OLDTRIG	.BYTE 0
 WTJOY	.BYTE 0
 JOYSTAT	.BYTE 0
-JOYWAIT	.BYTE 0, 25, 4
 
 PRTFOR	LDA #0
 	STA PRTFSEL
