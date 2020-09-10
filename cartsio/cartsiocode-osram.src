@@ -72,6 +72,16 @@ STDSIO	JMP $1234	; call original OS SIO code
 .endif
 
 	LDY #0
+.if .def FREEZER2011
+	LDX CSSRCB
+?CPLP 	CARTBNKX
+	LDA (CSSRC),Y
+	CARTOFF2
+	STA (CSDST),Y
+	INY
+	CPY BUFLEN
+	BNE ?CPLP
+.else
 .if .def FREEZER2005
 	CARTBNK CSSRCB	; set source bank number
 ?CPLP	CARTON
@@ -85,6 +95,7 @@ STDSIO	JMP $1234	; call original OS SIO code
 	INY
 	CPY BUFLEN
 	BNE ?CPLP
+.endif
 
 ?CSEND	CARTOFF		; disable cartridge
 ;	DEC CRITIC	; re-enable deferred VBI
