@@ -1381,14 +1381,10 @@ TMENU	.BYTE 155,155
 TMENUL	= * - TMENU
 
 TNOCAR	
-.if .def ATARIMAX8
-	.BYTE "no cart detected - check switch"
-.else
 .if .def FREEZER2005 .or .def FREEZER2011
 	.BYTE "no cartemu detected - check switch"
 .else
 	.BYTE "no cart detected!"
-.endif
 .endif
 TNOCARL	= * - TNOCAR
 
