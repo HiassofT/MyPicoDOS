@@ -430,7 +430,19 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	BNE ?DET3
 
 ; setup flash/bank sizes etc.
-?DET4	
+?DET4
+	JSR ?FSETCHP	; setup chip parameters
+
+	JMP ?SETREAD	; set flash back to read mode
+?DET5	RTS
+
+; set chip type (A=chip type)
+FSETCHP	STA FTYPE
+	CMP #TNOFLSH
+	BNE ?FSETCHP
+	RTS
+
+?FSETCHP
 ; default values
 	LDA #0
 	STA FSIZE
@@ -457,6 +469,12 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	BEQ ?DET512
 	CMP #TBM40
 	BEQ ?DET512
+	CMP #TAMIC40
+	BEQ ?DET512
+	CMP #TSST40
+	BNE ?NDET512_4
+	JMP ?DET512_4
+?NDET512_4
 	CMP #TRAM512
 	BEQ ?RAM512
 
@@ -467,6 +485,10 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	BEQ ?DET128
 	CMP #TST10B
 	BEQ ?DET128
+	CMP #TSST10A
+	BNE ?NDET128_4
+	JMP ?DET128_4
+?NDET128_4
 	CMP #TRAM128
 	BEQ ?RAM128
 	CMP #TRAM1024
@@ -494,10 +516,7 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	LDA #0		; block mask is $00FFFF
 	STA FBLKMSK+2
 
-?DET5	LDA ?FRAMMOD	; are we in RAM mode?
-	BEQ ?DET6	; yes, just return
-	JMP ?SETREAD	; no, set flash back to read mode
-?DET6	RTS		
+	RTS
 
 ?RAM128
 	INC ?FRAMMOD
@@ -515,7 +534,8 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 	STA FBLKMSK
 	LDA #$3F
 	STA FBLKMSK+1
-	BNE ?DET5
+
+	RTS
 
 ?RAM1024
 	INC ?FRAMMOD
@@ -535,20 +555,49 @@ FDETECT	JSR ?FSETUPA	; setup addresses
 
 	LDA #0		; block mask is $00FFFF
 	STA FBLKMSK+2
-	BEQ ?DET5
+	RTS
 
-; set chip type (A=chip type)
-FSETCHP	STA FTYPE
-	CMP #TNOFLSH
-	BEQ ?FSETC1
-	JMP ?DET4	; valid type - setup config
-?FSETC1	RTS
+; 512k with 4k sectors
+?DET512_4
+	LDA #8		; flash size 512k
+	STA FSIZE+2	
+
+	LDA #$10	; block size 4k
+	STA FBLKSIZ+1
+
+	LDA #128	; 128 blocks
+	STA FNUMBLK
+
+	LDA #0		; block mask is $000FFF
+	STA FBLKMSK+2
+	LDA #$0F
+	STA FBLKMSK+1
+	RTS
+
+; 128k with 4k sectors
+?DET128_4
+	LDA #2		; flash size 512k
+	STA FSIZE+2	
+
+	LDA #$10	; block size 4k
+	STA FBLKSIZ+1
+
+	LDA #32	; 128 blocks
+	STA FNUMBLK
+
+	LDA #0		; block mask is $000FFF
+	STA FBLKMSK+2
+	LDA #$0F
+	STA FBLKMSK+1
+	RTS
 
 ; ID tables
 ; format: chip-type, manufacturer ID, device ID
 
 ?IDHI	.BYTE TAMD10, $01, $20	; AMD 29F010
 	.BYTE TBM40, $AD, $40	; BM 29F040
+	.BYTE TSST40, $BF, $B7	; SST 39SF040
+	.BYTE TSST10A, $BF, $B5	; SST 39SF010A
 	.BYTE TNOFLSH,$FF,$FF	; end of table
 
 ?IDLO	.BYTE TAMD10B, $01, $20	; AMD 29F010B
@@ -556,6 +605,7 @@ FSETCHP	STA FTYPE
 	.BYTE TAMD32B, $01, $41	; AMD 29F032B
 	.BYTE TST10B, $20, $20	; ST 29F010B
 	.BYTE TST40B, $20, $E2	; ST 29F040B
+	.BYTE TAMIC40, $37, $86	; AMIC 29040B
 	.BYTE TNOFLSH,$FF,$FF	; end of table
 
 ; flash type ($FF means no flash)
@@ -627,9 +677,9 @@ FWBYTE	JSR ?FSETUPB		; setup addresses for byte mode
 	LDA #0
 	RTS
 
-?FBERR2 STA FERRFD
-	LDA (DATAVEC),Y
-	STA FERRUD
+?FBERR2 STA FERRUD
+	LDA (FLASHVEC),Y
+	STA FERRFD
 	INC FERROR
 ?FBERR1	INC FERROR
 ?FBERR	LDA FERROR
@@ -666,8 +716,8 @@ FWPAGE	JSR ?FSETUPP		; setup adresses and check for page mode
 	STA (FLASHVEC),Y	; program data
 	JSR ?WTDATA		; wait for programming to finish
 	BMI ?FPERR1		; error
-	LDA (FLASHVEC),Y
-	CMP (DATAVEC),Y		; verify data
+	LDA (DATAVEC),Y
+	CMP (FLASHVEC),Y		; verify data
 	BNE ?FPERR2
 	INY
 	BNE ?FWPAGL2
@@ -682,9 +732,9 @@ FWPAGE	JSR ?FSETUPP		; setup adresses and check for page mode
 	RTS
 
 ; error in page mode: add Y to current address and return
-?FPERR2	STA FERRFD
-	LDA (DATAVEC),Y
-	STA FERRUD
+?FPERR2	STA FERRUD
+	LDA (FLASHVEC),Y
+	STA FERRFD
 	INC FERROR
 ?FPERR1	INC FERROR
 

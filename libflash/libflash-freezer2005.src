@@ -72,7 +72,7 @@ FRMODSDX = $D58B
 
 ; calculate base bank number (in: A, out: A)
 	.MACRO CBASE
-	AND #0		; only one chip
+	LDA #0		; only one chip
 	.ENDM
 
 ; init flash library
