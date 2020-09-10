@@ -10,6 +10,9 @@ CXXFLAGS=-W -Wall -g
 #LDFLAGS=
 LDFLAGS=-g
 
+MINGW_CXX?=i686-w64-mingw32-g++
+MINGW_STRIP?=i686-w64-mingw32-strip
+
 all: diskcart.atr atr2cart atr2cart.exe
 # m512.rom am8.rom
 
@@ -91,8 +94,8 @@ atr2cart: atr2cart.o AtrUtils.o Error.o
 	$(CXX) $(LDFLAGS) -o $@ $^
 
 atr2cart.exe: atr2cart.cpp AtrUtils.cpp Error.cpp
-	i586-mingw32msvc-g++ $(CXXFLAGS) -DWINVER -o $@ $^
-	i586-mingw32msvc-strip $@
+	$(MINGW_CXX) $(CXXFLAGS) -DWINVER -o $@ $^
+	$(MINGW_STRIP) $@
 
 piconame.txt: piconame.src version.inc
 	$(ATASM) -r -o$@ $<
