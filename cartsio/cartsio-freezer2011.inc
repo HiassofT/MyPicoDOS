@@ -38,7 +38,6 @@
 
 	.MACRO CARTBASE	; set base ROM bank for cartsio
 	CARTBNKI CSROMBK
-	CARTON
 	.ENDM
 
 	.MACRO CARTBNK ; parameter: bank number (address)
