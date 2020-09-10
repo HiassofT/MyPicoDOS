@@ -1,0 +1,13 @@
+atr2cart
+atr2cart.exe
+mypdrom.c
+*.o
+*.bin
+*.com
+*.atr
+*.rom
+mypdos*.c
+diskwriter*.c
+hisio.c
+disk
+piconame.txt
