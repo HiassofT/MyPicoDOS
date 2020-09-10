@@ -1143,21 +1143,14 @@ DETCHK
 .endif
 
 .if .def FREEZER2005
-; we have to do block erase, so check if the flash size is 512k
-; and the flash consists of 8*64k blocks
+; check if the flash size is 512k
 	LDA FSIZE
 	ORA FSIZE+1
-	ORA FBLKSIZ
-	ORA FBLKSIZ+1
 	BNE DETERR
-	LDA #8
-	CMP FSIZE+2
+	LDA FSIZE+2
+	CMP #8
 	BNE DETERR
-	CMP FNUMBLK
-	BNE DETERR
-	LDA FBLKSIZ+2
-	CMP #1
-	BNE DETERR
+	RTS
 .endif
 	RTS
 
@@ -1172,8 +1165,8 @@ ERASE	JSR FADRZERO
 	JSR FENABLE
 
 .if .def FREEZER2005 .or .def FREEZER2011
-; freezer2005: erase 7*64k blocks
-; freezer2011: erase 15*64k blocks
+; freezer2005: erase the first 448k banks
+; freezer2011: erase the first 960k banks
 ; combine status results
 	LDA #0
 	STA TMP32
@@ -1183,7 +1176,7 @@ ERASELP	JSR FPERAS
 	PLA
 	ORA TMP32
 	STA TMP32
-	INC FLASHADR+2
+	MADD32 FLASHADR,FLASHADR,FBLKSIZ
 	LDA FLASHADR+2
 .if .def FREEZER2005
 	CMP #7
