@@ -100,9 +100,9 @@ STDSIO	JMP $1234	; call original OS SIO code
 ?CSEND	CARTOFF		; disable cartridge
 ;	DEC CRITIC	; re-enable deferred VBI
 
-	CLI
 	LDA #$40
 	STA $D40E
+	CLI
 
 .if .def COLORS
 	LDA #0
