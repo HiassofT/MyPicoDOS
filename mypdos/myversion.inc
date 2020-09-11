@@ -18,23 +18,23 @@
 
 ; version string in ATASCII format
 	.MACRO VERSION
-	.BYTE "4.05"
+	.BYTE "4.06"
 ;	.BYTE "4dev"
 	.ENDM
 
 ; version string in screen format
 	.MACRO SVERSION
-	.SBYTE "4.05"
+	.SBYTE "4.06"
 ;	.SBYTE "4dev"
 	.ENDM
 
 ; copyright year string
 	.MACRO COPYYEAR
-	.BYTE "2011"
+	.BYTE "2017"
 	.ENDM
 
 ; copyright year string
 	.MACRO SCOPYYEAR
-	.SBYTE "2011"
+	.SBYTE "2017"
 	.ENDM
 
