@@ -118,7 +118,7 @@ diskcart.atr: \
 	cp -f diskcart-freezer2011.com disk/f11disk.com
 	cp -f diskcart-freezer2011-512k.com disk/f115disk.com
 	cp -f piconame.txt disk/PICONAME.TXT
-	dir2atr -b MyPicoDos406 $@ disk
+	dir2atr -b MyPicoDos406 1040 $@ disk
 
 #test.rom: atr2cart testdisk.atr testdd.atr
 #	./atr2cart $@ testdisk.atr testdd.atr
