@@ -20,8 +20,6 @@ DBUF	= $0304
 DBYT	= $0308
 DSEC	= $030A
 
-SOUNDR	= $41
-
 ; address of .bin file loader
 
 LDBINAD	= $80
