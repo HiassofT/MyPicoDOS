@@ -67,13 +67,13 @@ hisio.bin: hisio.src $(HISIOINC)
 include targets/targets.mk
 
 testdisk.atr: testdisk testdisk/*
-	dir2atr -b MyPicoDos405N -P 1040 testdisk.atr testdisk
+	dir2atr -b MyPicoDos406N -P 1040 testdisk.atr testdisk
 
 testam8.rom: testdisk.atr atr2cart
 	./atr2cart -a am8 $@ $<
 	
 testdd.atr: testdisk testdisk/*
-	dir2atr -b MyPicoDos405N -P -d 720 testdd.atr testdisk
+	dir2atr -b MyPicoDos406N -P -d 720 testdd.atr testdisk
 
 mydos.rom: atr2cart
 	./atr2cart $@ /data/hias/xl/camel/boot/mydosx1.atr
@@ -115,7 +115,7 @@ diskcart.atr: \
 	cp -f diskcart-freezer2005.com disk/f05disk.com
 	cp -f diskcart-freezer2011.com disk/f11disk.com
 	cp -f piconame.txt disk/PICONAME.TXT
-	dir2atr -b MyPicoDos405 $@ disk
+	dir2atr -b MyPicoDos406 $@ disk
 
 #test.rom: atr2cart testdisk.atr testdd.atr
 #	./atr2cart $@ testdisk.atr testdd.atr
