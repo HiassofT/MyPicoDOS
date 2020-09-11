@@ -10,4 +10,5 @@
 	.BYTE "MEDISK  COM Mega 512k DiskCart", 155
 	.BYTE "M4DISK  COM Mega 4MB DiskCart", 155
 	.BYTE "F05DISK COM Turbo Freezer 2005 DiskCart", 155
-	.BYTE "F11DISK COM Turbo Freezer 2011 DiskCart", 155
+	.BYTE "F11DISK COM Turbo Freezer 2011/960k DiskCart", 155
+	.BYTE "F115DISKCOM Turbo Freezer 2011/512k DiskCart", 155

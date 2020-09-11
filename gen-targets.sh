@@ -19,6 +19,11 @@ cat << EOF
 #include "../mypdos-$1.c"
 #include "../diskwriter-$1.c"
 EOF
+if [ "$1" = "freezer2011" ]; then
+cat << EOF
+#include "../diskwriter-$1-512k.c"
+EOF
+fi
 }
 
 doall atr2cart_inc_target > targets/atr2cart-inc-target.c
@@ -158,6 +163,23 @@ mypdos-$1.c: mypdos-$1.rom
 	xxd -i \$< > \$@
 
 EOF
+if [ "$1" = "freezer2011" ]; then
+cat << EOF
+diskcart-$1-512k.com: diskcart.src mypdos-$1.rom $LIBFLASH_SRC \\
+	targets/diskcart-inc-target.inc \\
+	targets/diskcart-incbin-mypdos.inc \\
+	iohelp.inc iohelp.src arith.inc arith.src diskio.src version.inc
+	\$(ATASM) \$(ASMFLAGS) $LIBFLASH_INC -d$2 -dFREEZER2011_512K -o\$@ \$<
+
+diskwriter-$1-512k.bin: diskcart-$1-512k.com
+	ataricom -b 1 -n \$< \$@
+
+diskwriter-$1-512k.c: diskwriter-$1-512k.bin
+	xxd -i \$< > \$@
+
+EOF
+fi
+
 }
 
 doall targets_mk > targets/targets.mk

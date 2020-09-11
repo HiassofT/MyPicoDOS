@@ -1376,7 +1376,15 @@ TTITLE
 .endif
 	.BYTE " DiskWriter V"
 	D_BVERSION
-	.BYTE 155, "(c) "
+	.BYTE 155
+.if .def FREEZER2011
+.if .def FREEZER2011_512K
+	.BYTE "512k Version", 155
+.else
+	.BYTE "960k Version", 155
+.endif
+.endif
+	.BYTE "(c) "
 	D_BYEAR
 	.BYTE " by Matthias Reichl",155,155
 TTITLEL	= * - TTITLE

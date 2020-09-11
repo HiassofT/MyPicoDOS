@@ -40,6 +40,18 @@ diskwriter-freezer2011.c: diskwriter-freezer2011.bin
 mypdos-freezer2011.c: mypdos-freezer2011.rom
 	xxd -i $< > $@
 
+diskcart-freezer2011-512k.com: diskcart.src mypdos-freezer2011.rom $(LIBFLASHINC) \
+	targets/diskcart-inc-target.inc \
+	targets/diskcart-incbin-mypdos.inc \
+	iohelp.inc iohelp.src arith.inc arith.src diskio.src version.inc
+	$(ATASM) $(ASMFLAGS) -Ilibflash -dFREEZER2011 -dFREEZER2011_512K -o$@ $<
+
+diskwriter-freezer2011-512k.bin: diskcart-freezer2011-512k.com
+	ataricom -b 1 -n $< $@
+
+diskwriter-freezer2011-512k.c: diskwriter-freezer2011-512k.bin
+	xxd -i $< > $@
+
 cartsio-freezer2005-pal.bin: mypdos/cartsiobin.src $(CARTSIOINC)
 	$(ATASM) $(MYPDOSFLAGS) -dFREEZER2005 -dPAL -r -o$@ $<
 

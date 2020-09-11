@@ -88,7 +88,8 @@ atr2cart.o: atr2cart.cpp\
 	mypdos-freezer2005.c mypdos-freezer2011.c \
 	diskwriter-mega512.c diskwriter-mega4096.c \
 	diskwriter-atarimax8.c \
-	diskwriter-freezer2005.c diskwriter-freezer2011.c
+	diskwriter-freezer2005.c diskwriter-freezer2011.c \
+	diskwriter-freezer2011-512k.c
 
 atr2cart: atr2cart.o AtrUtils.o Error.o
 	$(CXX) $(LDFLAGS) -o $@ $^
@@ -106,6 +107,7 @@ diskcart.atr: \
 	diskcart-atarimax8.com \
 	diskcart-freezer2005.com \
 	diskcart-freezer2011.com \
+	diskcart-freezer2011-512k.com \
 	piconame.txt
 	rm -rf disk
 	mkdir -p disk
@@ -114,6 +116,7 @@ diskcart.atr: \
 	cp -f diskcart-atarimax8.com disk/am8disk.com
 	cp -f diskcart-freezer2005.com disk/f05disk.com
 	cp -f diskcart-freezer2011.com disk/f11disk.com
+	cp -f diskcart-freezer2011-512k.com disk/f115disk.com
 	cp -f piconame.txt disk/PICONAME.TXT
 	dir2atr -b MyPicoDos406 $@ disk
 
