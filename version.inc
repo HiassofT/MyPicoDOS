@@ -17,22 +17,22 @@
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 	.macro D_BVERSION
-	.byte "1.21"
+	.byte "1.22"
 	.endm
 
 	.macro D_SVERSION
-	.sbyte "1.21"
+	.sbyte "1.22"
 	.endm
 
 	.macro D_BYEAR
-	.byte "2013"
+	.byte "2020"
 	.endm
 
 	.macro D_SYEAR
-	.sbyte "2013"
+	.sbyte "2020"
 	.endm
 
 	.macro D_TIMESTAMP
 	D_BYEAR
-	.byte "0422"
+	.byte "0911"
 	.endm

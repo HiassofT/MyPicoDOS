@@ -1,7 +1,7 @@
 /*
    atr2cart - create flashcart image containing multiple ATRs
 
-   Copyright (C) 2010-2013 Matthias Reichl <hias@horus.com>
+   Copyright (C) 2010-2020 Matthias Reichl <hias@horus.com>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -380,7 +380,7 @@ int main(int argc, char** argv)
 	bool autorun = false;
 	const char* out_filename;
 
-	cout << "atr2cart V1.21 (c) 2010-2013 by Matthias Reichl <hias@horus.com>" << endl;
+	cout << "atr2cart V1.22 (c) 2010-2020 by Matthias Reichl <hias@horus.com>" << endl;
 	if (argc <= 3) {
 		goto usage;
 	}
