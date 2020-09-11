@@ -6,8 +6,10 @@ if [ $# -ge 1 ] ; then
 	VER=$1
 fi
 
+DIST="${DIST:-../dist}"
+
 NAME=diskcart-$VER
-TMPDIR=dist/tmp/"${NAME}"
+TMPDIR="${DIST}/tmp/${NAME}"
 
 mkdir -p "${TMPDIR}/src/cartsio"
 mkdir -p "${TMPDIR}/src/libflash"
@@ -30,8 +32,8 @@ cp -a mypdos/*.src mypdos/*.inc "${TMPDIR}/src/mypdos"
 cp -a hisio/*.src hisio/*.inc "${TMPDIR}/src/hisio"
 cp -a targets/*.c targets/*.inc targets/*.mk "${TMPDIR}/src/targets"
 
-rm -f "dist/${NAME}".zip
-cd dist/tmp
+rm -f "${DIST}/${NAME}".zip
+cd "${DIST}/tmp"
 zip -r "../${NAME}.zip" ${NAME}
 cd ..
 rm -rf tmp
