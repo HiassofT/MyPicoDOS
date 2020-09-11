@@ -16,23 +16,23 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	.macro BVERSION
+	.macro D_BVERSION
 	.byte "1.21"
 	.endm
 
-	.macro SVERSION
+	.macro D_SVERSION
 	.sbyte "1.21"
 	.endm
 
-	.macro BYEAR
+	.macro D_BYEAR
 	.byte "2013"
 	.endm
 
-	.macro SYEAR
+	.macro D_SYEAR
 	.sbyte "2013"
 	.endm
 
-	.macro TIMESTAMP
-	BYEAR
+	.macro D_TIMESTAMP
+	D_BYEAR
 	.byte "0422"
 	.endm

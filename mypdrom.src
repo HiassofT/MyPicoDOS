@@ -133,9 +133,9 @@ DLISTL	= * - DLIST
 
 TITLE	.SBYTE "    "
 	.SBYTE "DiskCart V"
-	SVERSION
+	D_SVERSION
 	.SBYTE " (c) "
-	SYEAR
+	D_SYEAR
 	.SBYTE " HiassofT"
 	.SBYTE "    "
 
@@ -811,7 +811,7 @@ XEND	= *
 
 	* = CARTSIG
 	.BYTE "HiassofT"
-	TIMESTAMP
+	D_TIMESTAMP
 
 .if .def ATARIMAX8
 	* = $BFF0

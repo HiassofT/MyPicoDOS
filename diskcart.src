@@ -1380,9 +1380,9 @@ TTITLE
 	.BYTE "Turbo Freezer 2011"
 .endif
 	.BYTE " DiskWriter V"
-	BVERSION
+	D_BVERSION
 	.BYTE 155, "(c) "
-	BYEAR
+	D_BYEAR
 	.BYTE " by Matthias Reichl",155,155
 TTITLEL	= * - TTITLE
 
