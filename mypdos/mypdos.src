@@ -487,6 +487,9 @@ TITLE	= *
 	.SBYTE "T (c)"
 	.SBYTE " HiassofT 1992-2013 "
 	.ELSE
+	.IF .DEF FREEZER
+	.SBYTE "F"
+	.ELSE
 	.IF .DEF REMOTE
 	.SBYTE " MyPicoDos "
 	SVERSION
@@ -517,6 +520,7 @@ TITLE	= *
 	.SBYTE "HiassofT 1992-"
 	SCOPYYEAR
 	.SBYTE "  "
+	.ENDIF
 	.ENDIF
 	.ENDIF
 	.ENDIF
@@ -2187,7 +2191,7 @@ LOAD2	LDA TEMPV
 	JMP LOADBAS
 
 BINOK	
-.if .def THECART
+.if .def THECART .or .def FREEZER
 	LDA TEMPV
 	CMP #'C
 	BNE BINOK1
@@ -2450,7 +2454,7 @@ DEMPTLEN	= *-DSKEMPT
 	.include "imginfo.src"
 	.ENDIF
 
-	.if .def THECART
+	.if .def THECART .or .def FREEZER
 	.include "carloadcode.src"
 	.endif
 
