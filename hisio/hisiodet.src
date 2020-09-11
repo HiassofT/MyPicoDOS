@@ -78,6 +78,9 @@ HISIO
 
 ?NOULTRA 
 .if .not .def USONLY
+?ABS12A	JSR ?GETST2
+	BMI ?CHKNOHI	; bail out early if drive is not responding
+
 	LDA #TURFLG	; Turbo 1050?
 ?ABS12	JSR ?GETST
 	BPL ?SETSPD
@@ -92,12 +95,15 @@ HISIO
 	BPL ?SETSPD
 .endif
 
+?CHKNOHI
 	LDA #STDSPD	; no, just use standard SIO speed
 	BNE ?SETSP2
 
 .if .not .def USONLY
 ?GETST
 ?ABS16	STA SIOSPEED
+
+?GETST2
 	LDA #4
 	STA DBYTLO
 	LDX #$53
@@ -134,4 +140,4 @@ HISIO
 ?ABS20	JMP ?DOSIO
 
 ?CMD3F	.BYTE $3F,$40
-?ABS21	.WORD HIBUF,1,1,$20
+?ABS21	.WORD HIBUF,2,1,$20
