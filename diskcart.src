@@ -1165,8 +1165,7 @@ ERASE	JSR FADRZERO
 	JSR FENABLE
 
 .if .def FREEZER2005 .or .def FREEZER2011
-; freezer2005: erase the first 448k banks
-; freezer2011: erase the first 960k banks
+; erase banks from 0 up to end of image area
 ; combine status results
 	LDA #0
 	STA TMP32
@@ -1178,11 +1177,7 @@ ERASELP	JSR FPERAS
 	STA TMP32
 	MADD32 FLASHADR,FLASHADR,FBLKSIZ
 	LDA FLASHADR+2
-.if .def FREEZER2005
-	CMP #7
-.else
-	CMP #15
-.endif
+	CMP #OFSIMEH
 	BNE ERASELP
 
 	JSR FDISABLE
