@@ -1593,13 +1593,13 @@ TCONT	.BYTE 155
 	.BYTE "Press any key to continue > "
 TCONTL	= * - TCONT
 
-TVERS	.BYTE "SW date:", $99
+TVERS	.BYTE " Ver:", $99
 TVERSL	= * - TVERS
 
 THISIO	.BYTE "HiSIO:"
 THISIOL	= * - THISIO
 
-TAUTOS	.BYTE "MyPicoDos autostart:"
+TAUTOS	.BYTE " MyPicoDos autostart:"
 TAUTOSL	= * - TAUTOS
 
 TON	.BYTE $99
