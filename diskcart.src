@@ -247,16 +247,6 @@ GETDTAB	LDA #<TABBUF
 	LDX #4
 	JSR GETCCFG
 
-; check if IMGEND is unset ($FF) and use default in this case
-	LDA IMGEND
-	AND IMGEND+1
-	AND IMGEND+2
-	AND IMGEND+3
-	CMP #$FF
-	BNE GETDTIOK
-	JSR DEFIMGEND
-GETDTIOK
-
 ; init disk image starting address
 	LDA #<OFSIMSL
 	STA DISKOFS
