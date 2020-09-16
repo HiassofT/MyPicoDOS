@@ -398,7 +398,7 @@ int main(int argc, char** argv)
 	bool autorun = false;
 	const char* out_filename;
 
-	cout << "atr2cart V1.22 (c) 2010-2020 by Matthias Reichl <hias@horus.com>" << endl;
+	cout << "atr2cart V1.30 (c) 2010-2020 by Matthias Reichl <hias@horus.com>" << endl;
 	if (argc <= 3) {
 		goto usage;
 	}
