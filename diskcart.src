@@ -94,6 +94,17 @@ MINIT	JMP DOINIT
 MOK	JSR PVERS	; print software version
 	JSR PHISIO	; print highspeed SIO status
 
+; read autostart flag
+	LDA #<AUTOFLG
+	STA DATAADR
+	LDA #>AUTOFLG
+	STA DATAADR+1
+	LDA #CAUTOFO
+	LDX #1
+	JSR GETCCFG
+
+	JSR PAUTOST	; print MyPicoDos autostart status
+
 	JSR GETDTAB	; read drive table and init DISKIDX, DISKOFS
 	JSR PIMG	; print loaded images
 	JSR PFREE	; print free image space
@@ -152,6 +163,11 @@ HIOFF	STX SIOVEC+1
 NO4	CMP #'5
 	BNE NO5
 	JSR PUTCHAR
+	JMP DOAUTO
+
+NO5	CMP #'6
+	BNE NO6
+	JSR PUTCHAR
 	BPUT0 TASKSC
 	JSR YESNO
 	BEQ DOSC1
@@ -161,7 +177,7 @@ DOSC1	INC $42
 	CARTBASE
 	JMP $E477
 
-NO5	JMP MENULP
+NO6	JMP MENULP
 
 ; set flash address to configuration with offset A
 SETCFGA	STA FLASHADR
@@ -438,6 +454,46 @@ POFF	BPUT0 TOFF
 
 PON	BPUT0 TON
 	RTS
+
+PAUTOST	BPUT0 TAUTOS
+	LDA AUTOFLG
+	BEQ PON
+	BNE POFF
+
+
+DOAUTO	LDA AUTOFLG
+	BNE DOAUTO1
+	BPUT0 TAUTON
+	JMP DOCONT
+
+DOAUTO1
+	BPUT0 TASKAU
+	JSR YESNO
+	BEQ DOAUTO2
+	JMP MAINLP
+
+DOAUTO2
+	LDA #0
+	STA AUTOFLG
+	LDA #CAUTOFO
+	JSR SETCFGA
+	LDA #<AUTOFLG
+	STA DATAADR
+	LDA #>AUTOFLG
+	STA DATAADR+1
+	JSR FENABLE
+	LDX #1
+	LDY #0
+	JSR FWBYTE
+	PHP
+	JSR FDISABLE
+	PLP
+	BPL DOAUTO3
+	JSR PERRADR
+	JMP DOCONT
+
+DOAUTO3
+	JMP MAINLP
  
 DOINIT
 ; set image end address to default values
@@ -464,17 +520,7 @@ DOINIF1	CMP #'2
 DOINIFE
 .endif
 
-	BPUT0 TASKAU
-	LDA #0
-	STA AUTOFLG
-	JSR YESNO
-	BPL DOINI1
-	JMP MAINLP
-DOINI1	BNE DOINI2
-	INC AUTOFLG
-
-DOINI2	BPUT0 TINIT
-
+	BPUT0 TINIT
 	BPUT0 TERAS
 	JSR ERASE
 	BPL DOINIT1
@@ -496,16 +542,13 @@ DOINIT1
 	LDX #$20	; $20 pages = 8k
 	JSR COPYPAG
 
-; clear drive table
+; clear autostart flag and drive table
 	LDA #$FF
+	STA DATABUF+[CCONFPG-CARTSTRT+CAUTOFO]
 	LDY #$3F
 CLRDT	STA DATABUF+[CCONFPG-CARTSTRT+CARTTABO],Y
 	DEY
 	BPL CLRDT
-
-; set autostart flag
-	LDA AUTOFLG
-	STA DATABUF+[CCONFPG-CARTSTRT+CAUTOFO]
 
 ; set image end address
 	LDX #3
@@ -1466,7 +1509,8 @@ TMENU	.BYTE 155,155
 	.BYTE "2) Add disk to cart",155
 	.BYTE "3) Write image to disk",155
 	.BYTE "4) Toggle HISIO on/off",155
-	.BYTE "5) Start cartridge",155
+	.BYTE "5) Enable MyPicoDos autostart",155
+	.BYTE "6) Start cartridge",155
 	.BYTE "0) Exit program",155
 	.BYTE "> "
 TMENUL	= * - TMENU
@@ -1500,6 +1544,9 @@ TFRZ11L = * - TFRZ11
 
 TASKAU	.BYTE 155, "Autostart MyPicoDos (y/n)? "
 TASKAUL	= * - TASKAU
+
+TAUTON	.BYTE 155, "MyPicoDos Autostart already enabled"
+TAUTONL	= * - TAUTON
 
 TASKSC	.BYTE 155, 155, "Start cartridge (y/n)? "
 TASKSCL	= * - TASKSC
@@ -1540,6 +1587,9 @@ TVERSL	= * - TVERS
 
 THISIO	.BYTE "HiSIO:"
 THISIOL	= * - THISIO
+
+TAUTOS	.BYTE "MyPicoDos autostart:"
+TAUTOSL	= * - TAUTOS
 
 TON	.BYTE $99
 	.BYTE +$80, "on"
