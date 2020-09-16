@@ -54,6 +54,9 @@
 
 	CARTTAB = CCONFPG + CARTTABO
 
+; offset to image end address
+	CIMGENDO = $D0
+
 ; offset to autostart flag:
 ; if != 0 start MyPicoDos automatically if images
 ; are available (disable this feature with "select")

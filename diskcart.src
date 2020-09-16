@@ -206,6 +206,16 @@ GETCCFG	JSR SETCFGA
 	JSR FRBYTE
 	JMP FDISABLE
 
+; set IMGEND address to default values
+DEFIMGEND
+	LDX #3
+DEFIMGEL
+	LDA DIMGEND,X
+	STA IMGEND,X
+	DEX
+	BPL DEFIMGEL
+	RTS
+
 ; get drive table from flash
 GETDTAB	LDA #<TABBUF
 	STA DATAADR
@@ -215,6 +225,25 @@ GETDTAB	LDA #<TABBUF
 	LDA #CARTTABO
 	LDX #CTTSIZE
 	JSR GETCCFG
+
+; read image end address from configuration
+	LDA #<IMGEND
+	STA DATAADR
+	LDA #>IMGEND
+	STA DATAADR+1
+	LDA #CIMGENDO
+	LDX #4
+	JSR GETCCFG
+
+; check if IMGEND is unset ($FF) and use default in this case
+	LDA IMGEND
+	AND IMGEND+1
+	AND IMGEND+2
+	AND IMGEND+3
+	CMP #$FF
+	BNE GETDTIOK
+	JSR DEFIMGEND
+GETDTIOK
 
 ; init disk image starting address
 	LDA #<OFSIMSL
@@ -413,7 +442,10 @@ PHISIO2	LDA #$19
 	LDA #155
 	JMP PUTCHAR
 
-DOINIT	
+DOINIT
+; set image end address to default values
+	JSR DEFIMGEND
+
 	BPUT0 TASKAU
 	LDA #0
 	STA AUTOFLG
@@ -456,6 +488,13 @@ CLRDT	STA DATABUF+[CCONFPG-CARTSTRT+CARTTABO],Y
 ; set autostart flag
 	LDA AUTOFLG
 	STA DATABUF+[CCONFPG-CARTSTRT+CAUTOFO]
+
+; set image end address
+	LDX #3
+INIIEL	LDA IMGEND,X
+	STA DATABUF+[CCONFPG-CARTSTRT+CIMGENDO],X
+	DEX
+	BPL INIIEL
 
 ; setup addresses
 	LDA #<OFSCODL
@@ -1346,8 +1385,11 @@ RUNMODE	.BYTE 0
 DISKIDX	.BYTE 0
 DISKOFS	.WORD 0,0
 
-; 32bit image space end address
-IMGEND	.WORD OFSIMEL, OFSIMEH
+; default 32bit image space end address
+DIMGEND	.WORD OFSIMEL, OFSIMEH
+
+; actual 32bit image space end address
+IMGEND	.WORD 0,0
 
 ; 32bit number of free image bytes
 IMGFREE	.WORD 0,0
