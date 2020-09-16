@@ -528,6 +528,8 @@ DOINIF1	CMP #'2
 	STA IMGEND+2
 
 DOINIF2
+	LDA #155
+	JSR PUTCHAR
 	BPUT0 TASKIN
 	JSR YESNO
 	BEQ DOINIFE
@@ -1558,10 +1560,10 @@ TFRZ11	.BYTE 155
 TFRZ11L = * - TFRZ11
 .endif
 
-TASKAU	.BYTE 155, "Autostart MyPicoDos (y/n)? "
+TASKAU	.BYTE 155, 155, "Autostart MyPicoDos (y/n)? "
 TASKAUL	= * - TASKAU
 
-TAUTON	.BYTE 155, "MyPicoDos Autostart already enabled"
+TAUTON	.BYTE 155, 155, "MyPicoDos Autostart already enabled"
 TAUTONL	= * - TAUTON
 
 TASKSC	.BYTE 155, 155, "Start cartridge (y/n)? "
