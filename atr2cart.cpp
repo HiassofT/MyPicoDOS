@@ -45,8 +45,9 @@ enum ECartType {
 	eAtariMax8 = 1,
 	eFreezer2005 = 2,
 	eFreezer2011 = 3,
-	eMega4096 = 4,
-	eNoCart = 5
+	eFreezer2011_512 = 4,
+	eMega4096 = 5,
+	eNoCart = 6
 };
 
 static ECartType cartType = eNoCart;
@@ -73,8 +74,10 @@ static const struct CartConfig AllCartConfigs[] = {
 	{ 0x100000, 0x2000, 0xfe000, 0x1f00, 0, 0xfe000 },
 // Freezer 2005
 	{ 0x70000, 0x4000, 0x70000, 0x1f00, 0, 0x2000 },
-// Freezer 2011
+// Freezer 2011 / 960k
 	{ 0xF0000, 0x4000, 0xF0000, 0x1f00, 0, 0x2000 },
+// Freezer 2011 / 512k
+	{ 0x80000, 0x4000, 0x80000, 0x1f00, 0, 0x2000 },
 // Mega4096
 	{ 0x3fc000, 0, 0x3f8000, 0x3fbf00, 0x3fa000, 0x3f8000 },
 };
@@ -165,6 +168,7 @@ void init_rom_image(bool autorun)
 		break;
 
 	case eFreezer2011:
+	case eFreezer2011_512:
 		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer2011_rom, 0x2000);
 		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_freezer2011_bin, sizeof(diskwriter_freezer2011_bin));
 		break;
@@ -426,7 +430,11 @@ int main(int argc, char** argv)
 	}
 	if (strcasecmp(argv[idx], "frz11") == 0) {
 		cartType = eFreezer2011;
-		cout << "output type: TurboFreezer 2011 CartEmu" << endl;
+		cout << "output type: TurboFreezer 2011 CartEmu (960k)" << endl;
+	}
+	if (strcasecmp(argv[idx], "frz11_512") == 0) {
+		cartType = eFreezer2011_512;
+		cout << "output type: TurboFreezer 2011 CartEmu (512k)" << endl;
 	}
 	if (cartType == eNoCart) {
 		goto usage;
@@ -468,10 +476,11 @@ usage:
 	cout << "usage: atr2catr [-a] type outfile.rom file1.atr [file2.atr ...]" << endl;
 	cout << "   -a: enable MyPicoDos autostart" << endl;
 	cout << "supported types:" << endl;
-	cout << "  am8: AtariMax 8MBit FlashCart" << endl;
-	cout << " m512: MegaCart 512k" << endl;
-	cout << "m4096: MegaCart 4MB" << endl;
-	cout << "frz05: TurboFreezer 2005 CartEmu" << endl;
-	cout << "frz11: TurboFreezer 2011 CartEmu" << endl;
+	cout << "      am8: AtariMax 8MBit FlashCart" << endl;
+	cout << "     m512: MegaCart 512k" << endl;
+	cout << "    m4096: MegaCart 4MB" << endl;
+	cout << "    frz05: TurboFreezer 2005 CartEmu" << endl;
+	cout << "    frz11: TurboFreezer 2011 CartEmu (960k)" << endl;
+	cout << "frz11_512: TurboFreezer 2011 CartEmu (512k)" << endl;
 	return 1;
 }
