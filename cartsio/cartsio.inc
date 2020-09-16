@@ -45,9 +45,27 @@
 ; alternate cartsio entry, set Y to slot number
 	CSIOROMY= $A006
 
-; drive table in ROM (stored in same bank as cartsio code)
+; base page with configuration data (stored in same bank as cartsio code)
+	CCONFPG = $BF00
+
+; offset to drive table in ROM
 ; the drive table has 8 entries (D1:..D8:) with 8 bytes each
-	CARTTAB	= $BF00	; drive table base address
+	CARTTABO = 0
+
+	CARTTAB = CCONFPG + CARTTABO
+
+; offset to autostart flag:
+; if != 0 start MyPicoDos automatically if images
+; are available (disable this feature with "select")
+	CAUTOFO	= $DF
+
+	CAUTOF = CCONFPG + CAUTOFO
+
+; offset to 16byte signature in ROM (contains "HiassofT" plus 8-byte serial number)
+	CARTSIGO = $E0
+
+	CARTSIG = CCONFPG + CARTSIGO
+
 
 ; size and number of entries in drive table
 	CTENUM	= 8	; number of entries in drive table
@@ -71,13 +89,6 @@
 
 ; address of highspeed SIO code in ROM
 	CHISIO	= $BB00
-
-; autostart flag: if != 0 start MyPicoDos automatically if images
-; are available (disable this feature with "select")
-	CAUTOF	= $BFDF
-
-; 16byte signature in ROM (contains "HiassofT" plus 8-byte serial number)
-	CARTSIG	= $BFE0	; drive table base address
 
 .include "cartsio-inc-target.inc"
 

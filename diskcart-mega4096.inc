@@ -24,13 +24,9 @@
 OFSCODH	= $3F
 OFSCODL	= $A000
 
-; drive table
-OFSTABH	= $3F
-OFSTABL	= CARTTAB
-
-; 16byte signature
-OFSSIGH	= $3F
-OFSSIGL	= CARTSIG
+; configuration page
+OFSCFGH = $3F
+OFSCFGL = CCONFPG
 
 ; diskwriter code
 OFSDWH  = $3F

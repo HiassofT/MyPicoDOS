@@ -22,13 +22,9 @@
 OFSCODH	= 0
 OFSCODL	= $2000
 
-; drive table
-OFSTABH	= 0
-OFSTABL	= CARTTAB-$8000
-
-; 16byte signature
-OFSSIGH	= 0
-OFSSIGL	= CARTSIG-$8000
+; configuration page
+OFSCFGH = 0
+OFSCFGL = CCONFPG-$8000
 
 ; diskwriter code
 OFSDWH  = 0

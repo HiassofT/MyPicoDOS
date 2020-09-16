@@ -22,13 +22,9 @@
 OFSCODH = 0
 OFSCODL = 0
 
-; drive table
-OFSTABH	= 0
-OFSTABL	= CARTTAB-$A000
-
-; 16byte signature
-OFSSIGH	= 0
-OFSSIGL	= CARTSIG-$A000
+; configuration page
+OFSCFGH	= 0
+OFSCFGL	= CCONFPG-$A000
 
 ; diskwriter code
 OFSDWH	= 0
