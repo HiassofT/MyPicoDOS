@@ -810,7 +810,7 @@ XEND	= *
 	.BYTE 0
 
 	* = CARTSIG
-	.BYTE "HiassofT"
+	.BYTE "DiskCart"
 	D_TIMESTAMP
 
 .if .def ATARIMAX8

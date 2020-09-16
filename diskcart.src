@@ -1613,7 +1613,7 @@ TOFF	.BYTE $99
 TOFFL	= * - TOFF
 
 ; signature in cartridge
-TSIG	.BYTE "HiassofT"
+TSIG	.BYTE "DiskCart"
 
 TFREE	.BYTE "k free"
 TFREEL	= * - TFREE
