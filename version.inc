@@ -20,6 +20,10 @@
 	.byte "1.30"
 	.endm
 
+	.macro D_BEXTRA
+	.byte " b1"
+	.endm
+
 	.macro D_SVERSION
 	.sbyte "1.30"
 	.endm
@@ -32,7 +36,14 @@
 	.sbyte "2020"
 	.endm
 
-	.macro D_TIMESTAMP
-	D_BYEAR
-	.byte "0916"
+	.macro D_ROMVERSION
+	D_BVERSION
+BEX
+	D_BEXTRA
+	.dc 4-[*-BEX] $20
+	.endm
+
+	.macro D_PICOVERSION
+	D_BVERSION
+	D_BEXTRA
 	.endm

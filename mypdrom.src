@@ -811,7 +811,7 @@ XEND	= *
 
 	* = CARTSIG
 	.BYTE "DiskCart"
-	D_TIMESTAMP
+	D_ROMVERSION
 
 .if .def ATARIMAX8
 	* = $BFF0
