@@ -38,3 +38,6 @@ OFSIMSL	= $4000
 OFSIMEH	= $F
 OFSIMEL	= $0000
 
+; end of image area for 512k version
+OFSIMEH_512 = $8
+
