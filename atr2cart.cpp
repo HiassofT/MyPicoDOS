@@ -55,23 +55,28 @@ struct CartConfig {
 	unsigned long image_size;	// total size of ROM image
 	unsigned long image_start;	// start of disk images
 	unsigned long image_end;	// end of disk images
-	unsigned long drvtab_offset;
-	unsigned long autorun_offset;
+	unsigned long cfgpage_offset;
 	unsigned long cartrom_offset;
 	unsigned long diskwriter_offset;
 };
 
+enum EConfigPageOffset {
+	eOfsDriveTab = 0,
+	eOfsImageEndAddress = 0xd0,
+	eOfsAutorun = 0xdf
+};
+
 static const struct CartConfig AllCartConfigs[] = {
 // Mega512
-	{ 0x80000, 0x4000, 0x80000, 0x3f00, 0x3fdf, 0x2000, 0 },
+	{ 0x80000, 0x4000, 0x80000, 0x3f00, 0x2000, 0 },
 // AtariMax 8MBit
-	{ 0x100000, 0x2000, 0xfe000, 0x1f00, 0x1fdf, 0, 0xfe000 },
+	{ 0x100000, 0x2000, 0xfe000, 0x1f00, 0, 0xfe000 },
 // Freezer 2005
-	{ 0x70000, 0x4000, 0x70000, 0x1f00, 0x1fdf, 0, 0x2000 },
+	{ 0x70000, 0x4000, 0x70000, 0x1f00, 0, 0x2000 },
 // Freezer 2011
-	{ 0xF0000, 0x4000, 0xF0000, 0x1f00, 0x1fdf, 0, 0x2000 },
+	{ 0xF0000, 0x4000, 0xF0000, 0x1f00, 0, 0x2000 },
 // Mega4096
-	{ 0x3fc000, 0, 0x3f8000, 0x3fbf00, 0x3fbfdf, 0x3fa000, 0x3f8000 },
+	{ 0x3fc000, 0, 0x3f8000, 0x3fbf00, 0x3fa000, 0x3f8000 },
 };
 
 static const struct CartConfig* cartconfig;
@@ -121,7 +126,7 @@ void set_drive_table(
 		Assert(false);
 		return;
 	}
-	ofs = (driveno - 1) * 8 + cartconfig->drvtab_offset;
+	ofs = (driveno - 1) * 8 + cartconfig->cfgpage_offset + eOfsDriveTab;
 	memset(rom_image + ofs, 0xff, 8);
 
 	if (density <= 1) {
@@ -168,10 +173,19 @@ void init_rom_image(bool autorun)
 		assert(false);
 	}
 
+	rom_image[cartconfig->cfgpage_offset + eOfsImageEndAddress] =
+		 cartconfig->image_end & 0xff;
+	rom_image[cartconfig->cfgpage_offset + eOfsImageEndAddress + 1] =
+		(cartconfig->image_end >> 8) & 0xff;
+	rom_image[cartconfig->cfgpage_offset + eOfsImageEndAddress + 2] =
+		(cartconfig->image_end >> 16) & 0xff;
+	rom_image[cartconfig->cfgpage_offset + eOfsImageEndAddress + 3] =
+		(cartconfig->image_end >> 24) & 0xff;
+
 	if (autorun) {
-		rom_image[cartconfig->autorun_offset] = 1;
+		rom_image[cartconfig->cfgpage_offset + eOfsAutorun] = 1;
 	} else {
-		rom_image[cartconfig->autorun_offset] = 0;
+		rom_image[cartconfig->cfgpage_offset + eOfsAutorun] = 0;
 	}
 
 	for (i=1; i<=8; i++) {
