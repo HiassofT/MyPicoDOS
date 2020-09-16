@@ -46,8 +46,7 @@ enum ECartType {
 	eFreezer2005 = 2,
 	eFreezer2011 = 3,
 	eMega4096 = 4,
-	eFreezer2011_512k = 5,
-	eNoCart = 6
+	eNoCart = 5
 };
 
 static ECartType cartType = eNoCart;
@@ -69,12 +68,10 @@ static const struct CartConfig AllCartConfigs[] = {
 	{ 0x100000, 0x2000, 0xfe000, 0x1f00, 0x1fdf, 0, 0xfe000 },
 // Freezer 2005
 	{ 0x70000, 0x4000, 0x70000, 0x1f00, 0x1fdf, 0, 0x2000 },
-// Freezer 2011 960k
+// Freezer 2011
 	{ 0xF0000, 0x4000, 0xF0000, 0x1f00, 0x1fdf, 0, 0x2000 },
 // Mega4096
 	{ 0x3fc000, 0, 0x3f8000, 0x3fbf00, 0x3fbfdf, 0x3fa000, 0x3f8000 },
-// Freezer 2011 512k
-	{ 0x80000, 0x4000, 0x80000, 0x1f00, 0x1fdf, 0, 0x2000 },
 };
 
 static const struct CartConfig* cartconfig;
@@ -165,11 +162,6 @@ void init_rom_image(bool autorun)
 	case eFreezer2011:
 		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer2011_rom, 0x2000);
 		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_freezer2011_bin, sizeof(diskwriter_freezer2011_bin));
-		break;
-
-	case eFreezer2011_512k:
-		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer2011_rom, 0x2000);
-		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_freezer2011_512k_bin, sizeof(diskwriter_freezer2011_512k_bin));
 		break;
 
 	default:
@@ -420,11 +412,7 @@ int main(int argc, char** argv)
 	}
 	if (strcasecmp(argv[idx], "frz11") == 0) {
 		cartType = eFreezer2011;
-		cout << "output type: TurboFreezer 2011 CartEmu / 960k" << endl;
-	}
-	if (strcasecmp(argv[idx], "frz115") == 0) {
-		cartType = eFreezer2011_512k;
-		cout << "output type: TurboFreezer 2011 CartEmu / 512k" << endl;
+		cout << "output type: TurboFreezer 2011 CartEmu" << endl;
 	}
 	if (cartType == eNoCart) {
 		goto usage;
@@ -466,11 +454,10 @@ usage:
 	cout << "usage: atr2catr [-a] type outfile.rom file1.atr [file2.atr ...]" << endl;
 	cout << "   -a: enable MyPicoDos autostart" << endl;
 	cout << "supported types:" << endl;
-	cout << "   am8: AtariMax 8MBit FlashCart" << endl;
-	cout << "  m512: MegaCart 512k" << endl;
-	cout << " m4096: MegaCart 4MB" << endl;
-	cout << " frz05: TurboFreezer 2005 CartEmu" << endl;
-	cout << " frz11: TurboFreezer 2011 CartEmu / 960K" << endl;
-	cout << "frz115: TurboFreezer 2011 CartEmu / 512K" << endl;
+	cout << "  am8: AtariMax 8MBit FlashCart" << endl;
+	cout << " m512: MegaCart 512k" << endl;
+	cout << "m4096: MegaCart 4MB" << endl;
+	cout << "frz05: TurboFreezer 2005 CartEmu" << endl;
+	cout << "frz11: TurboFreezer 2011 CartEmu" << endl;
 	return 1;
 }

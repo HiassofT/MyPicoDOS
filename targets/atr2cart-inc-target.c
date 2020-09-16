@@ -1,6 +1,5 @@
 #include "../mypdos-freezer2011.c"
 #include "../diskwriter-freezer2011.c"
-#include "../diskwriter-freezer2011-512k.c"
 #include "../mypdos-freezer2005.c"
 #include "../diskwriter-freezer2005.c"
 #include "../mypdos-atarimax8.c"

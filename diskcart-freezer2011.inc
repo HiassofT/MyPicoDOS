@@ -39,10 +39,6 @@ OFSIMSH	= 0
 OFSIMSL	= $4000
 
 ; end of disk image area
-.if .def FREEZER2011_512K
-OFSIMEH	= $8
-.else
 OFSIMEH	= $F
-.endif
 OFSIMEL	= $0000
 
