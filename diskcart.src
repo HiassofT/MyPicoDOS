@@ -105,6 +105,9 @@ MOK	JSR PVERS	; print software version
 
 	JSR PAUTOST	; print MyPicoDos autostart status
 
+	LDA #155
+	JSR PUTCHAR
+
 	JSR GETDTAB	; read drive table and init DISKIDX, DISKOFS
 	JSR PIMG	; print loaded images
 	JSR PFREE	; print free image space
