@@ -126,6 +126,9 @@ If MyPicoDos autostart has been enabled the integrated MyPicoDos
 is automatically activated instead. Pressing SELECT during powerup
 disables that and brings up the configuration menu.
 
+Note: for the Turbo Freezer versions you have to configure the
+CartEmu to default settings (8k mode, ROM, bank 0).
+
 Configuration menu
 ------------------
 
