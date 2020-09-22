@@ -399,13 +399,13 @@ int main(int argc, char** argv)
 	const char* out_filename;
 
 	cout << "atr2cart V1.30 (c) 2010-2020 by Matthias Reichl <hias@horus.com>" << endl;
-	if (argc <= 3) {
+	if (argc <= 2) {
 		goto usage;
 	}
 	if (strcmp(argv[idx], "-a") == 0) {
 		autorun = true;
 		idx++;
-		if (idx + 3 > argc) {
+		if (idx + 2 > argc) {
 			goto usage;
 		}
 	}
@@ -473,7 +473,7 @@ int main(int argc, char** argv)
 	}
 	return 0;
 usage:
-	cout << "usage: atr2catr [-a] type outfile.rom file1.atr [file2.atr ...]" << endl;
+	cout << "usage: atr2catr [-a] type outfile.rom [image.atr ...]" << endl;
 	cout << "options:" << endl;
 	cout << " -a         enable MyPicoDos autostart" << endl;
 	cout << "supported types:" << endl;
