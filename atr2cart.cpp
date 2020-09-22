@@ -474,13 +474,14 @@ int main(int argc, char** argv)
 	return 0;
 usage:
 	cout << "usage: atr2catr [-a] type outfile.rom file1.atr [file2.atr ...]" << endl;
-	cout << "   -a: enable MyPicoDos autostart" << endl;
+	cout << "options:" << endl;
+	cout << " -a         enable MyPicoDos autostart" << endl;
 	cout << "supported types:" << endl;
-	cout << "      am8: AtariMax 8MBit FlashCart" << endl;
-	cout << "     m512: MegaCart 512k" << endl;
-	cout << "    m4096: MegaCart 4MB" << endl;
-	cout << "    frz05: TurboFreezer 2005 CartEmu" << endl;
-	cout << "    frz11: TurboFreezer 2011 CartEmu (960k)" << endl;
-	cout << "frz11_512: TurboFreezer 2011 CartEmu (512k)" << endl;
+	cout << " am8        AtariMax 8MBit FlashCart" << endl;
+	cout << " m512       MegaCart 512k" << endl;
+	cout << " m4096      MegaCart 4MB" << endl;
+	cout << " frz05      TurboFreezer 2005 CartEmu" << endl;
+	cout << " frz11      TurboFreezer 2011 CartEmu (960k)" << endl;
+	cout << " frz11_512  TurboFreezer 2011 CartEmu (512k)" << endl;
 	return 1;
 }
