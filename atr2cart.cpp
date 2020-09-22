@@ -408,6 +408,7 @@ int main(int argc, char** argv)
 		if (idx + 2 > argc) {
 			goto usage;
 		}
+		cout << "enabled MyPicoDos autostart" << endl;
 	}
 
 	cartType = eNoCart;
