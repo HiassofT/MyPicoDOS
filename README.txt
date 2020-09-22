@@ -28,9 +28,15 @@ the TurboFreezer 2005 and 2011 CartEmus.
 Using DiskWriter
 ================
 
-diskcart.atr contains separate versions of the DiskWriter software
-for the supported flash carts. Plug in the flash cart, boot the
-diskcart disk (image) and choose the version matching your cart.
+DiskWriter allows you to initialize a flash cart and transfer
+disks to/from it.
+
+The DiskCart distribution contains separate versions of DiskWriter
+for the supported flash carts. Both as COM files and also as ar
+bootable ATR image (diskcart.atr), containing all versions.
+
+Plug in the flash cart and load the DiskWriter version
+matching your cart.
 
 After startup it checks if the flash cart is present and if the
 cart had been previously initialized with the DiskCart software.
