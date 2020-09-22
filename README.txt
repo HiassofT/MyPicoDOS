@@ -184,8 +184,13 @@ atr2cart allows you to create ROM images with DiskCart and (up to)
 eight ATR disk images on a PC.
 
 The diskcart distribution includes a pre-compiled Win32 console version
-(atr2cart.exe). If you use linux you have to compile it yourself
-(run "make atr2cart" in the src directory).
+(atr2cart.exe).
+
+If you use linux you have to compile it yourself. Either run
+"make atr2cart" in the src directory if you have atasm and xxd
+installed (this will also rebuild the Atari binaries) or build it
+with "g++ -o atr2cart atr2cart.cpp AtrUtils.cpp Error.cpp" - the
+latter only requires a C++ compiler.
 
 If you run atr2cart without any options it'll show a short usage
 summary.
