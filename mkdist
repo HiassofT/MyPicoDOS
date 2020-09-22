@@ -23,6 +23,7 @@ cp -a \
 	diskcart-atarimax8.com \
 	diskcart-freezer2005.com diskcart-freezer2011.com \
 	diskcart-mega512.com diskcart-mega4096.com \
+	README.txt \
 	"${TMPDIR}"
 
 cp -a Makefile piconame*.txt *.inc *.src *.cpp *.c *.h "${TMPDIR}/src"
