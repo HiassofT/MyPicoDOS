@@ -33,7 +33,7 @@ BANKBAS	= $8000	; base address
 
 ; disable cartridge
 	.MACRO SBANKOFF
-	LDX #$80
+	LDX #$FF
 	SBANKX
 	.ENDM
 
