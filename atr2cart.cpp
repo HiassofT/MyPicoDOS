@@ -187,9 +187,9 @@ void init_rom_image(bool autorun)
 		(cartconfig->image_end >> 24) & 0xff;
 
 	if (autorun) {
-		rom_image[cartconfig->cfgpage_offset + eOfsAutorun] = 1;
-	} else {
 		rom_image[cartconfig->cfgpage_offset + eOfsAutorun] = 0;
+	} else {
+		rom_image[cartconfig->cfgpage_offset + eOfsAutorun] = 0xff;
 	}
 
 	for (i=1; i<=8; i++) {
