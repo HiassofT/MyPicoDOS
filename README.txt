@@ -164,7 +164,8 @@ and pressing "I" shows a list of available images on the cart.
 Booting disk images
 -------------------
 
-This function is only available when using the stock XL/XE OS
+This function is only available when using the stock XL/XE OS,
+a stock XL/XE OS with the highspeed SIO patch 1.30 (or newer),
 or QMEG 4.04. Other OS versions might work, too, but this has
 not been tested.
 
