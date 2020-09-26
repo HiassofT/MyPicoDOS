@@ -79,7 +79,7 @@ static const struct CartConfig AllCartConfigs[] = {
 // Freezer 2011 / 512k
 	{ 0x80000, 0x4000, 0x80000, 0x1f00, 0, 0x2000 },
 // Mega4096
-	{ 0x3fc000, 0, 0x3f8000, 0x3fbf00, 0x3fa000, 0x3f8000 },
+	{ 0x400000, 0, 0x3f8000, 0x3fbf00, 0x3fa000, 0x3f8000 },
 };
 
 static const struct CartConfig* cartconfig;
