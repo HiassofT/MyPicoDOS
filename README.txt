@@ -36,7 +36,10 @@ for the supported flash carts. Both as COM files and also as ar
 bootable ATR image (diskcart.atr), containing all versions.
 
 Plug in the flash cart and load the DiskWriter version
-matching your cart.
+matching your cart. With most flash carts you have to press
+OPTION during powerup to temporarily disable it and boot from
+disk instead. On the Turbo Freezer make sure that the flash
+write jumper/switch is set to enabled.
 
 After startup it checks if the flash cart is present and if the
 cart had been previously initialized with the DiskCart software.
