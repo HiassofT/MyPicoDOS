@@ -415,11 +415,11 @@ int main(int argc, char** argv)
 
 	if (strcasecmp(argv[idx], "m512") == 0) {
 		cartType = eMega512;
-		cout << "output type: MegaCart 512k" << endl;
+		cout << "output type: 512k Flash MegaCart" << endl;
 	}
 	if (strcasecmp(argv[idx], "m4096") == 0) {
 		cartType = eMega4096;
-		cout << "output type: 4MB MegaCart" << endl;
+		cout << "output type: 4MB Flash MegaCart" << endl;
 	}
 	if (strcasecmp(argv[idx], "am8") == 0) {
 		cartType = eAtariMax8;
@@ -479,8 +479,8 @@ usage:
 	cout << " -a         enable MyPicoDos autostart" << endl;
 	cout << "supported types:" << endl;
 	cout << " am8        AtariMax 8MBit FlashCart" << endl;
-	cout << " m512       MegaCart 512k" << endl;
-	cout << " m4096      MegaCart 4MB" << endl;
+	cout << " m512       512k Flash MegaCart" << endl;
+	cout << " m4096      4MB Flash MegaCart" << endl;
 	cout << " frz05      TurboFreezer 2005 CartEmu" << endl;
 	cout << " frz11      TurboFreezer 2011 CartEmu (960k)" << endl;
 	cout << " frz11_512  TurboFreezer 2011 CartEmu (512k)" << endl;

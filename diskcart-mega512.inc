@@ -1,4 +1,4 @@
-;  diskcart-mega512.inc - definitions for Mega512 cart
+;  diskcart-mega512.inc - definitions for 512k Flash MegaCart
 ;
 ;  Copyright (C) 2010 Matthias Reichl <hias@horus.com>
 ;

@@ -1,4 +1,4 @@
-;  diskcart-mega4096.inc - definitions for 4MB mega cart
+;  diskcart-mega4096.inc - definitions for 4MB Flash MegaCart
 ;
 ;  Copyright (C) 2013 Matthias Reichl <hias@horus.com>
 ;

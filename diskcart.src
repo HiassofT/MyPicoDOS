@@ -1499,10 +1499,10 @@ WRFMT	.BYTE 0
 TTITLE
 	.BYTE 125
 .if .def MEGA512
-	.BYTE "Mega 512k FlashCart"
+	.BYTE "512k Flash MegaCart"
 .endif
 .if .def MEGA4096
-	.BYTE "Mega 4MB FlashCart"
+	.BYTE "4MB Flash MegaCart"
 .endif
 .if .def ATARIMAX8
 	.BYTE "AtariMax 8MBit"
