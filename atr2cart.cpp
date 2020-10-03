@@ -42,7 +42,7 @@ using namespace AtrUtils;
 
 enum ECartType {
 	eMega512 = 0,
-	eAtariMax8 = 1,
+	eAtarimax8 = 1,
 	eFreezer2005 = 2,
 	eFreezer2011 = 3,
 	eFreezer2011_512 = 4,
@@ -70,7 +70,7 @@ enum EConfigPageOffset {
 static const struct CartConfig AllCartConfigs[] = {
 // Mega512
 	{ 0x80000, 0x4000, 0x80000, 0x3f00, 0x2000, 0 },
-// AtariMax 8MBit
+// Atarimax 8MBit
 	{ 0x100000, 0x2000, 0xfe000, 0x1f00, 0, 0xfe000 },
 // Freezer 2005
 	{ 0x70000, 0x4000, 0x70000, 0x1f00, 0, 0x2000 },
@@ -157,7 +157,7 @@ void init_rom_image(bool autorun)
 		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_mega4096_rom, 0x2000);
 		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_mega4096_bin, sizeof(diskwriter_mega4096_bin));
 		break;
-	case eAtariMax8:
+	case eAtarimax8:
 		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_atarimax8_rom, 0x2000);
 		memcpy(rom_image+cartconfig->image_size-32, mypdos_atarimax8_rom + 0x2000-32, 32);	// cart init code for Atarimax
 		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_atarimax8_bin, sizeof(diskwriter_atarimax8_bin));
@@ -422,8 +422,8 @@ int main(int argc, char** argv)
 		cout << "output type: 4MB Flash MegaCart" << endl;
 	}
 	if (strcasecmp(argv[idx], "am8") == 0) {
-		cartType = eAtariMax8;
-		cout << "output type: AtariMax 8MBit FlashCart" << endl;
+		cartType = eAtarimax8;
+		cout << "output type: Atarimax 8MBit FlashCart" << endl;
 	}
 	if (strcasecmp(argv[idx], "frz05") == 0) {
 		cartType = eFreezer2005;
@@ -478,7 +478,7 @@ usage:
 	cout << "options:" << endl;
 	cout << " -a         enable MyPicoDos autostart" << endl;
 	cout << "supported types:" << endl;
-	cout << " am8        AtariMax 8MBit FlashCart" << endl;
+	cout << " am8        Atarimax 8MBit FlashCart" << endl;
 	cout << " m512       512k Flash MegaCart" << endl;
 	cout << " m4096      4MB Flash MegaCart" << endl;
 	cout << " frz05      TurboFreezer 2005 CartEmu" << endl;

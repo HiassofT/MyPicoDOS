@@ -1,4 +1,4 @@
-;  diskcart-atarimax8.inc - definitions for AtariMax 8MBit cart
+;  diskcart-atarimax8.inc - definitions for Atarimax 8MBit cart
 ;
 ;  Copyright (C) 2010 Matthias Reichl <hias@horus.com>
 ;
@@ -16,7 +16,7 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-; offsets in AtariMax 8MBit flashcart
+; offsets in Atarimax 8MBit flashcart
 
 ; code starts at offset 0
 OFSCODH = 0

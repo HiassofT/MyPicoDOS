@@ -21,7 +21,7 @@ programs from the disk images.
 On Atari XL/XE computers the disk images can also be booted.
 
 DiskCart was originally written for the 512k Flash MegaCart in 2010
-and now also supports the 4MB Flash MegaCart, 8Mbit AtariMax cart and
+and now also supports the 4MB Flash MegaCart, 8Mbit Atarinax cart and
 the TurboFreezer 2005 and 2011 CartEmus.
 
 

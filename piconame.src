@@ -6,7 +6,7 @@
 	D_PICOVERSION
 	.BYTE 155
 
-	.BYTE "AM8DISK COM AtariMax 8MBit DiskCart", 155
+	.BYTE "AM8DISK COM Atarimax 8MBit DiskCart", 155
 	.BYTE "MEDISK  COM 512k Flash MegaCart DiskCart", 155
 	.BYTE "M4DISK  COM 4MB Flash MegaCart DiskCart", 155
 	.BYTE "F05DISK COM Turbo Freezer 2005 DiskCart", 155

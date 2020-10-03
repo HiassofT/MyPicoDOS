@@ -1,4 +1,4 @@
-;  cartsio-atarimax8.inc - definitions for AtariMax 8MBit cart
+;  cartsio-atarimax8.inc - definitions for Atarimax 8MBit cart
 ;
 ;  Copyright (c) 2010 by Matthias Reichl <hias@horus.com>
 ;
