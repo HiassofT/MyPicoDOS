@@ -21,7 +21,7 @@
 	.endm
 
 	.macro D_BEXTRA
-	.byte " b1"
+;	.byte " b1"
 	.endm
 
 	.macro D_SVERSION
