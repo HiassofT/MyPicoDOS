@@ -13,3 +13,6 @@
 .if .def MEGA4096
 	.incbin "mypdos-code-mega4096.bin"
 .endif
+.if .def SXEGS512
+	.incbin "mypdos-code-sxegs512.bin"
+.endif

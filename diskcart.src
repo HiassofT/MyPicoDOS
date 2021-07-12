@@ -1,6 +1,6 @@
 ;  diskcart - load disks into flashcart
 ;
-;  Copyright (C) 2010-2013 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 2010-2021 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -1245,7 +1245,7 @@ DETCHK
 
 ; detection OK, now check if chip is compatible with software
 
-.if .def ATARIMAX8 .or .def MEGA512
+.if .def ATARIMAX8 .or .def MEGA512 .or .def SXEGS512
 ; we are doing chip erase, so just check if the flash size is 512k
 	LDA FSIZE
 	ORA FSIZE+1
@@ -1512,6 +1512,9 @@ TTITLE
 .endif
 .if .def FREEZER2011
 	.BYTE "Turbo Freezer 2011"
+.endif
+.if .def SXEGS512
+	.BYTE "SXEGS 512k Flash"
 .endif
 	.BYTE " DiskWriter V"
 	D_BVERSION

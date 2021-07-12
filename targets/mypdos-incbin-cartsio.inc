@@ -28,3 +28,9 @@ CSIOPL	= * - CSIOP
 CSION	.incbin "cartsio-mega4096-ntsc.bin"
 CSIONL	= * - CSION
 .endif
+.if .def SXEGS512
+CSIOP	.incbin "cartsio-sxegs512-pal.bin"
+CSIOPL	= * - CSIOP
+CSION	.incbin "cartsio-sxegs512-ntsc.bin"
+CSIONL	= * - CSION
+.endif

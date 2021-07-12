@@ -42,7 +42,8 @@ CARTSIOINC = cartsio/cartsio.inc targets/cartsio-inc-target.inc \
 	cartsio/cartsiocode-osram.src \
 	cartsio/cartsio-mega512.inc cartsio/cartsio-mega4096.inc \
 	cartsio/cartsio-atarimax8.inc \
-	cartsio/cartsio-freezer2005.inc cartsio/cartsio-freezer2011.inc
+	cartsio/cartsio-freezer2005.inc cartsio/cartsio-freezer2011.inc \
+	cartsio/cartsio-sxegs512.inc \
 
 LIBFLASHINC = libflash/libflash.inc libflash/libflash.src \
 	targets/libflash-inc-target.inc \
@@ -50,7 +51,8 @@ LIBFLASHINC = libflash/libflash.inc libflash/libflash.src \
 	libflash/libflash-freezer2005.src \
 	libflash/libflash-freezer2011.src \
 	libflash/libflash-mega512.src \
-	libflash/libflash-mega4096.src
+	libflash/libflash-mega4096.src \
+	libflash/libflash-sxegs512.src
 
 rread.bin: mypdos/rread.src mypdos/rreadcode.src mypdos/common.inc
 	$(ATASM) $(MYPDOSFLAGS) -r -o$@ $<
@@ -86,9 +88,11 @@ atr2cart.o: atr2cart.cpp\
 	mypdos-mega512.c mypdos-mega4096.c \
 	mypdos-atarimax8.c \
 	mypdos-freezer2005.c mypdos-freezer2011.c \
+	mypdos-sxegs512.c \
 	diskwriter-mega512.c diskwriter-mega4096.c \
 	diskwriter-atarimax8.c \
-	diskwriter-freezer2005.c diskwriter-freezer2011.c
+	diskwriter-freezer2005.c diskwriter-freezer2011.c \
+	diskwriter-sxegs512.c
 
 atr2cart: atr2cart.o AtrUtils.o Error.o
 	$(CXX) $(LDFLAGS) -o $@ $^
@@ -106,6 +110,7 @@ diskcart.atr: \
 	diskcart-atarimax8.com \
 	diskcart-freezer2005.com \
 	diskcart-freezer2011.com \
+	diskcart-sxegs512.com \
 	piconame.txt
 	rm -rf disk
 	mkdir -p disk
@@ -114,8 +119,9 @@ diskcart.atr: \
 	cp -f diskcart-atarimax8.com disk/am8disk.com
 	cp -f diskcart-freezer2005.com disk/f05disk.com
 	cp -f diskcart-freezer2011.com disk/f11disk.com
+	cp -f diskcart-sxegs512.com disk/sx5disk.com
 	cp -f piconame.txt disk/PICONAME.TXT
-	dir2atr -b MyPicoDos406 $@ disk
+	dir2atr -b MyPicoDos406 1040 $@ disk
 
 #test.rom: atr2cart testdisk.atr testdd.atr
 #	./atr2cart $@ testdisk.atr testdd.atr
@@ -128,6 +134,9 @@ m4096.rom: atr2cart
 
 am8.rom: atr2cart
 	./atr2cart am8 am8.rom ~/private/xl/boot/turbo.atr ~/private/xl/boot/turbosd.atr ~/private/xl/boot/mydosx2.atr ~/private/xl/boot/mydosx1.atr
+
+sx512.rom: atr2cart
+	./atr2cart sx512 sx512.rom ~/private/xl/boot/turbo.atr ~/private/xl/boot/turbosd.atr ~/private/xl/boot/mydosx1.atr
 
 
 clean:

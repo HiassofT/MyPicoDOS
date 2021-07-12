@@ -1,7 +1,7 @@
 /*
    atr2cart - create flashcart image containing multiple ATRs
 
-   Copyright (C) 2010-2020 Matthias Reichl <hias@horus.com>
+   Copyright (C) 2010-2021 Matthias Reichl <hias@horus.com>
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -47,7 +47,8 @@ enum ECartType {
 	eFreezer2011 = 3,
 	eFreezer2011_512 = 4,
 	eMega4096 = 5,
-	eNoCart = 6
+	eSxegs512 = 6,
+	eNoCart = 7
 };
 
 static ECartType cartType = eNoCart;
@@ -80,6 +81,8 @@ static const struct CartConfig AllCartConfigs[] = {
 	{ 0x80000, 0x4000, 0x80000, 0x1f00, 0, 0x2000 },
 // Mega4096
 	{ 0x400000, 0, 0x3f8000, 0x3fbf00, 0x3fa000, 0x3f8000 },
+// Sxegs512
+	{ 0x80000, 0, 0x7c000, 0x7ff00, 0x7e000, 0x7c000 },
 };
 
 static const struct CartConfig* cartconfig;
@@ -171,6 +174,11 @@ void init_rom_image(bool autorun)
 	case eFreezer2011_512:
 		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_freezer2011_rom, 0x2000);
 		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_freezer2011_bin, sizeof(diskwriter_freezer2011_bin));
+		break;
+
+	case eSxegs512:
+		memcpy(rom_image + cartconfig->cartrom_offset, mypdos_sxegs512_rom, 0x2000);
+		memcpy(rom_image + cartconfig->diskwriter_offset, diskwriter_sxegs512_bin, sizeof(diskwriter_sxegs512_bin));
 		break;
 
 	default:
@@ -437,6 +445,10 @@ int main(int argc, char** argv)
 		cartType = eFreezer2011_512;
 		cout << "output type: TurboFreezer 2011 CartEmu (512k)" << endl;
 	}
+	if (strcasecmp(argv[idx], "sx512") == 0) {
+		cartType = eSxegs512;
+		cout << "output type: SXEGS 512k Flash Cart" << endl;
+	}
 	if (cartType == eNoCart) {
 		goto usage;
 	}
@@ -484,5 +496,6 @@ usage:
 	cout << " frz05      TurboFreezer 2005 CartEmu" << endl;
 	cout << " frz11      TurboFreezer 2011 CartEmu (960k)" << endl;
 	cout << " frz11_512  TurboFreezer 2011 CartEmu (512k)" << endl;
+	cout << " sx512      SXEGS 512k Flash Cart" << endl;
 	return 1;
 }

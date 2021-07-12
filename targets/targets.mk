@@ -208,3 +208,45 @@ diskwriter-mega4096.c: diskwriter-mega4096.bin
 mypdos-mega4096.c: mypdos-mega4096.rom
 	xxd -i $< > $@
 
+cartsio-sxegs512-pal.bin: mypdos/cartsiobin.src $(CARTSIOINC)
+	$(ATASM) $(MYPDOSFLAGS) -dSXEGS512 -dPAL -r -o$@ $<
+
+cartsio-sxegs512-ntsc.bin: mypdos/cartsiobin.src $(CARTSIOINC)
+	$(ATASM) $(MYPDOSFLAGS) -dSXEGS512 -r -o$@ $<
+
+cartsiocode-osram-sxegs512-pal.bin: \
+	cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc $(CARTSIOINC)
+	$(ATASM) $(ASMFLAGS) -dSXEGS512 -dPAL -r -o$@ $<
+
+cartsiocode-osram-sxegs512-ntsc.bin: \
+	cartsio/cartsiocode-osram.src cartsio/cartsiocode-osram.inc $(CARTSIOINC)
+	$(ATASM) $(ASMFLAGS) -dSXEGS512 -r -o$@ $<
+
+mypdos-code-sxegs512.bin: mypdos/mypdos.src $(MYPDOSINC) $(CARTSIOINC) \
+	mypdos/cartsio.src mypdos/imginfo.src \
+	targets/mypdos-incbin-cartsio.inc \
+	cartsio-sxegs512-pal.bin cartsio-sxegs512-ntsc.bin \
+	cartsiocode-osram-sxegs512-pal.bin cartsiocode-osram-sxegs512-ntsc.bin
+	$(ATASM) $(MYPDOSFLAGS) -dMYPDOSROM -dCARTSIO -dSXEGS512 -r -o$@ $<
+
+mypdos-sxegs512.rom: mypdrom.src mypdos-code-sxegs512.bin version.inc \
+	targets/mypdrom-incbin-cartsio.inc \
+	targets/mypdrom-incbin-mypdos.inc \
+	cartsio-sxegs512-pal.bin cartsio-sxegs512-ntsc.bin hisio.bin
+	$(ATASM) $(MYPDOSFLAGS) -dSXEGS512 -r -f255 -o$@ $<
+
+diskcart-sxegs512.com: diskcart.src mypdos-sxegs512.rom $(LIBFLASHINC) \
+	targets/diskcart-inc-target.inc \
+	targets/diskcart-incbin-mypdos.inc \
+	iohelp.inc iohelp.src arith.inc arith.src diskio.src version.inc
+	$(ATASM) $(ASMFLAGS) -Ilibflash -dSXEGS512 -o$@ $<
+
+diskwriter-sxegs512.bin: diskcart-sxegs512.com
+	ataricom -b 1 -n $< $@
+
+diskwriter-sxegs512.c: diskwriter-sxegs512.bin
+	xxd -i $< > $@
+
+mypdos-sxegs512.c: mypdos-sxegs512.rom
+	xxd -i $< > $@
+

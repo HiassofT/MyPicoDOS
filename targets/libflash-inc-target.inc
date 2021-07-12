@@ -13,3 +13,6 @@
 .if .def MEGA4096
 	.include "libflash-mega4096.src"
 .endif
+.if .def SXEGS512
+	.include "libflash-sxegs512.src"
+.endif

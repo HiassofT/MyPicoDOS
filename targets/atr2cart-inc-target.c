@@ -8,3 +8,5 @@
 #include "../diskwriter-mega512.c"
 #include "../mypdos-mega4096.c"
 #include "../diskwriter-mega4096.c"
+#include "../mypdos-sxegs512.c"
+#include "../diskwriter-sxegs512.c"

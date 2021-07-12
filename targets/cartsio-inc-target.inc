@@ -13,3 +13,6 @@
 .if .def MEGA4096
 	.include "cartsio-mega4096.inc"
 .endif
+.if .def SXEGS512
+	.include "cartsio-sxegs512.inc"
+.endif

@@ -1,6 +1,6 @@
-;  version.inc - macros for version numbers
+;  diskcart-sxegs512.inc - definitions for SXEGS 512k cart
 ;
-;  Copyright (C) 2013 Matthias Reichl <hias@horus.com>
+;  Copyright (C) 2021 Matthias Reichl <hias@horus.com>
 ;
 ;  This program is free software; you can redistribute it and/or modify
 ;  it under the terms of the GNU General Public License as published by
@@ -16,34 +16,25 @@
 ;  along with this program; if not, write to the Free Software
 ;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	.macro D_BVERSION
-	.byte "1.31"
-	.endm
+; offsets in SXEGS 512k cart
 
-	.macro D_BEXTRA
-;	.byte " b1"
-	.endm
+; last bank (63) is always mapped to $A000
+OFSCODH	= 7
+OFSCODL	= $E000
 
-	.macro D_SVERSION
-	.sbyte "1.31"
-	.endm
+; configuration page
+OFSCFGH = 7
+OFSCFGL = CCONFPG+$4000
 
-	.macro D_BYEAR
-	.byte "2021"
-	.endm
+; diskwriter code
+OFSDWH  = 7
+OFSDWL  = $C000
 
-	.macro D_SYEAR
-	.sbyte "2021"
-	.endm
+; start of disk image area
+OFSIMSH	= 0
+OFSIMSL	= 0
 
-	.macro D_ROMVERSION
-	D_BVERSION
-BEX
-	D_BEXTRA
-	.dc 4-[*-BEX] $20
-	.endm
+; end of disk image area
+OFSIMEH	= 7
+OFSIMEL	= $C000
 
-	.macro D_PICOVERSION
-	D_BVERSION
-	D_BEXTRA
-	.endm

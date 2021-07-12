@@ -13,3 +13,6 @@
 .if .def MEGA4096
 	.include "diskcart-mega4096.inc"
 .endif
+.if .def SXEGS512
+	.include "diskcart-sxegs512.inc"
+.endif

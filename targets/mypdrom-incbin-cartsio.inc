@@ -28,3 +28,9 @@ OSCODPL	= * - OSCODP
 OSCODN	.incbin "cartsiocode-osram-mega4096-ntsc.bin"
 OSCODNL	= * - OSCODN
 .endif
+.if .def SXEGS512
+OSCODP	.incbin "cartsiocode-osram-sxegs512-pal.bin"
+OSCODPL	= * - OSCODP
+OSCODN	.incbin "cartsiocode-osram-sxegs512-ntsc.bin"
+OSCODNL	= * - OSCODN
+.endif

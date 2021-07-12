@@ -13,3 +13,6 @@
 .if .def MEGA4096
 	.incbin "mypdos-mega4096.rom"
 .endif
+.if .def SXEGS512
+	.incbin "mypdos-sxegs512.rom"
+.endif
