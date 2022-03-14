@@ -98,7 +98,7 @@ atr2cart: atr2cart.o AtrUtils.o Error.o
 	$(CXX) $(LDFLAGS) -o $@ $^
 
 atr2cart.exe: atr2cart.cpp AtrUtils.cpp Error.cpp
-	$(MINGW_CXX) $(CXXFLAGS) -DWINVER -o $@ $^
+	$(MINGW_CXX) $(CXXFLAGS) -DWINVER -static -o $@ $^
 	$(MINGW_STRIP) $@
 
 piconame.txt: piconame.src version.inc
