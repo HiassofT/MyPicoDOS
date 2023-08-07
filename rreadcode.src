@@ -24,6 +24,8 @@
 NE459	JMP $E459
 .endif
 
+BOOTQ = $9
+
 XREG	.BYTE 0   ; XREG
 YREG	.BYTE 0   ; YREG
 SECMASK	.BYTE 3   ; SECMASK
@@ -70,7 +72,8 @@ RREAD	STY YREG
 	PLA
 
 ; start program
-
+	LDA #1
+	STA BOOTQ
 	JSR INADJ
 	JSR RUADJ
 	JMP (10)
