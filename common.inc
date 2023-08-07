@@ -90,7 +90,6 @@ CLP2	LDA %2+$200,Y
 	BNE CLP2
 	.ENDIF
 	.ENDIF
-	.ENDIF
 	.ENDM
 
 ; memory locations used by GETBYT / RREAD
